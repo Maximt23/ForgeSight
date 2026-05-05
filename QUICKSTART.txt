@@ -1,86 +1,96 @@
 ╔══════════════════════════════════════════════════════════════════╗
-║                      🦉 CadOwl QUICK START                       ║
+║                    🦉 CadOwl QUICK START v2                      ║
+║                   Now with Python Processing!                     ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-  ┌─────────────────────────────────────────────────────────────┐
-  │  STEP 1: RUN SETUP                                          │
-  │                                                             │
-  │  Double-click:  SETUP.bat                                   │
-  │                                                             │
-  │  This creates Input\ and Output\ folders                    │
-  └─────────────────────────────────────────────────────────────┘
-
-  ┌─────────────────────────────────────────────────────────────┐
-  │  STEP 2: OPEN AUTOCAD                                       │
-  │                                                             │
-  │  Open any DWG or start a blank drawing                      │
-  └─────────────────────────────────────────────────────────────┘
-
-  ┌─────────────────────────────────────────────────────────────┐
-  │  STEP 3: LOAD THE SCRIPT                                    │
-  │                                                             │
-  │  Type this in AutoCAD command line:                         │
-  │                                                             │
-  │  APPLOAD                                                    │
-  │                                                             │
-  │  Browse to this folder, select: CAD2SITEOWL_AUTO.lsp        │
-  │  Click "Load" then "Close"                                  │
-  └─────────────────────────────────────────────────────────────┘
-
-  ┌─────────────────────────────────────────────────────────────┐
-  │  STEP 4: DROP YOUR DWGs                                     │
-  │                                                             │
-  │  Copy/paste DWG files into the Input\ folder                │
-  └─────────────────────────────────────────────────────────────┘
-
-  ┌─────────────────────────────────────────────────────────────┐
-  │  STEP 5: RUN THE BATCH                                      │
-  │                                                             │
-  │  Type in AutoCAD:  CAD2SOBATCH                              │
-  │                                                             │
-  │  Sit back and watch it process! ☕                          │
-  └─────────────────────────────────────────────────────────────┘
-
-  ┌─────────────────────────────────────────────────────────────┐
-  │  STEP 6: GET YOUR CSVs                                      │
-  │                                                             │
-  │  Check the Output\ folder for your SiteOwl CSV files!       │
-  │                                                             │
-  │  Files named: {StoreNumber}_SiteOwl_Export.csv              │
-  └─────────────────────────────────────────────────────────────┘
+  THE PROCESS:
+  
+    DWG files → [AutoCAD] → DXF files → [Python] → CSV files
+    
+    Step 1: AutoCAD converts DWG to DXF (simple, reliable)
+    Step 2: Python reads DXF and exports coordinates (no AutoCAD needed)
 
 
 ══════════════════════════════════════════════════════════════════
-  COMMANDS CHEAT SHEET
+  STEP 1: CONVERT DWG → DXF (in AutoCAD)
 ══════════════════════════════════════════════════════════════════
 
-  CAD2SOBATCH    Process ALL DWGs in Input folder (fully auto)
-  CAD2SO         Process just the currently open DWG
-  CAD2SITEOWL    Manual mode - you pick boundary & devices
-  ANALYZEDWG     Diagnostic - dumps DWG structure to text file
+  1. Put your DWG files in the Input\ folder
+  
+  2. Open AutoCAD (any blank drawing)
+  
+  3. Load the converter:
+     (load "C:/Users/vn59j7j/OneDrive - Walmart Inc/Master Excel Pathing/CADtoSiteOwl/CadOwl/DWG2DXF.lsp")
+  
+  4. Run:  DWG2DXFBATCH
+  
+  5. DXF files appear in DXF\ folder
+
+
+══════════════════════════════════════════════════════════════════
+  STEP 2: CONVERT DXF → CSV (Python - no AutoCAD!)
+══════════════════════════════════════════════════════════════════
+
+  Option A: Double-click RUN_CONVERTER.bat
+  
+  Option B: Command line:
+     cd "C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\CadOwl"
+     .venv\Scripts\python.exe cad2siteowl.py
+  
+  CSV files appear in Output\ folder!
+
+
+══════════════════════════════════════════════════════════════════
+  FOLDER STRUCTURE
+══════════════════════════════════════════════════════════════════
+
+  CadOwl/
+  ├── Input/          ← Put DWG files here
+  ├── DXF/            ← DXF files land here (intermediate)
+  ├── Output/         ← CSV files appear here!
+  ├── DWG2DXF.lsp     ← AutoCAD: DWG → DXF
+  ├── cad2siteowl.py  ← Python: DXF → CSV
+  └── RUN_CONVERTER.bat
+
+
+══════════════════════════════════════════════════════════════════
+  WHY TWO STEPS?
+══════════════════════════════════════════════════════════════════
+
+  DWG is a proprietary binary format - only AutoCAD can read it.
+  DXF is an open text format - Python can read it directly.
+  
+  By splitting the process:
+  - Step 1 is dead simple (just save as DXF)
+  - Step 2 is reliable (Python handles all the logic)
+  - If something breaks, we know which step failed
 
 
 ══════════════════════════════════════════════════════════════════
   TROUBLESHOOTING
 ══════════════════════════════════════════════════════════════════
 
+  "No DXF files found"
+  → Run DWG2DXFBATCH in AutoCAD first
+  
   "No devices found"
-  → Edit CAD2SITEOWL_AUTO.lsp lines 32-35 to match your layer/
-    block naming. Run ANALYZEDWG first to see what's in your DWG.
-
-  "Could not detect boundary"  
-  → Edit line 26 to try different method:
-    "LARGEST_POLY" | "LAYER" | "BLOCK" | "DRAWING_EXTENTS"
-
-  "Unknown command CAD2SOBATCH"
-  → Script not loaded. Do Step 3 again.
+  → Your layer/block names might be different
+  → Run ANALYZEDWG on a sample file and share the output
+  
+  "Module not found: ezdxf"
+  → Run: .venv\Scripts\pip install ezdxf
 
 
 ══════════════════════════════════════════════════════════════════
-  NEED HELP?
+  COMMANDS CHEAT SHEET
 ══════════════════════════════════════════════════════════════════
 
-  1. Run ANALYZEDWG on a sample DWG
-  2. Share the output .txt file
-  3. We'll tune the config for your exact CAD standards
+  AutoCAD:
+    DWG2DXF       Convert current drawing to DXF
+    DWG2DXFBATCH  Batch convert all Input/*.dwg to DXF/*.dxf
+    ANALYZEDWG    Dump layer/block info for debugging
+    
+  Python/Batch:
+    RUN_CONVERTER.bat       Process all DXF files
+    cad2siteowl.py [file]   Process single DXF file
 
