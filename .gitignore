@@ -5,6 +5,12 @@
 *.tmp
 *_recover.dwg
 
+# DXF files (intermediate - too large)
+*.dxf
+
+# DWG files (source files - user provides)
+*.dwg
+
 # Output files (don't commit data)
 *.csv
 *_log.txt
