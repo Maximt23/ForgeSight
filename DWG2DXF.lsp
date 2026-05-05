@@ -9,7 +9,7 @@
 (vl-load-com)
 
 (setq *DXF_INPUT_FOLDER*  "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\CadOwl\\Input")
-(setq *DXF_OUTPUT_FOLDER* "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\CadOwl\\DXF")
+(setq *DXF_OUTPUT_FOLDER* "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\Input")
 
 (defun c:DWG2DXF (/ dwgName dxfPath)
   "Convert current drawing to DXF"
