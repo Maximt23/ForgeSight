@@ -11,6 +11,10 @@
 (setq *DXF_INPUT_FOLDER*  "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\CadOwl\\Input")
 (setq *DXF_OUTPUT_FOLDER* "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\Input")
 
+;; NOTE: Put DWG files in CadOwl\Input folder
+;; DXF files will be saved to CADtoSiteOwl\Input folder
+;; Then run cad2siteowl.py to create CSVs in CADtoSiteOwl\Output
+
 (defun c:DWG2DXF (/ dwgName dxfPath)
   "Convert current drawing to DXF"
   (setq dwgName (vl-filename-base (getvar "DWGNAME")))

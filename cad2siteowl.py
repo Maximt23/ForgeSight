@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 cad2siteowl.py - Convert DXF block insertions to SiteOwl coordinates
 
@@ -269,11 +270,11 @@ def find_boundary(doc: ezdxf.document.Drawing) -> Optional[BoundingBox]:
                 continue
     
     if largest_bbox:
-        print(f"  📐 Boundary: {largest_bbox.width:.0f} x {largest_bbox.height:.0f} (area: {largest_area:.0f})")
+        print(f"  Boundary: {largest_bbox.width:.0f} x {largest_bbox.height:.0f} (area: {largest_area:.0f})")
         return largest_bbox
     
     # Fallback: use all entity extents
-    print("  ⚠️  No closed polyline found, using drawing extents")
+    print("  WARNING: No closed polyline found, using drawing extents")
     min_x = min_y = float('inf')
     max_x = max_y = float('-inf')
     
@@ -366,31 +367,31 @@ def make_row(device: Device, siteowl_coords: tuple[float, float], store_num: str
 
 def process_dxf(dxf_path: Path, output_folder: Path) -> int:
     """Process a single DXF file and output CSV"""
-    print(f"\n📄 Processing: {dxf_path.name}")
+    print(f"\n[FILE] Processing: {dxf_path.name}")
     
     # Extract store number
     store_num = extract_store_number(dxf_path.stem)
-    print(f"  🏪 Store: {store_num}")
+    print(f"  Store: {store_num}")
     
     # Load DXF
     try:
         doc = ezdxf.readfile(str(dxf_path))
     except Exception as e:
-        print(f"  ❌ Failed to read DXF: {e}")
+        print(f"  ERROR: Failed to read DXF: {e}")
         return 0
     
     # Find boundary
     bbox = find_boundary(doc)
     if not bbox:
-        print("  ❌ Could not determine boundary!")
+        print("  ERROR: Could not determine boundary!")
         return 0
     
     # Extract devices
     devices = extract_devices(doc)
-    print(f"  🔧 Found {len(devices)} devices")
+    print(f"  Found {len(devices)} devices")
     
     if not devices:
-        print("  ⚠️  No devices found!")
+        print("  WARNING: No devices found!")
         return 0
     
     # Ensure output folder exists
@@ -408,14 +409,14 @@ def process_dxf(dxf_path: Path, output_folder: Path) -> int:
             row = make_row(device, coords, store_num)
             writer.writerow(row)
     
-    print(f"  ✅ Exported: {csv_path.name}")
+    print(f"  SUCCESS: Exported {csv_path.name}")
     return len(devices)
 
 
 def main():
     """Main entry point"""
     print("\n" + "=" * 50)
-    print("  🦉 CadOwl - DXF to SiteOwl Converter")
+    print("  CadOwl - DXF to SiteOwl Converter")
     print("=" * 50)
     
     # Determine input files
@@ -425,19 +426,19 @@ def main():
     else:
         # Batch mode - process DXF folder
         if not DXF_FOLDER.exists():
-            print(f"\n❌ DXF folder not found: {DXF_FOLDER}")
+            print(f"\nERROR: DXF folder not found: {DXF_FOLDER}")
             print("   Run DWG2DXFBATCH in AutoCAD first to convert DWG files!")
             sys.exit(1)
         
         dxf_files = list(DXF_FOLDER.glob("*.dxf"))
         
         if not dxf_files:
-            print(f"\n❌ No DXF files found in: {DXF_FOLDER}")
+            print(f"\nERROR: No DXF files found in: {DXF_FOLDER}")
             print("   Run DWG2DXFBATCH in AutoCAD first!")
             sys.exit(1)
     
-    print(f"\n📂 Found {len(dxf_files)} DXF file(s)")
-    print(f"📂 Output: {OUTPUT_FOLDER}")
+    print(f"\n[*] Found {len(dxf_files)} DXF file(s)")
+    print(f"[*] Output: {OUTPUT_FOLDER}")
     
     total_devices = 0
     processed = 0
@@ -449,10 +450,10 @@ def main():
             processed += 1
     
     print("\n" + "=" * 50)
-    print(f"  ✅ Complete!")
-    print(f"  📊 Processed: {processed}/{len(dxf_files)} files")
-    print(f"  🔧 Total devices: {total_devices}")
-    print(f"  📂 Output: {OUTPUT_FOLDER}")
+    print(f"  COMPLETE!")
+    print(f"  Processed: {processed}/{len(dxf_files)} files")
+    print(f"  Total devices: {total_devices}")
+    print(f"  Output: {OUTPUT_FOLDER}")
     print("=" * 50 + "\n")
 
 
