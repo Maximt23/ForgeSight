@@ -1,0 +1,19 @@
+# AutoCAD backup files
+*.bak
+*.dwl
+*.dwl2
+*.tmp
+*_recover.dwg
+
+# Output files (don't commit data)
+*.csv
+*_log.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*~
