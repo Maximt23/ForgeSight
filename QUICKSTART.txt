@@ -1,43 +1,38 @@
 ╔══════════════════════════════════════════════════════════════════╗
-║                    🦉 CadOwl QUICK START v2                      ║
-║                   Now with Python Processing!                     ║
+║                      CadOwl QUICK START                          ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-  THE PROCESS:
+
+══════════════════════════════════════════════════════════════════
+  FIRST TIME SETUP
+══════════════════════════════════════════════════════════════════
+
+  1. Double-click:  SETUP.bat
   
-    DWG files → [AutoCAD] → DXF files → [Python] → CSV files
-    
-    Step 1: AutoCAD converts DWG to DXF (simple, reliable)
-    Step 2: Python reads DXF and exports coordinates (no AutoCAD needed)
+     This creates Input/ and Output/ folders and installs Python
+     dependencies.
 
 
 ══════════════════════════════════════════════════════════════════
-  STEP 1: CONVERT DWG → DXF (in AutoCAD)
+  CONVERT YOUR DRAWINGS
 ══════════════════════════════════════════════════════════════════
 
-  1. Put your DWG files in the Input\ folder
-  
-  2. Open AutoCAD (any blank drawing)
-  
-  3. Load the converter:
-     (load "C:/Users/vn59j7j/OneDrive - Walmart Inc/Master Excel Pathing/CADtoSiteOwl/CadOwl/DWG2DXF.lsp")
-  
-  4. Run:  DWG2DXFBATCH
-  
-  5. DXF files appear in DXF\ folder
+  STEP 1: Put DWG files in the Input\ folder
 
-
-══════════════════════════════════════════════════════════════════
-  STEP 2: CONVERT DXF → CSV (Python - no AutoCAD!)
-══════════════════════════════════════════════════════════════════
-
-  Option A: Double-click RUN_CONVERTER.bat
+  STEP 2: Convert DWG to DXF (in AutoCAD)
   
-  Option B: Command line:
-     cd "C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\CadOwl"
-     .venv\Scripts\python.exe cad2siteowl.py
+     Open AutoCAD, then run:
+     
+        (load "PATH/TO/CadOwl/DWG2DXF.lsp")
+        DWG2DXFBATCH
+     
+     Replace PATH/TO with the actual path. Use forward slashes!
+
+  STEP 3: Convert DXF to CSV
   
-  CSV files appear in Output\ folder!
+     Double-click:  RUN_CONVERTER.bat
+
+  STEP 4: Get your CSVs from the Output\ folder!
 
 
 ══════════════════════════════════════════════════════════════════
@@ -45,25 +40,26 @@
 ══════════════════════════════════════════════════════════════════
 
   CadOwl/
-  ├── Input/          ← Put DWG files here
-  ├── DXF/            ← DXF files land here (intermediate)
-  ├── Output/         ← CSV files appear here!
-  ├── DWG2DXF.lsp     ← AutoCAD: DWG → DXF
-  ├── cad2siteowl.py  ← Python: DXF → CSV
-  └── RUN_CONVERTER.bat
+  ├── Input/              <- DWGs go here, DXFs saved here
+  ├── Output/             <- CSVs appear here
+  ├── DWG2DXF.lsp         <- AutoCAD: DWG -> DXF
+  ├── cad2siteowl.py      <- Python: DXF -> CSV
+  ├── SETUP.bat           <- Run once to set up
+  └── RUN_CONVERTER.bat   <- Run to convert DXFs
 
 
 ══════════════════════════════════════════════════════════════════
-  WHY TWO STEPS?
+  COMMANDS
 ══════════════════════════════════════════════════════════════════
 
-  DWG is a proprietary binary format - only AutoCAD can read it.
-  DXF is an open text format - Python can read it directly.
-  
-  By splitting the process:
-  - Step 1 is dead simple (just save as DXF)
-  - Step 2 is reliable (Python handles all the logic)
-  - If something breaks, we know which step failed
+  AutoCAD:
+    DWG2DXF        Convert current drawing to DXF
+    DWG2DXFBATCH   Convert all Input/*.dwg to DXF
+    ANALYZEDWG     Dump layer/block info (for debugging)
+
+  Windows:
+    SETUP.bat          One-time setup
+    RUN_CONVERTER.bat  Process DXF files to CSV
 
 
 ══════════════════════════════════════════════════════════════════
@@ -71,26 +67,12 @@
 ══════════════════════════════════════════════════════════════════
 
   "No DXF files found"
-  → Run DWG2DXFBATCH in AutoCAD first
-  
+     -> Run DWG2DXFBATCH in AutoCAD first
+
   "No devices found"
-  → Your layer/block names might be different
-  → Run ANALYZEDWG on a sample file and share the output
-  
-  "Module not found: ezdxf"
-  → Run: .venv\Scripts\pip install ezdxf
+     -> Run ANALYZEDWG to see your layer/block names
+     -> Edit cad2siteowl.py to match your patterns
 
-
-══════════════════════════════════════════════════════════════════
-  COMMANDS CHEAT SHEET
-══════════════════════════════════════════════════════════════════
-
-  AutoCAD:
-    DWG2DXF       Convert current drawing to DXF
-    DWG2DXFBATCH  Batch convert all Input/*.dwg to DXF/*.dxf
-    ANALYZEDWG    Dump layer/block info for debugging
-    
-  Python/Batch:
-    RUN_CONVERTER.bat       Process all DXF files
-    cad2siteowl.py [file]   Process single DXF file
+  "Module not found"
+     -> Run SETUP.bat again
 

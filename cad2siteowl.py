@@ -22,10 +22,10 @@ from ezdxf.entities import Insert
 # CONFIGURATION
 # =============================================================================
 
-# Folders - hardcoded paths
-SCRIPT_DIR = Path(__file__).parent
-DXF_FOLDER = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Input")
-OUTPUT_FOLDER = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Output")
+# Folders - relative to this script
+SCRIPT_DIR = Path(__file__).parent.resolve()
+DXF_FOLDER = SCRIPT_DIR / "Input"
+OUTPUT_FOLDER = SCRIPT_DIR / "Output"
 
 # SiteOwl coordinate settings
 ARTBOARD_SIZE = 1000.0

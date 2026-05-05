@@ -1,48 +1,67 @@
 @echo off
+setlocal
+
 echo.
 echo  ========================================
-echo   🦉 CadOwl Setup
+echo   CadOwl - Setup
 echo  ========================================
 echo.
 
-:: Set the base folder (where this script is located)
-set "BASE=%~dp0"
+cd /d "%~dp0"
 
-:: Create Input and Output folders
-echo  Creating folders...
-if not exist "%BASE%Input" mkdir "%BASE%Input"
-if not exist "%BASE%Output" mkdir "%BASE%Output"
+:: Create folders if they don't exist
+if not exist "Input" mkdir Input
+if not exist "Output" mkdir Output
 
-echo   ✅ Input\  - Drop your DWG files here
-echo   ✅ Output\ - CSVs will appear here
+echo  [OK] Created Input/ and Output/ folders
 echo.
 
-:: Check if AutoCAD is likely installed
-where /q acad.exe 2>nul
-if %ERRORLEVEL%==0 (
-    echo  ✅ AutoCAD detected
-) else (
-    echo  ⚠️  AutoCAD not in PATH - that's OK, just open it manually
+:: Check for Python/uv
+where uv >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo  [!!] uv not found. Please install uv first:
+    echo       https://docs.astral.sh/uv/getting-started/installation/
+    echo.
+    pause
+    exit /b 1
 )
 
+echo  [OK] uv found
 echo.
+
+:: Create virtual environment
+if not exist ".venv" (
+    echo  Creating Python virtual environment...
+    uv venv
+    echo  [OK] Virtual environment created
+) else (
+    echo  [OK] Virtual environment exists
+)
+echo.
+
+:: Install dependencies
+echo  Installing Python dependencies...
+uv pip install ezdxf
+echo  [OK] Dependencies installed
+echo.
+
 echo  ========================================
 echo   SETUP COMPLETE!
 echo  ========================================
 echo.
 echo  NEXT STEPS:
 echo.
-echo   1. Open AutoCAD
+echo   1. Put DWG files in the Input\ folder
 echo.
-echo   2. Paste this in the command line:
-echo      (load "%BASE:\=/%CAD2SITEOWL_AUTO.lsp")
+echo   2. Open AutoCAD and run:
+echo      (load "%~dp0DWG2DXF.lsp")
+echo      DWG2DXFBATCH
 echo.
-echo   3. Drop DWG files in the Input folder
+echo   3. Double-click RUN_CONVERTER.bat
 echo.
-echo   4. Type: CAD2SOBATCH
-echo.
-echo   5. CSVs appear in Output folder!
+echo   4. CSV files appear in Output\ folder!
 echo.
 echo  ========================================
 echo.
+
 pause

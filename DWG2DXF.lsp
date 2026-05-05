@@ -8,14 +8,45 @@
 
 (vl-load-com)
 
-(setq *DXF_INPUT_FOLDER*  "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\CadOwl\\Input")
-(setq *DXF_OUTPUT_FOLDER* "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\Input")
+;;; ============================================================
+;;; CONFIGURATION - Auto-detects paths from script location
+;;; ============================================================
+;;; After loading, the script finds Input/ and Output/ folders
+;;; relative to where this .lsp file is located.
+;;;
+;;; Structure expected:
+;;;   YourFolder/
+;;;   ├── DWG2DXF.lsp    (this file)
+;;;   ├── Input/         (put DWG files here, DXF saved here)
+;;;   └── Output/        (CSV files from Python script)
+;;; ============================================================
 
-;; NOTE: Put DWG files in CadOwl\Input folder
-;; DXF files will be saved to CADtoSiteOwl\Input folder
-;; Then run cad2siteowl.py to create CSVs in CADtoSiteOwl\Output
+(vl-load-com)
 
-(defun c:DWG2DXF (/ dwgName dxfPath)
+;; Auto-detect script location and set paths
+(defun DXF:SetPaths (/ scriptPath)
+  (setq scriptPath (findfile "DWG2DXF.lsp"))
+  (if scriptPath
+    (progn
+      (setq *DXF_BASE_FOLDER* (vl-filename-directory scriptPath))
+      (setq *DXF_INPUT_FOLDER* (strcat *DXF_BASE_FOLDER* "\\Input"))
+      (setq *DXF_OUTPUT_FOLDER* (strcat *DXF_BASE_FOLDER* "\\Input"))  ;; DXF goes to Input folder
+      (princ (strcat "\nPaths configured:"))
+      (princ (strcat "\n  Input:  " *DXF_INPUT_FOLDER*))
+      (princ (strcat "\n  Output: " *DXF_OUTPUT_FOLDER*))
+    )
+    (progn
+      ;; Fallback to current drawing folder
+      (setq *DXF_BASE_FOLDER* (getvar "DWGPREFIX"))
+      (setq *DXF_INPUT_FOLDER* (strcat *DXF_BASE_FOLDER* "Input"))
+      (setq *DXF_OUTPUT_FOLDER* (strcat *DXF_BASE_FOLDER* "Input"))
+      (princ "\nWARNING: Could not find script location, using drawing folder.")
+    )
+  )
+)
+
+;; Initialize paths on load
+(DXF:SetPaths)
   "Convert current drawing to DXF"
   (setq dwgName (vl-filename-base (getvar "DWGNAME")))
   

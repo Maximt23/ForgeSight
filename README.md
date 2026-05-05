@@ -1,153 +1,188 @@
 # 🦉 CadOwl
 
-**AutoLISP tools for exporting CAD device coordinates to SiteOwl format.**
+**Convert CAD device coordinates to SiteOwl CSV format.**
 
-Convert CCTV camera and device block insertion points from AutoCAD drawings into SiteOwl-compatible CSV coordinates.
-
----
-
-## 📁 Scripts
-
-| Script | Mode | Description |
-|--------|------|-------------|
-| `CAD2SITEOWL_AUTO.lsp` | **Automated** | Zero-touch batch processing. Auto-detects boundaries and devices. |
-| `CAD2SITEOWL_MANUAL.lsp` | **Manual** | Interactive mode - prompts you to select boundary and devices. |
-| `DWG_Analyzer.lsp` | **Diagnostic** | Analyzes a DWG and dumps layer/block structure to a text file. |
+Extract block insertion points (cameras, fire alarm devices, sensors) from AutoCAD drawings and export them as SiteOwl-compatible coordinates.
 
 ---
 
 ## 🚀 Quick Start
 
-### Option 1: Automated (Recommended)
+### 1. Clone the repo
 
-1. **Configure folders** (edit lines 22-23 in `CAD2SITEOWL_AUTO.lsp`):
+```bash
+git clone https://gecgithub01.walmart.com/vn59j7j/CadOwl.git
+cd CadOwl
+```
+
+### 2. Run setup
+
+```bash
+SETUP.bat
+```
+
+This creates `Input/` and `Output/` folders and installs Python dependencies.
+
+### 3. Convert your drawings
+
+**Step A: DWG → DXF (in AutoCAD)**
+
+1. Put your `.dwg` files in the `Input/` folder
+2. Open AutoCAD (any drawing)
+3. Run:
    ```lisp
-   (setq *SO_INPUT_FOLDER*  "C:\\path\\to\\Input")
-   (setq *SO_OUTPUT_FOLDER* "C:\\path\\to\\Output")
+   (load "C:/path/to/CadOwl/DWG2DXF.lsp")
+   DWG2DXFBATCH
    ```
 
-2. **Load the script** in AutoCAD:
-   ```
-   (load "C:/path/to/CAD2SITEOWL_AUTO.lsp")
-   ```
+**Step B: DXF → CSV (Python)**
 
-3. **Run commands:**
-   - `CAD2SO` — Process the currently open drawing
-   - `CAD2SOBATCH` — Batch process all DWGs in Input folder
+```bash
+RUN_CONVERTER.bat
+```
 
-### Option 2: Manual (Interactive)
-
-1. Open your DWG in AutoCAD
-2. Load the script:
-   ```
-   (load "C:/path/to/CAD2SITEOWL_MANUAL.lsp")
-   ```
-3. Run `CAD2SITEOWL`
-4. Select your print boundary when prompted
-5. Select device blocks when prompted
-6. Choose CSV save location
+CSV files appear in `Output/` folder! 🎉
 
 ---
 
-## ⚙️ Configuration (Auto Mode)
+## 📁 Folder Structure
 
-Edit the config section at the top of `CAD2SITEOWL_AUTO.lsp`:
+```
+CadOwl/
+├── Input/              ← Put DWG files here, DXF files saved here
+├── Output/             ← CSV exports appear here
+├── DWG2DXF.lsp         ← AutoCAD script (DWG → DXF)
+├── cad2siteowl.py      ← Python script (DXF → CSV)
+├── DWG_Analyzer.lsp    ← Diagnostic tool
+├── SETUP.bat           ← One-time setup
+└── RUN_CONVERTER.bat   ← Run the Python converter
+```
 
-### Boundary Detection
+---
+
+## ⚙️ How It Works
+
+### Two-Step Process
+
+1. **AutoCAD** converts DWG to DXF (simple save-as operation)
+2. **Python** reads DXF and extracts coordinates (reliable, debuggable)
+
+### Why two steps?
+
+- DWG is a proprietary binary format - only AutoCAD can read it
+- DXF is an open text format - Python handles it easily
+- If something breaks, you know exactly which step failed
+
+### Coordinate Transformation
+
+Converts CAD insertion points to SiteOwl's 0-100 coordinate system:
+
+```
+SiteOwl artboard: 1000 x 1000
+Floorplan scaled to: 800 units wide (centered)
+Final coordinates: divided by 10 → 0-100 range
+Y-axis flipped: CAD Y-up → SiteOwl Y-down
+```
+
+---
+
+## 🔧 Device Detection
+
+The script auto-detects devices based on layer and block patterns:
+
+### Supported Systems
+
+| System | Layer Patterns | Block Patterns |
+|--------|----------------|----------------|
+| Fire Alarm | `*NOTIFICATION*`, `*E-ALARM*`, `*EFP*` | `SCR`, `PC2R`, `P2RK`, `D4120` |
+| CCTV | `*CCTV*`, `*CAMERA*`, `*VIDEO*` | `CAM*`, `DOME*`, `PTZ*`, `BULLET*` |
+| Intrusion | `*INTRUSION*`, `*BURG*`, `*SECURITY*` | - |
+
+### Auto-Detected Device Types
+
+- Horn/Strobe, Weatherproof Horn/Strobe
+- Smoke Detector, Pull Station
+- Supervisory Device, Waterflow Switch
+- Fixed Camera, Dome Camera, PTZ Camera
+
+---
+
+## 🔍 Analyzing Unknown Drawings
+
+If your drawings use different naming conventions, run the analyzer:
+
 ```lisp
-;; Method: "LAYER", "BLOCK", "LARGEST_POLY", or "DRAWING_EXTENTS"
-(setq *SO_BOUNDARY_METHOD* "LARGEST_POLY")
-
-;; If using LAYER method:
-(setq *SO_BOUNDARY_LAYERS* "A-ANNO-TTLB*,*BOUNDARY*,*BORDER*")
-
-;; If using BLOCK method:
-(setq *SO_BOUNDARY_BLOCKS* "TITLEBLOCK*,BORDER*")
-```
-
-### Device Detection
-```lisp
-;; Layer patterns (wildcards OK)
-(setq *SO_DEVICE_LAYERS* "S-CCTV*,*CCTV*,*CAMERA*,*SECURITY*")
-
-;; Block name patterns (wildcards OK)
-(setq *SO_DEVICE_BLOCKS* "CAM*,CAMERA*,DOME*,PTZ*,BULLET*")
-```
-
-### SiteOwl Coordinate Math
-```lisp
-(setq *SO_ARTBOARD_SIZE* 1000.0)  ; SiteOwl artboard size
-(setq *SO_OBJECT_WIDTH*  800.0)   ; Floorplan scaled to this width
-(setq *SO_SCALE_MODE*    "WIDTH") ; "WIDTH" or "FIT"
-```
-
----
-
-## 🧮 Coordinate Transformation
-
-The scripts convert CAD insertion points to SiteOwl coordinates using this logic:
-
-1. **Scale**: Boundary is scaled to fit 800 units wide on a 1000×1000 artboard
-2. **Center**: Scaled boundary is centered on the artboard
-3. **Flip Y**: CAD Y-up becomes SiteOwl Y-down (origin top-left)
-4. **Divide by 10**: Final coordinates are 0-100 range
-
-```
-SiteOwl X = (CAD_X - MinX) × scale ÷ 10 + offset
-SiteOwl Y = (MaxY - CAD_Y) × scale ÷ 10 + offset
-```
-
----
-
-## 📊 Output CSV Format
-
-Exports 56-column SiteOwl-compatible CSV with headers:
-
-- Project ID, Plan ID, Device ID, Name, Coordinates, etc.
-- Auto-populates: Name, Abbreviated Names, Description, Coordinates
-- Store number extracted from filename (3-4 digit patterns)
-
----
-
-## 🔍 Analyzing Unknown DWGs
-
-Run the diagnostic script to understand a DWG's structure:
-
-```
-(load "C:/path/to/DWG_Analyzer.lsp")
+(load "C:/path/to/CadOwl/DWG_Analyzer.lsp")
 ANALYZEDWG
 ```
 
-This creates a text file with:
-- All layer names (with on/off/frozen/locked status)
-- All block definitions
-- Block inserts with layers and attributes
-- Layers matching boundary keywords
-- Layers matching device keywords
-- Largest closed polylines (potential boundaries)
+This creates a text file showing all layers, blocks, and their patterns. Use this to customize the detection patterns in `cad2siteowl.py`.
 
 ---
 
-## 🛡️ Safety Features
+## 📋 CSV Output Format
 
-- **Non-destructive**: Never modifies or saves source DWG files
-- **Fallback chain**: If primary boundary detection fails, tries alternatives
-- **Error handling**: Graceful recovery with logging
-- **Logging**: Full processing log saved to Output folder
+Exports 56-column SiteOwl-compatible CSV with:
 
----
-
-## 📋 Requirements
-
-- AutoCAD 2018+ (or compatible)
-- Visual LISP extensions (`vl-load-com`)
+- Device Name (from attributes or block name)
+- System Type (Fire Alarm, Video Surveillance, etc.)
+- Device Type (Horn/Strobe, Fixed Camera, etc.)
+- Coordinates in `(X, Y)` format
+- Store number (extracted from filename)
+- Layer and block info in Description
 
 ---
 
-## 🐕 Support
+## 🛠️ Requirements
 
-Questions? Issues? Reach out or open an issue!
+- **AutoCAD** 2018+ (for DWG → DXF conversion)
+- **Python** 3.9+ with `uv` package manager
+- **ezdxf** library (auto-installed by SETUP.bat)
 
 ---
 
-*Made with 🐶 by Code Puppy*
+## 📝 Commands Reference
+
+### AutoCAD Commands
+
+| Command | Description |
+|---------|-------------|
+| `DWG2DXF` | Convert current drawing to DXF |
+| `DWG2DXFBATCH` | Convert all DWGs in Input folder |
+| `ANALYZEDWG` | Dump layer/block info for debugging |
+
+### Batch Files
+
+| File | Description |
+|------|-------------|
+| `SETUP.bat` | One-time setup (creates folders, installs deps) |
+| `RUN_CONVERTER.bat` | Run the Python DXF→CSV converter |
+
+---
+
+## 🐛 Troubleshooting
+
+**"No DXF files found"**
+- Run `DWG2DXFBATCH` in AutoCAD first
+
+**"No devices found"**
+- Your layer/block names might be different
+- Run `ANALYZEDWG` and check the patterns
+- Edit `cad2siteowl.py` to add your patterns
+
+**"Module not found: ezdxf"**
+- Run `SETUP.bat` again
+
+**AutoCAD script won't load**
+- Use forward slashes in the path: `C:/path/to/file.lsp`
+- Or escape backslashes: `C:\\path\\to\\file.lsp`
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE)
+
+---
+
+Made with 🐶 by Code Puppy
