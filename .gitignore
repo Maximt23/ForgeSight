@@ -3,6 +3,9 @@
 __pycache__/
 *.pyc
 
+# Watcher log
+watcher.log
+
 # AutoCAD backup files
 *.bak
 *.dwl
