@@ -1,0 +1,86 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                      🦉 CadOwl QUICK START                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  STEP 1: RUN SETUP                                          │
+  │                                                             │
+  │  Double-click:  SETUP.bat                                   │
+  │                                                             │
+  │  This creates Input\ and Output\ folders                    │
+  └─────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  STEP 2: OPEN AUTOCAD                                       │
+  │                                                             │
+  │  Open any DWG or start a blank drawing                      │
+  └─────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  STEP 3: LOAD THE SCRIPT                                    │
+  │                                                             │
+  │  Type this in AutoCAD command line:                         │
+  │                                                             │
+  │  APPLOAD                                                    │
+  │                                                             │
+  │  Browse to this folder, select: CAD2SITEOWL_AUTO.lsp        │
+  │  Click "Load" then "Close"                                  │
+  └─────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  STEP 4: DROP YOUR DWGs                                     │
+  │                                                             │
+  │  Copy/paste DWG files into the Input\ folder                │
+  └─────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  STEP 5: RUN THE BATCH                                      │
+  │                                                             │
+  │  Type in AutoCAD:  CAD2SOBATCH                              │
+  │                                                             │
+  │  Sit back and watch it process! ☕                          │
+  └─────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │  STEP 6: GET YOUR CSVs                                      │
+  │                                                             │
+  │  Check the Output\ folder for your SiteOwl CSV files!       │
+  │                                                             │
+  │  Files named: {StoreNumber}_SiteOwl_Export.csv              │
+  └─────────────────────────────────────────────────────────────┘
+
+
+══════════════════════════════════════════════════════════════════
+  COMMANDS CHEAT SHEET
+══════════════════════════════════════════════════════════════════
+
+  CAD2SOBATCH    Process ALL DWGs in Input folder (fully auto)
+  CAD2SO         Process just the currently open DWG
+  CAD2SITEOWL    Manual mode - you pick boundary & devices
+  ANALYZEDWG     Diagnostic - dumps DWG structure to text file
+
+
+══════════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+══════════════════════════════════════════════════════════════════
+
+  "No devices found"
+  → Edit CAD2SITEOWL_AUTO.lsp lines 32-35 to match your layer/
+    block naming. Run ANALYZEDWG first to see what's in your DWG.
+
+  "Could not detect boundary"  
+  → Edit line 26 to try different method:
+    "LARGEST_POLY" | "LAYER" | "BLOCK" | "DRAWING_EXTENTS"
+
+  "Unknown command CAD2SOBATCH"
+  → Script not loaded. Do Step 3 again.
+
+
+══════════════════════════════════════════════════════════════════
+  NEED HELP?
+══════════════════════════════════════════════════════════════════
+
+  1. Run ANALYZEDWG on a sample DWG
+  2. Share the output .txt file
+  3. We'll tune the config for your exact CAD standards
+

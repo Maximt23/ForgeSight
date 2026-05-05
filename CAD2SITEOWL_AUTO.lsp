@@ -23,9 +23,14 @@
 ;;; CONFIGURATION - EDIT THESE TO MATCH YOUR STANDARDS
 ;;; ============================================================
 
-;; INPUT/OUTPUT FOLDERS (for batch mode)
-(setq *SO_INPUT_FOLDER*  "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\Input")
-(setq *SO_OUTPUT_FOLDER* "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\Output")
+;; INPUT/OUTPUT FOLDERS (auto-detected from script location)
+;; The script looks for Input\ and Output\ folders next to itself.
+;; Override these if you want different paths:
+(setq *SO_SCRIPT_PATH* (if (findfile "CAD2SITEOWL_AUTO.lsp")
+                          (vl-filename-directory (findfile "CAD2SITEOWL_AUTO.lsp"))
+                          (getvar "DWGPREFIX")))
+(setq *SO_INPUT_FOLDER*  (strcat *SO_SCRIPT_PATH* "\\Input"))
+(setq *SO_OUTPUT_FOLDER* (strcat *SO_SCRIPT_PATH* "\\Output"))
 
 ;; SITEOWL COORDINATE SETTINGS
 (setq *SO_ARTBOARD_SIZE* 1000.0)
