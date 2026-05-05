@@ -26,11 +26,9 @@
 ;; INPUT/OUTPUT FOLDERS (auto-detected from script location)
 ;; The script looks for Input\ and Output\ folders next to itself.
 ;; Override these if you want different paths:
-(setq *SO_SCRIPT_PATH* (if (findfile "CAD2SITEOWL_AUTO.lsp")
-                          (vl-filename-directory (findfile "CAD2SITEOWL_AUTO.lsp"))
-                          (getvar "DWGPREFIX")))
-(setq *SO_INPUT_FOLDER*  (strcat *SO_SCRIPT_PATH* "\\Input"))
-(setq *SO_OUTPUT_FOLDER* (strcat *SO_SCRIPT_PATH* "\\Output"))
+;; HARDCODED PATHS (edit these for your setup)
+(setq *SO_INPUT_FOLDER*  "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\CadOwl\\Input")
+(setq *SO_OUTPUT_FOLDER* "C:\\Users\\vn59j7j\\OneDrive - Walmart Inc\\Master Excel Pathing\\CADtoSiteOwl\\Output")
 
 ;; SITEOWL COORDINATE SETTINGS
 (setq *SO_ARTBOARD_SIZE* 1000.0)
@@ -42,20 +40,22 @@
 (setq *SO_BOUNDARY_METHOD* "LARGEST_POLY")
 
 ;; If using LAYER method - comma-separated wildcard patterns
-(setq *SO_BOUNDARY_LAYERS* "A-ANNO-TTLB*,*BOUNDARY*,*BORDER*,*PRINT*,*LIMIT*")
+(setq *SO_BOUNDARY_LAYERS* "*XFLOOR*,*FLOOR*,*BASE*,*BOUNDARY*,*BORDER*")
 
 ;; If using BLOCK method - comma-separated wildcard patterns  
-(setq *SO_BOUNDARY_BLOCKS* "TITLEBLOCK*,BORDER*,*SHEET*")
+(setq *SO_BOUNDARY_BLOCKS* "XFLOOR*,*FLOOR*,TITLEBLOCK*,BORDER*")
 
 ;; DEVICE DETECTION SETTINGS
 ;; Layer patterns for device blocks (wildcards OK)
-(setq *SO_DEVICE_LAYERS* "S-CCTV*,*CCTV*,*CAMERA*,*SECURITY*,*VIDEO*,*SURV*,*DEVICE*")
+;; Covers: CCTV, Fire Alarm, Security, Notification devices
+(setq *SO_DEVICE_LAYERS* "NOTIFICATION,*E-ALARM*,*NOTF*,*CCTV*,*CAMERA*,*SECURITY*,*ALARM*,efp1-e-notf")
 
 ;; Block name patterns for devices (wildcards OK)
-(setq *SO_DEVICE_BLOCKS* "CAM*,CAMERA*,DOME*,PTZ*,BULLET*,CCTV*,*DEVICE*")
+;; Covers: Fire alarm (SCR,PC2R,P2RK,D4120,etc) and CCTV (CAM,DOME,etc)
+(setq *SO_DEVICE_BLOCKS* "SCR,PC2R,P2RK,D4120,D9412,D1256,D273,FMM100,VSR,PCVS,EFP10-R$0$E-*,A$C*,WMpoint,CAM*,CAMERA*,DOME*,PTZ*,BULLET*,CCTV*")
 
 ;; Attribute tags to try for device names (in order of preference)
-(setq *SO_NAME_TAGS* '("NAME" "DEVICE" "CAMERA" "ID" "TAG" "NUMBER" "CAM_ID" "DEVICE_ID"))
+(setq *SO_NAME_TAGS* '("NAME" "DEVICE" "D" "ID" "TAG" "S" "115CD" "WP" "CAMERA" "NUMBER"))
 
 ;; LOGGING
 (setq *SO_LOG_ENABLED* T)
@@ -543,13 +543,41 @@
 ;;; ROW BUILDER
 ;;; ============================================================
 
-(defun SO:MakeRow (obj coord storeNum / name blockName layer x y coordText row)
+(defun SO:MakeRow (obj coord storeNum / name blockName layer x y coordText row sysType devType)
   (setq name (SO:GetDeviceName obj))
   (setq blockName (SO:GetEffectiveName obj))
   (setq layer (vla-get-Layer obj))
   (setq x (rtos (car coord) 2 2))
   (setq y (rtos (cadr coord) 2 2))
   (setq coordText (strcat "(" x ", " y ")"))
+  
+  ;; Auto-detect system type based on layer/block name
+  (cond
+    ((or (wcmatch (strcase layer) "*CCTV*,*CAM*,*VIDEO*,*SURV*")
+         (wcmatch (strcase blockName) "*CAM*,*DOME*,*PTZ*,*BULLET*"))
+     (setq sysType "Video Surveillance")
+     (setq devType "Fixed Camera")
+    )
+    ((or (wcmatch (strcase layer) "*ALARM*,*NOTIF*,*EFP*,*FIRE*")
+         (wcmatch (strcase blockName) "SCR,PC2R,P2RK,D4120,D9412,*EFP*,*ALARM*"))
+     (setq sysType "Fire Alarm")
+     (cond
+       ((wcmatch (strcase blockName) "*SCR*,*PC2R*,*STROBE*") (setq devType "Horn/Strobe"))
+       ((wcmatch (strcase blockName) "*P2RK*") (setq devType "Weatherproof Horn/Strobe"))
+       ((wcmatch (strcase blockName) "*D4120*,*SD*,*SMOKE*") (setq devType "Smoke Detector"))
+       ((wcmatch (strcase blockName) "*PULL*,*FMM*") (setq devType "Pull Station"))
+       (T (setq devType "Notification Device"))
+     )
+    )
+    ((wcmatch (strcase layer) "*INTRUSION*,*BURG*,*SECURITY*")
+     (setq sysType "Intrusion Detection")
+     (setq devType "Sensor")
+    )
+    (T
+     (setq sysType "Security")
+     (setq devType "Device")
+    )
+  )
 
   (SO:PadToHeaders
     (list
@@ -561,8 +589,8 @@
       name                       ; Name
       blockName                  ; Abbreviated Names
       "Device"                   ; Device / Task
-      "Video Surveillance"       ; System Type
-      "Fixed Camera"             ; Device/Task Type
+      sysType                     ; System Type (auto-detected)
+      devType                     ; Device/Task Type (auto-detected)
       ""                         ; Part Number
       ""                         ; Manufacturer
       ""                         ; Budgeted Hours
