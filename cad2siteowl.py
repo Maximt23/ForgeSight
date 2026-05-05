@@ -22,10 +22,11 @@ from ezdxf.entities import Insert
 # CONFIGURATION
 # =============================================================================
 
-# Folders - relative to this script
+# Folders - use parent CADtoSiteOwl folder's Input/Output
 SCRIPT_DIR = Path(__file__).parent.resolve()
-DXF_FOLDER = SCRIPT_DIR / "Input"
-OUTPUT_FOLDER = SCRIPT_DIR / "Output"
+PARENT_DIR = SCRIPT_DIR.parent  # CADtoSiteOwl folder
+DXF_FOLDER = PARENT_DIR / "Input"
+OUTPUT_FOLDER = PARENT_DIR / "Output"
 
 # SiteOwl coordinate settings
 ARTBOARD_SIZE = 1000.0

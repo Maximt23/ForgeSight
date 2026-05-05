@@ -41,7 +41,7 @@ echo.
 
 :: Install dependencies
 echo  Installing Python dependencies...
-uv pip install ezdxf
+uv pip install ezdxf watchdog --link-mode=copy
 echo  [OK] Dependencies installed
 echo.
 
