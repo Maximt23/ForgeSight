@@ -24,8 +24,8 @@ RED = "#ea1100"
 ONEDRIVE_BASE = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl")
 CCTV_INPUT = ONEDRIVE_BASE / "Input-CCTV"
 CCTV_OUTPUT = ONEDRIVE_BASE / "Output-CCTV"
-FA_INPUT = ONEDRIVE_BASE / "Input-FA"
-FA_OUTPUT = ONEDRIVE_BASE / "Output-Fire"
+FA_INPUT = ONEDRIVE_BASE / "Input-FAIntrusion"
+FA_OUTPUT = ONEDRIVE_BASE / "Output-FAIntrusion"
 
 
 class CadOwlApp:

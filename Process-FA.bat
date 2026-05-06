@@ -14,8 +14,8 @@ if exist ".venv\Scripts\activate.bat" (
     call .venv\Scripts\activate.bat
 )
 
-set INPUT_FA=C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Input-FA
-set OUTPUT_FA=C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Output-Fire
+set INPUT_FA=C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Input-FAIntrusion
+set OUTPUT_FA=C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Output-FAIntrusion
 
 echo Input:  %INPUT_FA%
 echo Output: %OUTPUT_FA%
