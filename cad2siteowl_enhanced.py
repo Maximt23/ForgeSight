@@ -24,6 +24,15 @@ from difflib import SequenceMatcher
 import ezdxf
 from ezdxf.entities import Insert
 
+# Local module for DWG→DXF conversion
+try:
+    from dwg_converter import get_cad_files, check_oda_status
+    HAS_DWG_CONVERTER = True
+except ImportError:
+    HAS_DWG_CONVERTER = False
+    def get_cad_files(folder, auto_convert=True):
+        return list(Path(folder).glob("*.dxf"))
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
@@ -558,14 +567,17 @@ def main():
         dxf_files = [Path(args.file)]
     else:
         if not input_folder.exists():
-            print(f"\nERROR: DXF folder not found: {input_folder}")
+            print(f"\nERROR: Input folder not found: {input_folder}")
             sys.exit(1)
-        dxf_files = list(input_folder.glob("*.dxf"))
+        
+        # Get DXF files (and auto-convert DWG if ODA is installed)
+        dxf_files = get_cad_files(input_folder, auto_convert=True)
+        
         if not dxf_files:
-            print(f"\nERROR: No DXF files found in: {input_folder}")
+            print(f"\nERROR: No DXF or DWG files found in: {input_folder}")
             sys.exit(1)
     
-    print(f"\n[*] Found {len(dxf_files)} DXF file(s)")
+    print(f"\n[*] Found {len(dxf_files)} CAD file(s)")
     print(f"[*] Input:  {input_folder}")
     print(f"[*] Master Excel: {master_folder}")
     print(f"[*] Output: {output_folder}")
