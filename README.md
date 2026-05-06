@@ -6,7 +6,38 @@ Extract block insertion points (cameras, fire alarm devices, sensors) from AutoC
 
 ---
 
-## 🚀 Quick Start
+## 🆕 Enhanced Version (with Excel Cross-Reference)
+
+The **enhanced version** (`cad2siteowl_enhanced.py`) merges:
+- ✅ **Accurate COORDINATES** from CAD/DXF extraction
+- ✅ **Correct NAMES, SYSTEM TYPES, DEVICE TYPES** from master FA & Intrusion Excel files
+
+### How it works:
+1. Extracts device positions from CAD files (coordinates are accurate)
+2. Loads master Excel data from `FA&Intrusion STORES DATA - Survey`
+3. Matches CAD devices to Excel devices using:
+   - System type similarity (Fire Alarm vs Intrusion)
+   - Keyword overlap (PULL, MOTION, SMOKE, etc.)
+   - Name/ID matching
+4. Outputs merged CSV with **Excel naming** + **CAD coordinates**
+
+### Usage:
+```bash
+# Process all DXF files in Input folder with Excel cross-reference
+python cad2siteowl_enhanced.py
+
+# Process single file
+python cad2siteowl_enhanced.py path/to/file.dxf
+```
+
+### Output:
+- Matched devices get: Excel name, system type, device type, description
+- Unmatched devices fall back to CAD-derived data (marked `[UNMATCHED]`)
+- **All devices get accurate CAD coordinates!**
+
+---
+
+## 🚀 Quick Start (Original Version)
 
 ### 1. Clone the repo
 
