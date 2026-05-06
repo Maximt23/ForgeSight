@@ -107,10 +107,10 @@ def convert_dwg_to_dxf(
         for dwg in dwg_files:
             dxf_path = output_folder / f"{dwg.stem}.dxf"
             if dxf_path.exists():
-                print(f"  ✅ {dwg.name} → {dxf_path.name}")
+                print(f"  [OK] {dwg.name} -> {dxf_path.name}")
                 converted += 1
             else:
-                print(f"  ❌ {dwg.name} - conversion failed")
+                print(f"  [X] {dwg.name} - conversion failed")
                 failed += 1
                 errors.append(f"Failed to convert: {dwg.name}")
         
@@ -152,7 +152,7 @@ def get_cad_files(input_folder: Path, auto_convert: bool = True) -> List[Path]:
                     dxf_files.append(dxf_path)
         else:
             print("\n" + "=" * 60)
-            print("  ⚠️  DWG FILES FOUND BUT CANNOT AUTO-CONVERT")
+            print("  [!] DWG FILES FOUND BUT CANNOT AUTO-CONVERT")
             print("=" * 60)
             print(f"\nFound {len(dwg_files)} DWG file(s) but ODA File Converter not installed.")
             print("\nOptions:")
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     status = check_oda_status()
     print("\n=== ODA File Converter Status ===")
     if status["installed"]:
-        print(f"✅ Installed: {status['path']}")
+        print(f"[OK] Installed: {status['path']}")
     else:
-        print("❌ Not installed")
-        print(f"   Download: {status['download_url']}")
+        print("[X] Not installed")
+        print(f"    Download: {status['download_url']}")
