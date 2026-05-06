@@ -32,8 +32,9 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 DXF_FOLDER = SCRIPT_DIR / "Input"
 OUTPUT_FOLDER = SCRIPT_DIR / "Output"
 
-# Master Excel folder with FA & Intrusion data
-MASTER_EXCEL_FOLDER = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\FA&Intrusion STORES DATA - Survey")
+# Master Excel folders for reference data
+MASTER_EXCEL_FA = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\FA&Intrusion STORES DATA - Survey")
+MASTER_EXCEL_CCTV = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CCTV STORES DATA - Survey")
 
 # SiteOwl coordinate settings
 ARTBOARD_SIZE = 1000.0
@@ -166,23 +167,37 @@ class CadDevice:
 # EXCEL LOADING
 # =============================================================================
 
-def load_master_excel(store_num: str) -> list[ExcelDevice]:
-    """Load device data from master Excel for a store"""
-    # Try different filename patterns
-    patterns = [
-        f"Store_{store_num}_FA_Intrusion.csv",
-        f"Store_{int(store_num)}_FA_Intrusion.csv",
-    ]
+def load_master_excel(store_num: str, system_type: str = "fa") -> list[ExcelDevice]:
+    """Load device data from master Excel for a store
+    
+    Args:
+        store_num: Store number
+        system_type: 'fa' for Fire Alarm/Intrusion, 'cctv' for CCTV
+    """
+    # Select correct folder based on system type
+    if system_type == "cctv":
+        master_folder = MASTER_EXCEL_CCTV
+        patterns = [
+            f"Store_{store_num}_CCTV.csv",
+            f"Store_{int(store_num)}_CCTV.csv",
+            f"{store_num}_CCTV.csv",
+        ]
+    else:
+        master_folder = MASTER_EXCEL_FA
+        patterns = [
+            f"Store_{store_num}_FA_Intrusion.csv",
+            f"Store_{int(store_num)}_FA_Intrusion.csv",
+        ]
     
     excel_path = None
     for pattern in patterns:
-        path = MASTER_EXCEL_FOLDER / pattern
+        path = master_folder / pattern
         if path.exists():
             excel_path = path
             break
     
     if not excel_path:
-        print(f"  WARNING: No master Excel found for store {store_num}")
+        print(f"  WARNING: No master Excel found for store {store_num} ({system_type})")
         return []
     
     print(f"  Loading master Excel: {excel_path.name}")
@@ -455,7 +470,7 @@ def make_row(
 # MAIN PROCESSING
 # =============================================================================
 
-def process_dxf(dxf_path: Path, output_folder: Path) -> int:
+def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") -> int:
     """Process a single DXF file with Excel cross-reference"""
     print(f"\n[FILE] Processing: {dxf_path.name}")
     
@@ -483,8 +498,8 @@ def process_dxf(dxf_path: Path, output_folder: Path) -> int:
         print("  WARNING: No devices found in CAD!")
         return 0
     
-    # Load master Excel for this store
-    excel_devices = load_master_excel(store_num)
+    # Load master Excel for this store (using correct system type)
+    excel_devices = load_master_excel(store_num, system_type)
     
     # Match devices
     matched_count = 0
@@ -523,14 +538,20 @@ def main():
     parser.add_argument("file", nargs="?", help="Single DXF file to process")
     parser.add_argument("--input", "-i", type=Path, help="Input folder for DXF files")
     parser.add_argument("--output", "-o", type=Path, help="Output folder for results")
+    parser.add_argument("--system", "-s", choices=["fa", "cctv"], default="fa",
+                        help="System type: 'fa' for Fire Alarm/Intrusion, 'cctv' for CCTV")
     args = parser.parse_args()
     
     # Determine input/output folders
     input_folder = args.input if args.input else DXF_FOLDER
     output_folder = args.output if args.output else OUTPUT_FOLDER
+    system_type = args.system
+    
+    # Select correct master Excel folder
+    master_folder = MASTER_EXCEL_CCTV if system_type == "cctv" else MASTER_EXCEL_FA
     
     print("\n" + "=" * 60)
-    print("  CadOwl Enhanced - DXF + Excel Cross-Reference")
+    print(f"  CadOwl Enhanced - DXF + Excel Cross-Reference ({system_type.upper()})")
     print("=" * 60)
     
     if args.file:
@@ -546,14 +567,14 @@ def main():
     
     print(f"\n[*] Found {len(dxf_files)} DXF file(s)")
     print(f"[*] Input:  {input_folder}")
-    print(f"[*] Master Excel: {MASTER_EXCEL_FOLDER}")
+    print(f"[*] Master Excel: {master_folder}")
     print(f"[*] Output: {output_folder}")
     
     total_devices = 0
     processed = 0
     
     for dxf_path in dxf_files:
-        count = process_dxf(dxf_path, output_folder)
+        count = process_dxf(dxf_path, output_folder, system_type)
         if count > 0:
             total_devices += count
             processed += 1

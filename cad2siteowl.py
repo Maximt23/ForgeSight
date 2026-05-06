@@ -573,6 +573,8 @@ def main():
     parser.add_argument("file", nargs="?", help="Single DXF file to process")
     parser.add_argument("--input", "-i", type=Path, help="Input folder for DXF files")
     parser.add_argument("--output", "-o", type=Path, help="Output folder for results")
+    parser.add_argument("--system", "-s", choices=["fa", "cctv"], default="fa",
+                        help="System type (not used in basic mode, for compatibility)")
     args = parser.parse_args()
     
     # Determine input/output folders

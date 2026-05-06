@@ -298,14 +298,16 @@ class CadOwlApp:
                 self.root.after(0, lambda: self.conversion_done(False, f"Script not found: {script.name}"))
                 return
             
-            # Run the script with input/output folder arguments
+            # Run the script with input/output folder and system type arguments
             input_folder = self.get_input_folder()
             output_folder = self.get_output_folder()
+            system_type = self.system_var.get()  # 'cctv' or 'fa'
             
             self.process = subprocess.Popen(
                 [sys.executable, str(script), 
                  "--input", str(input_folder),
-                 "--output", str(output_folder)],
+                 "--output", str(output_folder),
+                 "--system", system_type],
                 cwd=str(self.script_dir),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
