@@ -20,11 +20,12 @@ GRAY_TEXT = "#333333"
 GREEN = "#2a8703"
 RED = "#ea1100"
 
-# System-specific folder paths
-CCTV_INPUT = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Stores_COPY")
-FA_INPUT = Path(__file__).parent.resolve() / "Input-FA"
-CCTV_OUTPUT = Path(__file__).parent.resolve() / "Output-CCTV"
-FA_OUTPUT = Path(__file__).parent.resolve() / "Output-Fire"
+# System-specific folder paths (all in OneDrive)
+ONEDRIVE_BASE = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl")
+CCTV_INPUT = ONEDRIVE_BASE / "Input-CCTV"
+CCTV_OUTPUT = ONEDRIVE_BASE / "Output-CCTV"
+FA_INPUT = ONEDRIVE_BASE / "Input-FA"
+FA_OUTPUT = ONEDRIVE_BASE / "Output-Fire"
 
 
 class CadOwlApp:
