@@ -6,10 +6,15 @@ Watches Input folder for new files and auto-processes them.
 - DXF files: Auto-convert to CSV
 - DWG files: Notify user to run AutoCAD conversion
 
-Run with: python watcher.py
+Run with: 
+  python watcher.py              # Default FA mode
+  python watcher.py --system fa   # Fire Alarm/Intrusion
+  python watcher.py --system cctv # CCTV
+
 Stop with: Ctrl+C
 """
 
+import argparse
 import sys
 import time
 import subprocess
@@ -26,23 +31,43 @@ except ImportError:
     print("ERROR: watchdog not installed. Run: uv pip install watchdog")
     sys.exit(1)
 
-# Paths - watch the parent CADtoSiteOwl folder's Input/Output
+# Base paths
 SCRIPT_DIR = Path(__file__).parent.resolve()
-PARENT_DIR = SCRIPT_DIR.parent  # CADtoSiteOwl folder
-INPUT_FOLDER = PARENT_DIR / "Input"
-OUTPUT_FOLDER = PARENT_DIR / "Output"
-CONVERTER_SCRIPT = SCRIPT_DIR / "cad2siteowl.py"
+ONEDRIVE_BASE = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl")
+
+# System-specific paths
+SYSTEM_PATHS = {
+    "fa": {
+        "name": "Fire Alarm / Intrusion",
+        "icon": "🔥",
+        "input": ONEDRIVE_BASE / "Input-FA",
+        "output": ONEDRIVE_BASE / "Output-Fire",
+        "color": "0C"  # Red
+    },
+    "cctv": {
+        "name": "CCTV",
+        "icon": "📹",
+        "input": ONEDRIVE_BASE / "Input-CCTV",
+        "output": ONEDRIVE_BASE / "Output-CCTV",
+        "color": "0B"  # Cyan
+    }
+}
+
+CONVERTER_SCRIPT = SCRIPT_DIR / "cad2siteowl_enhanced.py"
 LOG_FILE = SCRIPT_DIR / "watcher.log"
 
 # Track processed files to avoid duplicates
 processed_files: Set[str] = set()
 processing_queue: queue.Queue = queue.Queue()
 
+# Global system type
+current_system = "fa"
+
 
 def log(message: str, level: str = "INFO"):
     """Log to console and file."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] [{level}] {message}"
+    line = f"[{timestamp}] [{current_system.upper()}] [{level}] {message}"
     print(line)
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
@@ -82,7 +107,7 @@ def notify_user(title: str, message: str):
         log(f"Notification failed: {e}", "WARN")
 
 
-def process_dxf(file_path: Path):
+def process_dxf(file_path: Path, system_config: dict):
     """Process a single DXF file."""
     file_key = str(file_path).lower()
     
@@ -99,9 +124,15 @@ def process_dxf(file_path: Path):
     processed_files.add(file_key)
     
     try:
-        # Run the converter
+        # Run the converter with system-specific paths
         result = subprocess.run(
-            [sys.executable, str(CONVERTER_SCRIPT)],
+            [
+                sys.executable, 
+                str(CONVERTER_SCRIPT),
+                "--input", str(system_config["input"]),
+                "--output", str(system_config["output"]),
+                "--system", current_system
+            ],
             cwd=str(SCRIPT_DIR),
             capture_output=True,
             text=True,
@@ -110,16 +141,16 @@ def process_dxf(file_path: Path):
         
         if result.returncode == 0:
             log(f"SUCCESS: Converted {file_path.name}")
-            notify_user("CadOwl", f"Converted {file_path.name} to CSV!")
+            notify_user(f"CadOwl {system_config['icon']}", f"Converted {file_path.name} to CSV!")
             
             # Try to open output folder
             try:
-                subprocess.run(["explorer", str(OUTPUT_FOLDER)], timeout=5)
+                subprocess.run(["explorer", str(system_config["output"])], timeout=5)
             except Exception:
                 pass
         else:
             log(f"FAILED: {result.stderr[:200]}", "ERROR")
-            notify_user("CadOwl Error", f"Failed to convert {file_path.name}")
+            notify_user(f"CadOwl {system_config['icon']} Error", f"Failed to convert {file_path.name}")
             
     except subprocess.TimeoutExpired:
         log(f"TIMEOUT: Conversion took too long", "ERROR")
@@ -127,7 +158,7 @@ def process_dxf(file_path: Path):
         log(f"ERROR: {e}", "ERROR")
 
 
-def handle_dwg(file_path: Path):
+def handle_dwg(file_path: Path, system_config: dict):
     """Handle DWG file - notify user to run AutoCAD."""
     file_key = str(file_path).lower()
     
@@ -138,12 +169,12 @@ def handle_dwg(file_path: Path):
     log(f"New DWG detected: {file_path.name}")
     
     notify_user(
-        "CadOwl - DWG Found",
+        f"CadOwl {system_config['icon']} - DWG Found",
         f"New DWG: {file_path.name}\nRun DWG2DXFBATCH in AutoCAD to convert."
     )
     
     print("\n" + "=" * 50)
-    print("  NEW DWG FILE DETECTED!")
+    print(f"  NEW DWG FILE DETECTED! ({system_config['name']})")
     print("=" * 50)
     print(f"  File: {file_path.name}")
     print()
@@ -158,6 +189,10 @@ def handle_dwg(file_path: Path):
 
 class CadOwlHandler(FileSystemEventHandler):
     """Handle file system events."""
+    
+    def __init__(self, system_config: dict):
+        self.system_config = system_config
+        super().__init__()
     
     def on_created(self, event):
         if event.is_directory:
@@ -175,9 +210,9 @@ class CadOwlHandler(FileSystemEventHandler):
         
         if ext == ".dxf":
             # Queue for processing (avoid blocking the observer)
-            processing_queue.put(("dxf", file_path))
+            processing_queue.put(("dxf", file_path, self.system_config))
         elif ext == ".dwg":
-            processing_queue.put(("dwg", file_path))
+            processing_queue.put(("dwg", file_path, self.system_config))
 
 
 def process_queue():
@@ -185,12 +220,12 @@ def process_queue():
     while True:
         try:
             item = processing_queue.get(timeout=1)
-            file_type, file_path = item
+            file_type, file_path, system_config = item
             
             if file_type == "dxf":
-                process_dxf(file_path)
+                process_dxf(file_path, system_config)
             elif file_type == "dwg":
-                handle_dwg(file_path)
+                handle_dwg(file_path, system_config)
                 
             processing_queue.task_done()
         except queue.Empty:
@@ -199,21 +234,24 @@ def process_queue():
             log(f"Queue error: {e}", "ERROR")
 
 
-def scan_existing_files():
+def scan_existing_files(system_config: dict):
     """Check for existing DXF files on startup."""
+    input_folder = system_config["input"]
+    output_folder = system_config["output"]
+    
     log("Scanning for existing files...")
     
-    dxf_files = list(INPUT_FOLDER.glob("*.dxf"))
-    dwg_files = list(INPUT_FOLDER.glob("*.dwg"))
+    dxf_files = list(input_folder.glob("*.dxf"))
+    dwg_files = list(input_folder.glob("*.dwg"))
     
     if dxf_files:
         log(f"Found {len(dxf_files)} existing DXF file(s)")
         for f in dxf_files:
             # Check if already converted
             csv_name = f.stem.split()[0]  # Get store number part
-            existing_csvs = list(OUTPUT_FOLDER.glob(f"*{csv_name}*.csv"))
+            existing_csvs = list(output_folder.glob(f"*{csv_name}*.csv"))
             if not existing_csvs:
-                processing_queue.put(("dxf", f))
+                processing_queue.put(("dxf", f, system_config))
     
     if dwg_files:
         log(f"Found {len(dwg_files)} DWG file(s) awaiting conversion")
@@ -221,15 +259,29 @@ def scan_existing_files():
 
 def main():
     """Main entry point."""
+    global current_system
+    
+    parser = argparse.ArgumentParser(description="CadOwl File Watcher")
+    parser.add_argument("--system", "-s", choices=["fa", "cctv"], default="fa",
+                        help="System type: 'fa' for Fire Alarm/Intrusion, 'cctv' for CCTV")
+    args = parser.parse_args()
+    
+    current_system = args.system
+    system_config = SYSTEM_PATHS[current_system]
+    
+    input_folder = system_config["input"]
+    output_folder = system_config["output"]
+    
     print()
     print("=" * 60)
-    print("  CadOwl File Watcher")
+    print(f"  CadOwl File Watcher {system_config['icon']} {system_config['name']}")
     print("=" * 60)
     print()
-    print(f"  Watching: {INPUT_FOLDER}")
-    print(f"  Output:   {OUTPUT_FOLDER}")
+    print(f"  System:   {current_system.upper()}")
+    print(f"  Watching: {input_folder}")
+    print(f"  Output:   {output_folder}")
     print()
-    print("  Drop DXF files into Input/ for auto-conversion.")
+    print("  Drop DXF files into Input folder for auto-conversion.")
     print("  Drop DWG files and I'll remind you to run AutoCAD.")
     print()
     print("  Press Ctrl+C to stop.")
@@ -238,8 +290,8 @@ def main():
     print()
     
     # Ensure folders exist
-    INPUT_FOLDER.mkdir(exist_ok=True)
-    OUTPUT_FOLDER.mkdir(exist_ok=True)
+    input_folder.mkdir(parents=True, exist_ok=True)
+    output_folder.mkdir(parents=True, exist_ok=True)
     
     log("CadOwl watcher starting...")
     
@@ -248,16 +300,16 @@ def main():
     processor.start()
     
     # Scan existing files
-    scan_existing_files()
+    scan_existing_files(system_config)
     
     # Set up file watcher
-    handler = CadOwlHandler()
+    handler = CadOwlHandler(system_config)
     observer = Observer()
-    observer.schedule(handler, str(INPUT_FOLDER), recursive=False)
+    observer.schedule(handler, str(input_folder), recursive=False)
     observer.start()
     
-    log(f"Watching {INPUT_FOLDER}")
-    notify_user("CadOwl", "File watcher is running!")
+    log(f"Watching {input_folder}")
+    notify_user(f"CadOwl {system_config['icon']}", f"{system_config['name']} watcher is running!")
     
     try:
         while True:
