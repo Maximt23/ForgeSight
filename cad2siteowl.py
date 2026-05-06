@@ -13,6 +13,7 @@ Usage:
     python cad2siteowl.py path/to/file.dxf   # Process single file
 """
 
+import argparse
 import csv
 import re
 import sys
@@ -508,7 +509,7 @@ def write_csv(devices: List[Device], output_path: Path, store_number: str) -> No
 # MAIN PROCESSING
 # =============================================================================
 
-def process_dxf(dxf_path: Path) -> int:
+def process_dxf(dxf_path: Path, output_folder: Path) -> int:
     """Process a single DXF file"""
     print(f"\n[FILE] Processing: {dxf_path.name}")
     
@@ -547,19 +548,19 @@ def process_dxf(dxf_path: Path) -> int:
     print(f"  Sample coords: ({devices[0].site_x}, {devices[0].site_y})")
     
     # Create output files
-    OUTPUT_FOLDER.mkdir(exist_ok=True)
+    output_folder.mkdir(exist_ok=True)
     base_name = f"{store_number}_SiteOwl"
     
     # CSV
-    csv_path = OUTPUT_FOLDER / f"{base_name}_Export.csv"
+    csv_path = output_folder / f"{base_name}_Export.csv"
     write_csv(devices, csv_path, store_number)
     
     # Artboard DXF
-    dxf_out_path = OUTPUT_FOLDER / f"{base_name}_Artboard.dxf"
+    dxf_out_path = output_folder / f"{base_name}_Artboard.dxf"
     create_artboard_dxf(devices, dxf_out_path, store_number)
     
     # Artboard PDF
-    pdf_path = OUTPUT_FOLDER / f"{base_name}_Artboard.pdf"
+    pdf_path = output_folder / f"{base_name}_Artboard.pdf"
     create_artboard_pdf(devices, pdf_path, store_number)
     
     print(f"  SUCCESS: {len(devices)} devices exported")
@@ -568,30 +569,41 @@ def process_dxf(dxf_path: Path) -> int:
 
 def main():
     """Main entry point"""
+    parser = argparse.ArgumentParser(description="Convert DXF to SiteOwl CSV")
+    parser.add_argument("file", nargs="?", help="Single DXF file to process")
+    parser.add_argument("--input", "-i", type=Path, help="Input folder for DXF files")
+    parser.add_argument("--output", "-o", type=Path, help="Output folder for results")
+    args = parser.parse_args()
+    
+    # Determine input/output folders
+    input_folder = args.input if args.input else DXF_FOLDER
+    output_folder = args.output if args.output else OUTPUT_FOLDER
+    
     print("\n" + "=" * 50)
     print("  CadOwl - DXF to SiteOwl Converter")
     print("=" * 50)
     
     # Handle command line arguments
-    if len(sys.argv) > 1:
-        dxf_files = [Path(sys.argv[1])]
+    if args.file:
+        dxf_files = [Path(args.file)]
     else:
-        DXF_FOLDER.mkdir(exist_ok=True)
-        dxf_files = list(DXF_FOLDER.glob("*.dxf"))
+        input_folder.mkdir(exist_ok=True)
+        dxf_files = list(input_folder.glob("*.dxf"))
     
     if not dxf_files:
-        print(f"\n[!] No DXF files found in {DXF_FOLDER}")
+        print(f"\n[!] No DXF files found in {input_folder}")
         print("    Run DWG2DXFBATCH in AutoCAD first.")
         return
     
     print(f"\n[*] Found {len(dxf_files)} DXF file(s)")
-    print(f"[*] Output: {OUTPUT_FOLDER}")
+    print(f"[*] Input:  {input_folder}")
+    print(f"[*] Output: {output_folder}")
     
     total_devices = 0
     success_count = 0
     
     for dxf_path in dxf_files:
-        count = process_dxf(dxf_path)
+        count = process_dxf(dxf_path, output_folder)
         if count > 0:
             total_devices += count
             success_count += 1
@@ -600,7 +612,7 @@ def main():
     print(f"  COMPLETE!")
     print(f"  Processed: {success_count}/{len(dxf_files)} files")
     print(f"  Total devices: {total_devices}")
-    print(f"  Output: {OUTPUT_FOLDER}")
+    print(f"  Output: {output_folder}")
     print("=" * 50 + "\n")
 
 

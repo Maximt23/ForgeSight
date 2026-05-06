@@ -12,6 +12,7 @@ Usage:
     python cad2siteowl_enhanced.py path/to/file.dxf   # Process single file
 """
 
+import argparse
 import csv
 import re
 import sys
@@ -518,30 +519,41 @@ def process_dxf(dxf_path: Path, output_folder: Path) -> int:
 
 def main():
     """Main entry point"""
+    parser = argparse.ArgumentParser(description="Convert DXF to SiteOwl CSV with Excel cross-reference")
+    parser.add_argument("file", nargs="?", help="Single DXF file to process")
+    parser.add_argument("--input", "-i", type=Path, help="Input folder for DXF files")
+    parser.add_argument("--output", "-o", type=Path, help="Output folder for results")
+    args = parser.parse_args()
+    
+    # Determine input/output folders
+    input_folder = args.input if args.input else DXF_FOLDER
+    output_folder = args.output if args.output else OUTPUT_FOLDER
+    
     print("\n" + "=" * 60)
     print("  CadOwl Enhanced - DXF + Excel Cross-Reference")
     print("=" * 60)
     
-    if len(sys.argv) > 1:
-        dxf_files = [Path(sys.argv[1])]
+    if args.file:
+        dxf_files = [Path(args.file)]
     else:
-        if not DXF_FOLDER.exists():
-            print(f"\nERROR: DXF folder not found: {DXF_FOLDER}")
+        if not input_folder.exists():
+            print(f"\nERROR: DXF folder not found: {input_folder}")
             sys.exit(1)
-        dxf_files = list(DXF_FOLDER.glob("*.dxf"))
+        dxf_files = list(input_folder.glob("*.dxf"))
         if not dxf_files:
-            print(f"\nERROR: No DXF files found in: {DXF_FOLDER}")
+            print(f"\nERROR: No DXF files found in: {input_folder}")
             sys.exit(1)
     
     print(f"\n[*] Found {len(dxf_files)} DXF file(s)")
+    print(f"[*] Input:  {input_folder}")
     print(f"[*] Master Excel: {MASTER_EXCEL_FOLDER}")
-    print(f"[*] Output: {OUTPUT_FOLDER}")
+    print(f"[*] Output: {output_folder}")
     
     total_devices = 0
     processed = 0
     
     for dxf_path in dxf_files:
-        count = process_dxf(dxf_path, OUTPUT_FOLDER)
+        count = process_dxf(dxf_path, output_folder)
         if count > 0:
             total_devices += count
             processed += 1
@@ -550,7 +562,7 @@ def main():
     print(f"  COMPLETE!")
     print(f"  Processed: {processed}/{len(dxf_files)} files")
     print(f"  Total devices: {total_devices}")
-    print(f"  Output: {OUTPUT_FOLDER}")
+    print(f"  Output: {output_folder}")
     print("=" * 60 + "\n")
 
 

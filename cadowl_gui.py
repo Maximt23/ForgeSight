@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 CadOwl GUI - Simple launcher with Start/Stop
+Supports CCTV and Fire Alarm/Intrusion workflows
 """
 
 import tkinter as tk
@@ -19,12 +20,18 @@ GRAY_TEXT = "#333333"
 GREEN = "#2a8703"
 RED = "#ea1100"
 
+# System-specific folder paths
+CCTV_INPUT = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Stores_COPY")
+FA_INPUT = Path(__file__).parent.resolve() / "Input-FA"
+CCTV_OUTPUT = Path(__file__).parent.resolve() / "Output-CCTV"
+FA_OUTPUT = Path(__file__).parent.resolve() / "Output-Fire"
+
 
 class CadOwlApp:
     def __init__(self, root):
         self.root = root
         self.root.title("🦉 CadOwl Converter")
-        self.root.geometry("450x350")
+        self.root.geometry("500x420")
         self.root.configure(bg=WHITE)
         self.root.resizable(False, False)
         
@@ -32,6 +39,11 @@ class CadOwlApp:
         self.process = None
         self.running = False
         self.script_dir = Path(__file__).parent.resolve()
+        
+        # Ensure folders exist
+        FA_INPUT.mkdir(parents=True, exist_ok=True)
+        CCTV_OUTPUT.mkdir(parents=True, exist_ok=True)
+        FA_OUTPUT.mkdir(parents=True, exist_ok=True)
         
         self.setup_ui()
     
@@ -53,6 +65,38 @@ class CadOwlApp:
         # Main content
         content = tk.Frame(self.root, bg=WHITE, padx=30, pady=20)
         content.pack(fill="both", expand=True)
+        
+        # System type selection
+        system_frame = tk.Frame(content, bg=WHITE)
+        system_frame.pack(fill="x", pady=(0, 10))
+        
+        tk.Label(
+            system_frame, 
+            text="System:", 
+            font=("Segoe UI", 10, "bold"),
+            bg=WHITE, 
+            fg=GRAY_TEXT
+        ).pack(side="left")
+        
+        self.system_var = tk.StringVar(value="cctv")
+        
+        cctv_radio = ttk.Radiobutton(
+            system_frame, 
+            text="📹 CCTV", 
+            variable=self.system_var, 
+            value="cctv",
+            command=self.on_system_change
+        )
+        cctv_radio.pack(side="left", padx=(10, 5))
+        
+        fa_radio = ttk.Radiobutton(
+            system_frame, 
+            text="🔥 Fire Alarm / Intrusion", 
+            variable=self.system_var, 
+            value="fa",
+            command=self.on_system_change
+        )
+        fa_radio.pack(side="left", padx=5)
         
         # Mode selection
         mode_frame = tk.Frame(content, bg=WHITE)
@@ -81,6 +125,18 @@ class CadOwlApp:
             variable=self.mode_var, 
             value="basic"
         ).pack(side="left", padx=5)
+        
+        # Path display
+        self.path_label = tk.Label(
+            content,
+            text="",
+            font=("Segoe UI", 8),
+            bg=WHITE,
+            fg="#666666",
+            wraplength=380
+        )
+        self.path_label.pack(fill="x", pady=(0, 10))
+        self.on_system_change()  # Update path display
         
         # Status
         self.status_frame = tk.Frame(content, bg=GRAY_BG, padx=15, pady=15)
@@ -187,12 +243,28 @@ class CadOwlApp:
         self.status_label.config(text=status, fg=color)
         self.status_detail.config(text=detail)
     
+    def get_input_folder(self) -> Path:
+        """Get input folder based on selected system"""
+        return CCTV_INPUT if self.system_var.get() == "cctv" else FA_INPUT
+    
+    def get_output_folder(self) -> Path:
+        """Get output folder based on selected system"""
+        return CCTV_OUTPUT if self.system_var.get() == "cctv" else FA_OUTPUT
+    
+    def on_system_change(self):
+        """Update path display when system changes"""
+        input_folder = self.get_input_folder()
+        output_folder = self.get_output_folder()
+        self.path_label.config(
+            text=f"Input: {input_folder}\nOutput: {output_folder}"
+        )
+    
     def start_conversion(self):
         if self.running:
             return
         
-        # Check for DXF files
-        input_folder = self.script_dir / "Input"
+        # Check for DXF files in system-specific folder
+        input_folder = self.get_input_folder()
         if not input_folder.exists():
             input_folder.mkdir(parents=True)
         
@@ -225,9 +297,14 @@ class CadOwlApp:
                 self.root.after(0, lambda: self.conversion_done(False, f"Script not found: {script.name}"))
                 return
             
-            # Run the script
+            # Run the script with input/output folder arguments
+            input_folder = self.get_input_folder()
+            output_folder = self.get_output_folder()
+            
             self.process = subprocess.Popen(
-                [sys.executable, str(script)],
+                [sys.executable, str(script), 
+                 "--input", str(input_folder),
+                 "--output", str(output_folder)],
                 cwd=str(self.script_dir),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -272,12 +349,12 @@ class CadOwlApp:
         self.stop_btn.config(state="disabled")
     
     def open_input_folder(self):
-        folder = self.script_dir / "Input"
+        folder = self.get_input_folder()
         folder.mkdir(parents=True, exist_ok=True)
         subprocess.Popen(f'explorer "{folder}"')
     
     def open_output_folder(self):
-        folder = self.script_dir / "Output"
+        folder = self.get_output_folder()
         folder.mkdir(parents=True, exist_ok=True)
         subprocess.Popen(f'explorer "{folder}"')
 
