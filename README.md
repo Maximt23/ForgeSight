@@ -191,6 +191,34 @@ Exports 56-column SiteOwl-compatible CSV with:
 
 ---
 
+## 🧠 Intelligent Memory Library (DWG/DXF Learning)
+
+Use the memory builder to ingest many CAD files and learn a reusable pattern tree
+(store → system → layer → block → attribute tags).
+
+```bash
+python build_memory_library.py "C:/path/to/cad/folder"
+```
+
+Optional flags:
+
+```bash
+python build_memory_library.py "C:/path/to/cad/folder" --system "Fire Alarm" --json-out Output/memory_report.json
+python build_memory_library.py "C:/path/to/cad/folder" --department-map cadowl_memory/department_map.json
+python build_memory_library.py "C:/path/to/examples/*.dwg" --convert-dwg --staging-folder Output/Memory-Staging
+```
+
+What it does:
+- Ingests DXF files deeply (INSERT entities + attributes)
+- Can auto-convert selected DWG files to DXF for deep training (`--convert-dwg`)
+- Registers DWG files as placeholders (`pending_dxf`) until converted
+- Builds persistent SQLite memory in `cadowl_memory.db`
+- Learns high-signal patterns for better detection and matching over time
+- Learns department code mapping (`A/Y/Z`) for Fire Alarm + CCTV systems
+- Learns aisle number signals and serpentine direction hints (RTL/LTR)
+
+---
+
 ## 🐛 Troubleshooting
 
 **"No DXF files found"**
