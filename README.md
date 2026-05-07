@@ -28,6 +28,9 @@ python cad2siteowl_enhanced.py
 
 # Process single file
 python cad2siteowl_enhanced.py path/to/file.dxf
+
+# Use learned memory patterns + merch layout fallback
+python cad2siteowl_enhanced.py path/to/file.dxf --memory-db cadowl_memory.db
 ```
 
 ### Output:

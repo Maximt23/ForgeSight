@@ -15,6 +15,7 @@ Usage:
 import argparse
 import csv
 import re
+import sqlite3
 import sys
 from pathlib import Path
 from typing import Optional
@@ -43,6 +44,7 @@ except ImportError:
 SCRIPT_DIR = Path(__file__).parent.resolve()
 DXF_FOLDER = SCRIPT_DIR / "Input"
 OUTPUT_FOLDER = SCRIPT_DIR / "Output"
+MEMORY_DB = SCRIPT_DIR / "cadowl_memory.db"
 
 # Master Excel folders for reference data
 MASTER_EXCEL_FA = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\FA&Intrusion STORES DATA - Survey")
@@ -66,6 +68,21 @@ DEVICE_BLOCK_PATTERNS = [
 EXCLUDE_BLOCK_PATTERNS = [
     r"^\*u\d+$", r"^\$rma\$$", r"^xborder.*", r"^xfloor.*",
     r"^legend.*", r"^title.*", r"^shttitle.*", r"^stamp.*", r"^aecb_.*",
+]
+
+# Fallback layout signals for merch drawings that may not use security layers/blocks
+LAYOUT_LAYER_PATTERNS = [
+    r"^wmrt.*",
+    r"^spac_labels$",
+    r".*section_cnt.*",
+    r".*\$print$",
+]
+
+LAYOUT_BLOCK_PATTERNS = [
+    r"^wmrt_.*",
+    r"^space_countlabel$",
+    r".*\$_dot$",
+    r".*labl_zoneinfo.*",
 ]
 
 # =============================================================================
@@ -170,48 +187,212 @@ def extract_store_number(filename: str) -> str:
     return match.group(1) if match else "UNKNOWN"
 
 
+def dedupe_patterns(patterns: list[str]) -> list[str]:
+    """Deduplicate patterns while preserving order."""
+    seen: set[str] = set()
+    unique: list[str] = []
+    for item in patterns:
+        key = item.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+    return unique
+
+
+def node_to_exact_pattern(node_key: str, prefix: str) -> Optional[str]:
+    """Convert tree edge node key (e.g., LAYER:FOO) into exact regex."""
+    if not node_key.startswith(prefix):
+        return None
+    token = node_key[len(prefix):].strip()
+    if not token:
+        return None
+    return f"^{re.escape(token.lower())}$"
+
+
+def get_memory_systems(system_type: str) -> list[str]:
+    """Map runtime system flag to memory systems."""
+    if system_type == "cctv":
+        return ["Video Surveillance"]
+    return ["Fire Alarm", "Intrusion Detection", "Video Surveillance"]
+
+
+def load_memory_detection_patterns(
+    db_path: Path,
+    systems: list[str],
+    top_n: int = 80,
+    min_weight: int = 1,
+) -> tuple[list[str], list[str]]:
+    """Load high-signal layer/block patterns from the memory DB."""
+    if not db_path.exists() or not systems:
+        return ([], [])
+
+    layer_patterns: list[str] = []
+    block_patterns: list[str] = []
+
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        with conn:
+            for system_name in systems:
+                system_node = f"SYSTEM:{system_name}"
+                layer_rows = conn.execute(
+                    """
+                    SELECT child_key, weight
+                    FROM tree_edges
+                    WHERE edge_type = 'system_to_layer'
+                      AND parent_key = ?
+                      AND weight >= ?
+                    ORDER BY weight DESC
+                    LIMIT ?
+                    """,
+                    (system_node, min_weight, top_n),
+                ).fetchall()
+
+                for row in layer_rows:
+                    pattern = node_to_exact_pattern(row["child_key"], "LAYER:")
+                    if pattern:
+                        layer_patterns.append(pattern)
+
+                    block_rows = conn.execute(
+                        """
+                        SELECT child_key, weight
+                        FROM tree_edges
+                        WHERE edge_type = 'layer_to_block'
+                          AND parent_key = ?
+                          AND weight >= ?
+                        ORDER BY weight DESC
+                        LIMIT ?
+                        """,
+                        (row["child_key"], min_weight, top_n),
+                    ).fetchall()
+                    for block_row in block_rows:
+                        block_pattern = node_to_exact_pattern(block_row["child_key"], "BLOCK:")
+                        if block_pattern:
+                            block_patterns.append(block_pattern)
+    except Exception as ex:
+        print(f"  WARNING: Could not load memory patterns from {db_path}: {ex}")
+        return ([], [])
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    return (dedupe_patterns(layer_patterns), dedupe_patterns(block_patterns))
+
+
+def build_detection_patterns(
+    system_type: str,
+    memory_db: Path,
+    use_memory_patterns: bool,
+    memory_top_n: int,
+    memory_min_weight: int,
+) -> tuple[list[str], list[str]]:
+    """Combine static detector patterns with learned memory patterns."""
+    layer_patterns = list(DEVICE_LAYER_PATTERNS)
+    block_patterns = list(DEVICE_BLOCK_PATTERNS)
+
+    if not use_memory_patterns:
+        return (layer_patterns, block_patterns)
+
+    memory_layers, memory_blocks = load_memory_detection_patterns(
+        db_path=memory_db,
+        systems=get_memory_systems(system_type),
+        top_n=memory_top_n,
+        min_weight=memory_min_weight,
+    )
+
+    if memory_layers or memory_blocks:
+        print(
+            f"  Memory patterns loaded: layers={len(memory_layers)} blocks={len(memory_blocks)} "
+            f"from {memory_db.name}"
+        )
+
+    layer_patterns.extend(memory_layers)
+    block_patterns.extend(memory_blocks)
+
+    return (dedupe_patterns(layer_patterns), dedupe_patterns(block_patterns))
+
+
 # =============================================================================
 # DXF PROCESSING
 # =============================================================================
 
-def extract_devices(doc: ezdxf.document.Drawing) -> list[CadDevice]:
-    """Extract device block insertions from DXF"""
+def entity_to_cad_device(entity) -> CadDevice:
+    """Convert an INSERT entity into a CadDevice."""
+    attributes: dict[str, str] = {}
+    if entity.has_attrib:
+        for attrib in entity.attribs:
+            tag = attrib.dxf.tag.upper()
+            text = attrib.dxf.text
+            if text:
+                attributes[tag] = text
+
+    return CadDevice(
+        block_name=entity.dxf.name,
+        layer=entity.dxf.layer,
+        x=entity.dxf.insert.x,
+        y=entity.dxf.insert.y,
+        attributes=attributes,
+    )
+
+
+def is_layout_fallback_candidate(entity) -> bool:
+    """Heuristic fallback for merch drawings with WMRT/SPAC conventions."""
+    layer = entity.dxf.layer
+    block_name = entity.dxf.name
+
+    if not entity.has_attrib:
+        return False
+    if layer.lower().startswith("title"):
+        return False
+
+    return (
+        matches_any_pattern(layer, LAYOUT_LAYER_PATTERNS)
+        or matches_any_pattern(block_name, LAYOUT_BLOCK_PATTERNS)
+    )
+
+
+def extract_devices(
+    doc: ezdxf.document.Drawing,
+    layer_patterns: list[str],
+    block_patterns: list[str],
+    allow_layout_fallback: bool,
+) -> tuple[list[CadDevice], str]:
+    """Extract device-like INSERT entities from DXF."""
     msp = doc.modelspace()
-    devices = []
-    
-    for entity in msp.query("INSERT"):
+    primary_devices: list[CadDevice] = []
+
+    inserts = list(msp.query("INSERT"))
+    for entity in inserts:
         block_name = entity.dxf.name
         layer = entity.dxf.layer
-        
+
         if matches_any_pattern(block_name, EXCLUDE_BLOCK_PATTERNS):
             continue
-        
-        is_device_layer = matches_any_pattern(layer, DEVICE_LAYER_PATTERNS)
-        is_device_block = matches_any_pattern(block_name, DEVICE_BLOCK_PATTERNS)
-        
-        if not (is_device_layer or is_device_block):
-            continue
-        
-        x = entity.dxf.insert.x
-        y = entity.dxf.insert.y
-        
-        attributes = {}
-        if entity.has_attrib:
-            for attrib in entity.attribs:
-                tag = attrib.dxf.tag.upper()
-                text = attrib.dxf.text
-                if text:
-                    attributes[tag] = text
-        
-        devices.append(CadDevice(
-            block_name=block_name,
-            layer=layer,
-            x=x,
-            y=y,
-            attributes=attributes
-        ))
-    
-    return devices
+
+        is_device_layer = matches_any_pattern(layer, layer_patterns)
+        is_device_block = matches_any_pattern(block_name, block_patterns)
+
+        if is_device_layer or is_device_block:
+            primary_devices.append(entity_to_cad_device(entity))
+
+    if primary_devices or not allow_layout_fallback:
+        return (primary_devices, "pattern-match")
+
+    fallback_devices = [
+        entity_to_cad_device(entity)
+        for entity in inserts
+        if not matches_any_pattern(entity.dxf.name, EXCLUDE_BLOCK_PATTERNS)
+        and is_layout_fallback_candidate(entity)
+    ]
+
+    if fallback_devices:
+        return (fallback_devices, "layout-fallback")
+
+    return ([], "none")
 
 
 def make_row(
@@ -255,8 +436,17 @@ def make_row(
 # MAIN PROCESSING
 # =============================================================================
 
-def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") -> int:
-    """Process a single DXF file with Excel cross-reference"""
+def process_dxf(
+    dxf_path: Path,
+    output_folder: Path,
+    system_type: str = "fa",
+    memory_db: Path = MEMORY_DB,
+    use_memory_patterns: bool = True,
+    memory_top_n: int = 80,
+    memory_min_weight: int = 1,
+    allow_layout_fallback: bool = True,
+) -> int:
+    """Process a single DXF file with Excel cross-reference."""
     print(f"\n[FILE] Processing: {dxf_path.name}")
     
     store_num = extract_store_number(dxf_path.stem)
@@ -269,9 +459,23 @@ def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") ->
         print(f"  ERROR: Failed to read DXF: {e}")
         return 0
     
+    layer_patterns, block_patterns = build_detection_patterns(
+        system_type=system_type,
+        memory_db=memory_db,
+        use_memory_patterns=use_memory_patterns,
+        memory_top_n=memory_top_n,
+        memory_min_weight=memory_min_weight,
+    )
+    print(f"  Detection pattern counts: layers={len(layer_patterns)} blocks={len(block_patterns)}")
+
     # Extract CAD devices first - boundary scoring uses device coverage
-    cad_devices = extract_devices(doc)
-    print(f"  Found {len(cad_devices)} devices in CAD")
+    cad_devices, detection_mode = extract_devices(
+        doc,
+        layer_patterns,
+        block_patterns,
+        allow_layout_fallback=allow_layout_fallback,
+    )
+    print(f"  Found {len(cad_devices)} devices in CAD (mode={detection_mode})")
     
     if not cad_devices:
         print("  WARNING: No devices found in CAD!")
@@ -340,6 +544,16 @@ def main():
     parser.add_argument("--output", "-o", type=Path, help="Output folder for CSV results")
     parser.add_argument("--system", "-s", choices=["fa", "cctv"], default="fa",
                         help="System type: 'fa' for Fire Alarm/Intrusion, 'cctv' for CCTV")
+    parser.add_argument("--memory-db", type=Path, default=MEMORY_DB,
+                        help="Path to CadOwl memory SQLite DB for learned detection patterns")
+    parser.add_argument("--no-memory-patterns", action="store_true",
+                        help="Disable learned pattern injection; use static patterns only")
+    parser.add_argument("--memory-top-n", type=int, default=80,
+                        help="Max learned layers/blocks per system to load from memory DB")
+    parser.add_argument("--memory-min-weight", type=int, default=1,
+                        help="Minimum tree edge weight for learned pattern inclusion")
+    parser.add_argument("--no-layout-fallback", action="store_true",
+                        help="Disable WMRT/SPAC heuristic fallback when no pattern-matched devices are found")
     args = parser.parse_args()
     
     system_type = args.system
@@ -383,12 +597,23 @@ def main():
     print(f"[*] Staging: {staging_folder}")
     print(f"[*] Output:  {output_folder}")
     print(f"[*] Master Excel: {master_folder}")
+    print(f"[*] Memory DB: {args.memory_db} (enabled={not args.no_memory_patterns})")
+    print(f"[*] Layout fallback enabled: {not args.no_layout_fallback}")
     
     total_devices = 0
     processed = 0
     
     for dxf_path in dxf_files:
-        count = process_dxf(dxf_path, output_folder, system_type)
+        count = process_dxf(
+            dxf_path,
+            output_folder,
+            system_type,
+            memory_db=args.memory_db,
+            use_memory_patterns=not args.no_memory_patterns,
+            memory_top_n=args.memory_top_n,
+            memory_min_weight=args.memory_min_weight,
+            allow_layout_fallback=not args.no_layout_fallback,
+        )
         if count > 0:
             total_devices += count
             processed += 1
