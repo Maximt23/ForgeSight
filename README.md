@@ -222,6 +222,14 @@ What it does:
 
 ---
 
+## 🧭 Governance & Audit Roadmap
+
+For a clear capability inventory, control checks, and evidence standards, see:
+
+- `docs/SKILLS_AND_LEARNING_ROADMAP.md`
+
+---
+
 ## 🐛 Troubleshooting
 
 **"No DXF files found"**
