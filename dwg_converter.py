@@ -5,7 +5,7 @@ dwg_converter.py - Convert DWG files to DXF using ODA File Converter
 ODA File Converter is a free tool from Open Design Alliance:
 https://www.opendesign.com/guestfiles/oda_file_converter
 
-This module provides automatic DWG→DXF conversion for CadOwl.
+Workflow: Input (DWG) -> Staging (DXF) -> Output (CSV)
 """
 
 import subprocess
@@ -17,9 +17,25 @@ from typing import Optional, List, Tuple
 ODA_PATHS = [
     r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe",
     r"C:\Program Files (x86)\ODA\ODAFileConverter\ODAFileConverter.exe",
+    r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe",
     r"C:\Program Files\ODA\ODAFileConverter 25.6.0\ODAFileConverter.exe",
     r"C:\Program Files\ODA\ODAFileConverter 24.12.0\ODAFileConverter.exe",
 ]
+
+# Folder structure: Input (DWG) -> Staging (DXF) -> Output (CSV)
+ONEDRIVE_BASE = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl")
+FOLDERS = {
+    "cctv": {
+        "input": ONEDRIVE_BASE / "Input-CCTV",
+        "staging": ONEDRIVE_BASE / "Staging-CCTV",
+        "output": ONEDRIVE_BASE / "Output-CCTV",
+    },
+    "fa": {
+        "input": ONEDRIVE_BASE / "Input-FAIntrusion",
+        "staging": ONEDRIVE_BASE / "Staging-FAIntrusion",
+        "output": ONEDRIVE_BASE / "Output-FAIntrusion",
+    },
+}
 
 
 def find_oda_converter() -> Optional[Path]:
@@ -48,7 +64,7 @@ def find_oda_converter() -> Optional[Path]:
 
 def convert_dwg_to_dxf(
     input_folder: Path,
-    output_folder: Optional[Path] = None,
+    output_folder: Path,
     version: str = "ACAD2018"
 ) -> Tuple[int, int, List[str]]:
     """
@@ -56,14 +72,18 @@ def convert_dwg_to_dxf(
     
     Args:
         input_folder: Folder containing DWG files
-        output_folder: Where to save DXF files (defaults to input_folder)
+        output_folder: Where to save DXF files (MUST be different from input!)
         version: AutoCAD version for DXF (ACAD2018, ACAD2013, etc.)
     
     Returns:
         Tuple of (converted_count, failed_count, error_messages)
     """
-    if output_folder is None:
-        output_folder = input_folder
+    input_folder = Path(input_folder)
+    output_folder = Path(output_folder)
+    
+    # ODA requires different input/output folders
+    if input_folder.resolve() == output_folder.resolve():
+        return (0, 0, ["Input and output folders must be different for ODA File Converter"])
     
     oda_exe = find_oda_converter()
     if not oda_exe:
@@ -74,14 +94,12 @@ def convert_dwg_to_dxf(
     if not dwg_files:
         return (0, 0, [])
     
-    print(f"\n[DWG→DXF] Found {len(dwg_files)} DWG file(s)")
-    print(f"[DWG→DXF] Using ODA: {oda_exe}")
+    print(f"\n[DWG->DXF] Found {len(dwg_files)} DWG file(s)")
+    print(f"[DWG->DXF] Input:  {input_folder}")
+    print(f"[DWG->DXF] Output: {output_folder}")
+    print(f"[DWG->DXF] Using ODA: {oda_exe}")
     
-    # ODA File Converter command line:
-    # ODAFileConverter <input_folder> <output_folder> <output_version> <output_type> <recurse> <audit>
-    # output_type: DXF (text), DXB (binary)
-    
-    # Create temp folder structure for ODA
+    # Create output folder
     output_folder.mkdir(parents=True, exist_ok=True)
     
     converted = 0
@@ -92,15 +110,15 @@ def convert_dwg_to_dxf(
         # ODA converts all files in folder at once
         cmd = [
             str(oda_exe),
-            str(input_folder),      # Input folder
-            str(output_folder),     # Output folder  
+            str(input_folder),      # Input folder (DWG)
+            str(output_folder),     # Output folder (DXF)
             version,                # Output version (ACAD2018)
             "DXF",                  # Output type
             "0",                    # Recurse subfolders (0=no)
             "1"                     # Audit each file (1=yes)
         ]
         
-        print(f"[DWG→DXF] Converting...")
+        print(f"[DWG->DXF] Converting...")
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         
         # Check which files were converted
@@ -121,47 +139,105 @@ def convert_dwg_to_dxf(
         errors.append(f"Conversion error: {e}")
         failed = len(dwg_files)
     
-    print(f"[DWG→DXF] Complete: {converted} converted, {failed} failed")
+    print(f"[DWG->DXF] Complete: {converted} converted, {failed} failed")
     return (converted, failed, errors)
 
 
-def get_cad_files(input_folder: Path, auto_convert: bool = True) -> List[Path]:
+def get_cad_files_for_system(system_type: str) -> Tuple[List[Path], Path]:
     """
-    Get all CAD files (DXF and DWG) from a folder.
-    If auto_convert is True, converts DWG to DXF automatically.
+    Get all DXF files for a system, auto-converting DWG if needed.
     
-    Returns list of DXF file paths to process.
+    Workflow: Input (DWG) -> Staging (DXF) -> Output (CSV)
+    
+    Args:
+        system_type: 'cctv' or 'fa'
+    
+    Returns:
+        Tuple of (list of DXF file paths, output folder path)
     """
-    input_folder = Path(input_folder)
+    if system_type not in FOLDERS:
+        raise ValueError(f"Unknown system type: {system_type}. Use 'cctv' or 'fa'")
     
-    # Get existing DXF files
-    dxf_files = list(input_folder.glob("*.dxf")) + list(input_folder.glob("*.DXF"))
+    folders = FOLDERS[system_type]
+    input_folder = folders["input"]
+    staging_folder = folders["staging"]
+    output_folder = folders["output"]
     
-    # Get DWG files
+    # Ensure folders exist
+    input_folder.mkdir(parents=True, exist_ok=True)
+    staging_folder.mkdir(parents=True, exist_ok=True)
+    output_folder.mkdir(parents=True, exist_ok=True)
+    
+    # Check for DWG files in input folder
     dwg_files = list(input_folder.glob("*.dwg")) + list(input_folder.glob("*.DWG"))
     
-    if dwg_files and auto_convert:
+    if dwg_files:
+        # Convert DWG from Input -> Staging
         oda_exe = find_oda_converter()
         if oda_exe:
-            converted, failed, errors = convert_dwg_to_dxf(input_folder, input_folder)
-            
-            # Add newly converted DXF files
-            for dwg in dwg_files:
-                dxf_path = input_folder / f"{dwg.stem}.dxf"
-                if dxf_path.exists() and dxf_path not in dxf_files:
-                    dxf_files.append(dxf_path)
+            convert_dwg_to_dxf(input_folder, staging_folder)
         else:
             print("\n" + "=" * 60)
             print("  [!] DWG FILES FOUND BUT CANNOT AUTO-CONVERT")
             print("=" * 60)
             print(f"\nFound {len(dwg_files)} DWG file(s) but ODA File Converter not installed.")
-            print("\nOptions:")
-            print("  1. Install ODA File Converter (FREE):")
-            print("     https://www.opendesign.com/guestfiles/oda_file_converter")
-            print("\n  2. Convert manually in AutoCAD:")
-            print("     Load DWG2DXF.lsp and run: DWG2DXFBATCH")
-            print("\n  3. Save as DXF from AutoCAD: File → Save As → DXF")
+            print("\nInstall ODA File Converter (FREE):")
+            print("  https://www.opendesign.com/guestfiles/oda_file_converter")
             print("=" * 60 + "\n")
+    
+    # Get DXF files from staging folder
+    dxf_files = list(staging_folder.glob("*.dxf")) + list(staging_folder.glob("*.DXF"))
+    
+    return (sorted(set(dxf_files)), output_folder)
+
+
+def get_cad_files(input_folder: Path, auto_convert: bool = True, staging_folder: Path = None) -> List[Path]:
+    """
+    Get all CAD files (DXF) from staging folder after converting DWG from input.
+    
+    Args:
+        input_folder: Folder containing DWG files
+        auto_convert: Whether to auto-convert DWG to DXF
+        staging_folder: Where to put converted DXF files (required if auto_convert=True)
+    
+    Returns:
+        List of DXF file paths to process (from staging folder)
+    """
+    input_folder = Path(input_folder)
+    
+    # If no staging folder specified, try to determine from input folder name
+    if staging_folder is None:
+        # Check if this matches a known system folder
+        for sys_type, folders in FOLDERS.items():
+            if input_folder.resolve() == folders["input"].resolve():
+                staging_folder = folders["staging"]
+                break
+        
+        if staging_folder is None:
+            # Fallback: create staging folder next to input
+            staging_folder = input_folder.parent / f"{input_folder.name}-staging"
+    
+    staging_folder = Path(staging_folder)
+    staging_folder.mkdir(parents=True, exist_ok=True)
+    
+    # Check for DWG files in input folder
+    dwg_files = list(input_folder.glob("*.dwg")) + list(input_folder.glob("*.DWG"))
+    
+    if dwg_files and auto_convert:
+        oda_exe = find_oda_converter()
+        if oda_exe:
+            convert_dwg_to_dxf(input_folder, staging_folder)
+        else:
+            print("\n" + "=" * 60)
+            print("  [!] DWG FILES FOUND BUT CANNOT AUTO-CONVERT")
+            print("=" * 60)
+            print(f"\nFound {len(dwg_files)} DWG file(s) but ODA File Converter not installed.")
+            print("\nInstall ODA File Converter (FREE):")
+            print("  https://www.opendesign.com/guestfiles/oda_file_converter")
+            print("=" * 60 + "\n")
+    
+    # Get DXF files from staging folder
+    dxf_files = list(staging_folder.glob("*.dxf")) + list(staging_folder.glob("*.DXF"))
     
     return sorted(set(dxf_files))
 
@@ -185,3 +261,10 @@ if __name__ == "__main__":
     else:
         print("[X] Not installed")
         print(f"    Download: {status['download_url']}")
+    
+    print("\n=== Folder Configuration ===")
+    for sys_type, folders in FOLDERS.items():
+        print(f"\n{sys_type.upper()}:")
+        print(f"  Input:   {folders['input']}")
+        print(f"  Staging: {folders['staging']}")
+        print(f"  Output:  {folders['output']}")

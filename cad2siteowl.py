@@ -25,8 +25,6 @@ from typing import Optional, List, Tuple
 import ezdxf
 from ezdxf import colors
 from ezdxf.entities import Insert
-from ezdxf.addons.drawing import RenderContext, Frontend
-from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 
 # Local module for DWG→DXF conversion
 try:
