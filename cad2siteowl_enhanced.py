@@ -17,20 +17,23 @@ import csv
 import re
 import sys
 from pathlib import Path
-from dataclasses import dataclass, field
 from typing import Optional
-from difflib import SequenceMatcher
 
 import ezdxf
-from ezdxf.entities import Insert
 
-# Local module for DWG→DXF conversion
+from enhanced_boundary import convert_to_siteowl, find_boundary
+from enhanced_matching import match_cad_to_excel
+from enhanced_models import CadDevice, ExcelDevice
+
+# Local module for DWG->DXF conversion
 try:
-    from dwg_converter import get_cad_files, check_oda_status
+    from dwg_converter import get_cad_files, FOLDERS
     HAS_DWG_CONVERTER = True
 except ImportError:
     HAS_DWG_CONVERTER = False
-    def get_cad_files(folder, auto_convert=True):
+    FOLDERS = {}
+
+    def get_cad_files(folder, auto_convert=True, staging_folder=None):
         return list(Path(folder).glob("*.dxf"))
 
 # =============================================================================
@@ -44,11 +47,6 @@ OUTPUT_FOLDER = SCRIPT_DIR / "Output"
 # Master Excel folders for reference data
 MASTER_EXCEL_FA = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\FA&Intrusion STORES DATA - Survey")
 MASTER_EXCEL_CCTV = Path(r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CCTV STORES DATA - Survey")
-
-# SiteOwl coordinate settings
-ARTBOARD_SIZE = 1000.0
-OBJECT_WIDTH = 800.0
-SCALE_MODE = "WIDTH"
 
 # Device detection patterns (case-insensitive)
 DEVICE_LAYER_PATTERNS = [
@@ -70,8 +68,6 @@ EXCLUDE_BLOCK_PATTERNS = [
     r"^legend.*", r"^title.*", r"^shttitle.*", r"^stamp.*", r"^aecb_.*",
 ]
 
-NAME_TAGS = ["NAME", "DEVICE", "D", "ID", "TAG", "S", "115CD", "WP", "CAMERA", "NUMBER", "LABEL"]
-
 # =============================================================================
 # SITEOWL CSV HEADERS
 # =============================================================================
@@ -90,86 +86,6 @@ HEADERS = [
     "Replacement Cost", "Custom Device ID", "Project", "Site", "Building", "Plan",
     "Coordinates", "Archived", "Shareable Link"
 ]
-
-
-# =============================================================================
-# DATA CLASSES
-# =============================================================================
-
-@dataclass
-class BoundingBox:
-    min_x: float
-    min_y: float
-    max_x: float
-    max_y: float
-    
-    @property
-    def width(self) -> float:
-        return self.max_x - self.min_x
-    
-    @property
-    def height(self) -> float:
-        return self.max_y - self.min_y
-
-
-@dataclass
-class ExcelDevice:
-    """Device data from master Excel file"""
-    name: str
-    abbreviated_name: str
-    system_type: str
-    device_type: str
-    description: str
-    matched: bool = False
-    
-    @property
-    def match_keywords(self) -> set:
-        """Extract keywords for fuzzy matching"""
-        text = f"{self.name} {self.description}".upper()
-        # Extract meaningful words
-        words = re.findall(r'[A-Z]+', text)
-        return set(w for w in words if len(w) > 2)
-
-
-@dataclass
-class CadDevice:
-    """Device extracted from CAD/DXF"""
-    block_name: str
-    layer: str
-    x: float
-    y: float
-    attributes: dict = field(default_factory=dict)
-    
-    @property
-    def raw_name(self) -> str:
-        """Get device name from attributes or block name"""
-        for tag in NAME_TAGS:
-            if tag in self.attributes and self.attributes[tag]:
-                return self.attributes[tag]
-        return self.block_name
-    
-    @property
-    def match_keywords(self) -> set:
-        """Extract keywords for fuzzy matching"""
-        text = f"{self.block_name} {self.layer} {self.raw_name}".upper()
-        words = re.findall(r'[A-Z]+', text)
-        return set(w for w in words if len(w) > 2)
-    
-    @property
-    def inferred_system_type(self) -> str:
-        """Auto-detect system type from CAD data"""
-        layer_upper = self.layer.upper()
-        block_upper = self.block_name.upper()
-        name_upper = self.raw_name.upper()
-        combined = f"{layer_upper} {block_upper} {name_upper}"
-        
-        if any(x in combined for x in ["CCTV", "CAM", "VIDEO", "SURV"]):
-            return "Video Surveillance"
-        elif any(x in combined for x in ["MOTION", "BURG", "DOOR", "INTRUSION"]):
-            return "Intrusion Detection"
-        elif any(x in combined for x in ["ALARM", "NOTIF", "EFP", "FIRE", "PULL", "SMOKE", "FLOW", "RTU", "TAMPER"]):
-            return "Fire Alarm"
-        return "Fire Alarm"  # Default to Fire Alarm
 
 
 # =============================================================================
@@ -236,76 +152,6 @@ def load_master_excel(store_num: str, system_type: str = "fa") -> list[ExcelDevi
 
 
 # =============================================================================
-# MATCHING LOGIC
-# =============================================================================
-
-def similarity_score(text1: str, text2: str) -> float:
-    """Calculate similarity between two strings"""
-    return SequenceMatcher(None, text1.upper(), text2.upper()).ratio()
-
-
-def keyword_overlap(set1: set, set2: set) -> float:
-    """Calculate keyword overlap score"""
-    if not set1 or not set2:
-        return 0.0
-    intersection = set1 & set2
-    union = set1 | set2
-    return len(intersection) / len(union) if union else 0.0
-
-
-def match_cad_to_excel(cad_device: CadDevice, excel_devices: list[ExcelDevice]) -> Optional[ExcelDevice]:
-    """Find the best matching Excel device for a CAD device"""
-    if not excel_devices:
-        return None
-    
-    best_match = None
-    best_score = 0.0
-    
-    cad_keywords = cad_device.match_keywords
-    cad_system = cad_device.inferred_system_type
-    
-    for excel_dev in excel_devices:
-        if excel_dev.matched:
-            continue  # Already used
-        
-        score = 0.0
-        
-        # System type match is important
-        if excel_dev.system_type == cad_system:
-            score += 0.3
-        elif excel_dev.system_type and cad_system:
-            # Partial match (Fire Alarm vs Fire, etc.)
-            if cad_system[:4].upper() in excel_dev.system_type.upper():
-                score += 0.15
-        
-        # Keyword overlap
-        excel_keywords = excel_dev.match_keywords
-        overlap = keyword_overlap(cad_keywords, excel_keywords)
-        score += overlap * 0.4
-        
-        # Name similarity
-        name_sim = similarity_score(cad_device.raw_name, excel_dev.name)
-        score += name_sim * 0.2
-        
-        # Abbreviated name match (if CAD has a number)
-        cad_numbers = re.findall(r'\d+', cad_device.raw_name)
-        if cad_numbers and excel_dev.abbreviated_name:
-            if excel_dev.abbreviated_name in cad_numbers:
-                score += 0.1
-        
-        if score > best_score:
-            best_score = score
-            best_match = excel_dev
-    
-    # Only return if we have a reasonable match (>0.25)
-    if best_match and best_score > 0.25:
-        best_match.matched = True
-        return best_match
-    
-    return None
-
-
-# =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
 
@@ -324,79 +170,9 @@ def extract_store_number(filename: str) -> str:
     return match.group(1) if match else "UNKNOWN"
 
 
-def convert_to_siteowl(x: float, y: float, bbox: BoundingBox) -> tuple[float, float]:
-    """Convert CAD coordinates to SiteOwl coordinates"""
-    if bbox.width <= 0 or bbox.height <= 0:
-        return (0, 0)
-    
-    scale = OBJECT_WIDTH / (max(bbox.width, bbox.height) if SCALE_MODE == "FIT" else bbox.width)
-    
-    scaled_w = bbox.width * scale
-    scaled_h = bbox.height * scale
-    
-    offset_x = (ARTBOARD_SIZE - scaled_w) / 2.0
-    offset_y = (ARTBOARD_SIZE - scaled_h) / 2.0
-    
-    art_x = offset_x + (x - bbox.min_x) * scale
-    art_y = offset_y + (bbox.max_y - y) * scale
-    
-    site_x = art_x / 10.0
-    site_y = art_y / 10.0
-    
-    return (round(site_x, 2), round(site_y, 2))
-
-
 # =============================================================================
 # DXF PROCESSING
 # =============================================================================
-
-def find_boundary(doc: ezdxf.document.Drawing) -> Optional[BoundingBox]:
-    """Find the boundary/extents of the drawing"""
-    msp = doc.modelspace()
-    
-    largest_area = 0
-    largest_bbox = None
-    
-    for entity in msp.query("LWPOLYLINE"):
-        if entity.closed:
-            try:
-                points = list(entity.get_points())
-                if len(points) >= 3:
-                    xs = [p[0] for p in points]
-                    ys = [p[1] for p in points]
-                    
-                    n = len(points)
-                    area = abs(sum(
-                        points[i][0] * points[(i+1) % n][1] - points[(i+1) % n][0] * points[i][1]
-                        for i in range(n)
-                    )) / 2.0
-                    
-                    if area > largest_area:
-                        largest_area = area
-                        largest_bbox = BoundingBox(min(xs), min(ys), max(xs), max(ys))
-            except Exception:
-                continue
-    
-    if largest_bbox:
-        print(f"  Boundary: {largest_bbox.width:.0f} x {largest_bbox.height:.0f}")
-        return largest_bbox
-    
-    # Fallback to entity extents
-    print("  WARNING: No closed polyline, using entity extents")
-    min_x = min_y = float('inf')
-    max_x = max_y = float('-inf')
-    
-    for entity in msp:
-        try:
-            if hasattr(entity.dxf, 'insert'):
-                x, y = entity.dxf.insert.x, entity.dxf.insert.y
-                min_x, max_x = min(min_x, x), max(max_x, x)
-                min_y, max_y = min(min_y, y), max(max_y, y)
-        except Exception:
-            continue
-    
-    return BoundingBox(min_x, min_y, max_x, max_y) if min_x != float('inf') else None
-
 
 def extract_devices(doc: ezdxf.document.Drawing) -> list[CadDevice]:
     """Extract device block insertions from DXF"""
@@ -493,18 +269,18 @@ def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") ->
         print(f"  ERROR: Failed to read DXF: {e}")
         return 0
     
-    # Find boundary
-    bbox = find_boundary(doc)
-    if not bbox:
-        print("  ERROR: Could not determine boundary!")
-        return 0
-    
-    # Extract CAD devices
+    # Extract CAD devices first - boundary scoring uses device coverage
     cad_devices = extract_devices(doc)
     print(f"  Found {len(cad_devices)} devices in CAD")
     
     if not cad_devices:
         print("  WARNING: No devices found in CAD!")
+        return 0
+
+    # Find best-fit boundary after device extraction
+    bbox = find_boundary(doc, cad_devices)
+    if not bbox:
+        print("  ERROR: Could not determine boundary!")
         return 0
     
     # Load master Excel for this store (using correct system type)
@@ -513,6 +289,9 @@ def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") ->
     # Match devices
     matched_count = 0
     unmatched_count = 0
+    out_of_range = 0
+    site_x_values: list[float] = []
+    site_y_values: list[float] = []
     
     output_folder.mkdir(parents=True, exist_ok=True)
     csv_path = output_folder / f"{store_num}_SiteOwl_Enhanced.csv"
@@ -523,6 +302,12 @@ def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") ->
         
         for cad_dev in cad_devices:
             coords = convert_to_siteowl(cad_dev.x, cad_dev.y, bbox)
+            site_x, site_y = coords
+            site_x_values.append(site_x)
+            site_y_values.append(site_y)
+
+            if site_x < 0 or site_x > 100 or site_y < 0 or site_y > 100:
+                out_of_range += 1
             
             # Try to find matching Excel device
             excel_match = match_cad_to_excel(cad_dev, excel_devices)
@@ -535,7 +320,12 @@ def process_dxf(dxf_path: Path, output_folder: Path, system_type: str = "fa") ->
             row = make_row(cad_dev, excel_match, coords, store_num)
             writer.writerow(row)
     
-    print(f"  ✅ Matched: {matched_count} | ❌ Unmatched: {unmatched_count}")
+    print(f"  [MATCHED] {matched_count} | [UNMATCHED] {unmatched_count}")
+    print(
+        f"  Coordinates: X[{min(site_x_values):.2f}, {max(site_x_values):.2f}] "
+        f"Y[{min(site_y_values):.2f}, {max(site_y_values):.2f}] | "
+        f"Out-of-range: {out_of_range}/{len(cad_devices)}"
+    )
     print(f"  SUCCESS: Exported {csv_path.name}")
     
     return len(cad_devices)
@@ -545,23 +335,33 @@ def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description="Convert DXF to SiteOwl CSV with Excel cross-reference")
     parser.add_argument("file", nargs="?", help="Single DXF file to process")
-    parser.add_argument("--input", "-i", type=Path, help="Input folder for DXF files")
-    parser.add_argument("--output", "-o", type=Path, help="Output folder for results")
+    parser.add_argument("--input", "-i", type=Path, help="Input folder for DWG files")
+    parser.add_argument("--staging", type=Path, help="Staging folder for DXF files")
+    parser.add_argument("--output", "-o", type=Path, help="Output folder for CSV results")
     parser.add_argument("--system", "-s", choices=["fa", "cctv"], default="fa",
                         help="System type: 'fa' for Fire Alarm/Intrusion, 'cctv' for CCTV")
     args = parser.parse_args()
     
-    # Determine input/output folders
-    input_folder = args.input if args.input else DXF_FOLDER
-    output_folder = args.output if args.output else OUTPUT_FOLDER
     system_type = args.system
+    
+    # Use system-specific folders if available, otherwise use args
+    if HAS_DWG_CONVERTER and system_type in FOLDERS:
+        folders = FOLDERS[system_type]
+        input_folder = args.input if args.input else folders["input"]
+        staging_folder = args.staging if args.staging else folders["staging"]
+        output_folder = args.output if args.output else folders["output"]
+    else:
+        input_folder = args.input if args.input else DXF_FOLDER
+        staging_folder = args.staging if args.staging else (input_folder.parent / f"{input_folder.name}-staging")
+        output_folder = args.output if args.output else OUTPUT_FOLDER
     
     # Select correct master Excel folder
     master_folder = MASTER_EXCEL_CCTV if system_type == "cctv" else MASTER_EXCEL_FA
     
     print("\n" + "=" * 60)
-    print(f"  CadOwl Enhanced - DXF + Excel Cross-Reference ({system_type.upper()})")
+    print(f"  CadOwl Enhanced - DWG/DXF to SiteOwl ({system_type.upper()})")
     print("=" * 60)
+    print(f"\n  Workflow: Input (DWG) -> Staging (DXF) -> Output (CSV)")
     
     if args.file:
         dxf_files = [Path(args.file)]
@@ -570,17 +370,19 @@ def main():
             print(f"\nERROR: Input folder not found: {input_folder}")
             sys.exit(1)
         
-        # Get DXF files (and auto-convert DWG if ODA is installed)
-        dxf_files = get_cad_files(input_folder, auto_convert=True)
+        # Get DXF files from staging (auto-convert DWG from input if ODA is installed)
+        dxf_files = get_cad_files(input_folder, auto_convert=True, staging_folder=staging_folder)
         
         if not dxf_files:
-            print(f"\nERROR: No DXF or DWG files found in: {input_folder}")
+            print(f"\nERROR: No DXF files in staging folder: {staging_folder}")
+            print(f"       Put DWG files in: {input_folder}")
             sys.exit(1)
     
-    print(f"\n[*] Found {len(dxf_files)} CAD file(s)")
-    print(f"[*] Input:  {input_folder}")
+    print(f"\n[*] Found {len(dxf_files)} DXF file(s) to process")
+    print(f"[*] Input:   {input_folder}")
+    print(f"[*] Staging: {staging_folder}")
+    print(f"[*] Output:  {output_folder}")
     print(f"[*] Master Excel: {master_folder}")
-    print(f"[*] Output: {output_folder}")
     
     total_devices = 0
     processed = 0

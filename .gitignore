@@ -22,6 +22,12 @@ watcher.log
 # Output files (don't commit data)
 *.csv
 *_log.txt
+Output/*.json
+
+# Local runtime/generated artifacts
+*.db
+cadowl_memory.db
+puppy_memory.db
 
 # OS files
 .DS_Store
