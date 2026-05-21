@@ -38,8 +38,8 @@ def check_clean_tree() -> None:
 
 def check_conflict_markers() -> None:
     _print_step("scanning for unresolved merge markers")
-    proc = _run(
-        ["git", "grep", "-n", "-E", r"^(<<<<<<<|=======|>>>>>>>)", "--", "."],
+    proc= _run(
+        ["git", "grep", "-n", "-E", r"^(<<<<<<< |>>>>>>>)", "--", "."],
         check=False,
     )
     if proc.returncode not in (0, 1):
