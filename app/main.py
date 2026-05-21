@@ -1,9 +1,10 @@
 """CadOwl - Modern Survey Coordination Platform."""
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pathlib import Path
+from uuid import uuid4
 import logging
 import httpx
 
@@ -24,6 +25,21 @@ app = FastAPI(
 BASE_DIR = Path(__file__).parent
 PROJECT_ROOT = BASE_DIR.parent
 DESIGN_RESEARCH_DIR = PROJECT_ROOT / "docs" / "design-research"
+DESIGN_UPLOAD_DIR = PROJECT_ROOT / "temp" / "design_uploads"
+DESIGN_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+FLOORPLAN_EXTENSIONS = {
+    ".png": "image",
+    ".jpg": "image",
+    ".jpeg": "image",
+    ".webp": "image",
+    ".gif": "image",
+    ".bmp": "image",
+    ".svg": "svg",
+    ".pdf": "pdf",
+    ".dxf": "cad",
+    ".dwg": "cad",
+}
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 if DESIGN_RESEARCH_DIR.exists():
@@ -186,6 +202,41 @@ async def project_design(request: Request, project_id: str):
         name="design_workspace.html",
         context={"request": request, "brand": BRAND, "project_id": project_id},
     )
+
+
+# === DESIGN FLOORPLAN UPLOADS ===
+
+@app.post("/ui-api/design/floorplans/upload")
+async def upload_design_floorplan(file: UploadFile = File(...)):
+    suffix = Path(file.filename or "").suffix.lower()
+    kind = FLOORPLAN_EXTENSIONS.get(suffix)
+    if not kind:
+        allowed = ", ".join(sorted(FLOORPLAN_EXTENSIONS))
+        raise HTTPException(status_code=400, detail=f"Unsupported floorplan format '{suffix}'. Allowed: {allowed}")
+
+    token = f"{uuid4().hex}{suffix}"
+    destination = DESIGN_UPLOAD_DIR / token
+    content = await file.read()
+    destination.write_bytes(content)
+
+    preview_url = f"/ui-api/design/floorplans/{token}"
+    return {
+        "file_name": file.filename,
+        "stored_name": token,
+        "file_size": len(content),
+        "file_kind": kind,
+        "preview_url": preview_url,
+        "note": "CAD files (DWG/DXF) are accepted and staged; interactive CAD rendering is next iteration.",
+    }
+
+
+@app.get("/ui-api/design/floorplans/{stored_name}")
+async def get_design_floorplan_file(stored_name: str):
+    safe_name = Path(stored_name).name
+    file_path = DESIGN_UPLOAD_DIR / safe_name
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Uploaded floorplan file not found")
+    return FileResponse(file_path)
 
 
 # === FORGESEARCH API (design baseline contract) ===

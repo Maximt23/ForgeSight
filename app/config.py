@@ -32,7 +32,9 @@ class Settings(BaseSettings):
     
     # File Upload
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
-    ALLOWED_EXTENSIONS: list = [".pdf", ".jpg", ".jpeg", ".png", ".xlsx", ".docx"]
+    ALLOWED_EXTENSIONS: list = [
+        ".pdf", ".jpg", ".jpeg", ".png", ".svg", ".dxf", ".dwg", ".xlsx", ".docx"
+    ]
     
     # Paths
     UPLOAD_DIR: Path = Path("uploads")
