@@ -17,9 +17,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid, func
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -35,16 +34,12 @@ class Base(DeclarativeBase):
 
 
 def _uuid_pk() -> Mapped[UUID]:
-    return mapped_column(
-        PG_UUID(as_uuid=True).with_variant(String(36), "sqlite"),
-        primary_key=True,
-        default=uuid4,
-    )
+    return mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
 
 
 def _uuid_fk(target: str, *, index: bool = True, nullable: bool = False) -> Mapped[UUID]:
     return mapped_column(
-        PG_UUID(as_uuid=True).with_variant(String(36), "sqlite"),
+        Uuid(as_uuid=True),
         ForeignKey(target, ondelete="CASCADE"),
         nullable=nullable,
         index=index,
@@ -189,7 +184,7 @@ class Event(Base):
 
     __tablename__ = "event"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer(), "sqlite"), primary_key=True, autoincrement=True)
     event_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     entity_type: Mapped[Optional[str]] = mapped_column(String(100), index=True)
     entity_id: Mapped[Optional[str]] = mapped_column(String(100), index=True)
@@ -259,7 +254,7 @@ class Design(Base):
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default="normal", index=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
     assigned_to: Mapped[Optional[str]] = mapped_column(String(200), index=True)
-    vendor_id: Mapped[Optional[UUID]] = mapped_column(PG_UUID(as_uuid=True).with_variant(String(36), "sqlite"))
+    vendor_id: Mapped[Optional[UUID]] = mapped_column(Uuid(as_uuid=True))
     vendor_status: Mapped[Optional[str]] = mapped_column(String(50))
     due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), index=True)
     status_history: Mapped[Optional[dict]] = mapped_column(JSONB().with_variant(JSON(), "sqlite"))
@@ -273,7 +268,7 @@ class SandboxConfig(Base):
 
     id: Mapped[UUID] = _uuid_pk()
     site_id: Mapped[UUID] = _uuid_fk("site_extended.id")
-    cloned_from: Mapped[Optional[UUID]] = mapped_column(PG_UUID(as_uuid=True).with_variant(String(36), "sqlite"))
+    cloned_from: Mapped[Optional[UUID]] = mapped_column(Uuid(as_uuid=True))
     is_template: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     template_name: Mapped[Optional[str]] = mapped_column(String(200))
     purpose: Mapped[str] = mapped_column(String(100), nullable=False, default="clone")

@@ -9,7 +9,25 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Added — Production Hardening (2026-05-21)
+### Added — Auth Everywhere + Postgres Scaffold (2026-05-21 PM)
+- **`apps/api/auth_deps.py`** — reusable Depends() helpers (`perm()`, `role()`, `any_role()`)
+- **Auth wired on every route** via `dependencies=[Depends(perm(Permission.X))]`
+  - 23 routes in `apps/api/main.py` (projects, sites, floors, maps, devices, zones, cables, imports, events, snapshots, rollback)
+  - 17 routes in `apps/api/lifecycle_routes.py` (sites, designs, sandbox, dashboard)
+  - `lifecycle_router` now mounted at `/api/v1/lifecycle/*` (was floating)
+  - Health (`/api/v1/health`) and metrics (`/metrics`) stay anonymous for k8s/Prom
+- **`tests/integration/test_auth_enforcement.py`** — 9 tests verifying 401 with DEV_MODE off, 200 for health/metrics
+- **`tests/conftest.py`** — forces `CADOWL_DEV_MODE=true` for tests (was env-fragile)
+- **`packages/db/`** — first real database layer
+  - `session.py` — async SQLAlchemy 2.x engine + sessionmaker + FastAPI dep
+  - `models.py` — 14 ORM models (Project, Site, Floor, Map, Device, Zone, Cable, ImportBatch, Event, Snapshot, IdempotencyKey, SiteExtended, Design, SandboxConfig)
+  - Portable types (Uuid auto-converts PG ↔ SQLite)
+  - `README.md` — full DB ops guide
+- **`alembic.ini` + `packages/db/migrations/`** — Alembic config + async env.py + initial migration
+- **`scripts/migrate.py`** — convenient migration runner
+- 4 new DB tests, all green (model import + CRUD + unique constraint + JSON round-trip)
+
+### Added — Production Hardening (2026-05-21 AM)
 - **`packages/integrations/`** — first-class home for external system clients
   - `doris` — async client with TTL cache, retry, pydantic-settings
   - `saone` — async camera health client with bulk register
