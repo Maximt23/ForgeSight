@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # MAXILLM / Ollama
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "maxillm"
+
+    # Core API integration
+    CORE_API_BASE_URL: str = "http://127.0.0.1:9010"
     
     # Knowledge Graph
     KNOWLEDGE_GRAPH_PATH: Path = Path("../knowledge-graph/graph.db")

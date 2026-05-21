@@ -45,6 +45,10 @@ class ExportRepository:
     def get(self, export_id: str) -> dict | None:
         return next((x for x in self.load() if x.get("export_id") == export_id), None)
 
+    def list(self, limit: int = 50) -> list[dict]:
+        rows = sorted(self.load(), key=lambda x: x.get("created_at", ""), reverse=True)
+        return rows[:limit]
+
 
 class ExportService:
     SUPPORTED_FORMATS: dict[ExportType, set[str]] = {

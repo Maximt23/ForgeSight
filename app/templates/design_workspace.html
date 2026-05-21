@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" x-data="designWorkspace()" x-init="init()">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Workspace - {{ brand.app_name }}</title>
+  <link rel="icon" type="image/x-icon" href="{{ brand.icon_path }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="max-w-7xl mx-auto p-6 md:p-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold">Design Workspace</h1>
+        <p class="text-gray-600">Project <code class="bg-gray-100 px-1 rounded">{{ project_id }}</code> • Real canvas placement persisted to API.</p>
+      </div>
+      <a href="/dashboard" class="px-4 py-2 rounded-lg bg-[#0053e2] text-white hover:bg-[#0039a6]">← Dashboard</a>
+    </div>
+
+    <section class="grid lg:grid-cols-4 gap-6">
+      <div class="lg:col-span-3 bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <label class="text-sm font-semibold">Site #</label>
+          <input x-model="siteNumber" class="border rounded px-2 py-1 text-sm w-28">
+          <label class="text-sm font-semibold ml-2">Device Type</label>
+          <input x-model="deviceType" class="border rounded px-2 py-1 text-sm w-32">
+          <button @click="refreshDevices()" class="ml-auto border px-3 py-1 rounded text-sm">Refresh</button>
+        </div>
+        <div class="border border-gray-300 rounded-lg overflow-hidden bg-white">
+          <canvas id="designCanvas" width="960" height="540" class="w-full h-auto cursor-crosshair" @click="placeDevice($event)"></canvas>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Click canvas to place device. Coordinates saved in 0..100 range and rendered back from API.</p>
+      </div>
+
+      <aside class="bg-white rounded-xl border border-gray-200 p-4">
+        <h2 class="font-bold mb-2">Placement Log</h2>
+        <div class="text-xs text-gray-700 space-y-1 max-h-[460px] overflow-auto">
+          <template x-for="line in logs" :key="line">
+            <div x-text="line"></div>
+          </template>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    function designWorkspace() {
+      return {
+        projectId: '{{ project_id }}',
+        siteNumber: '2996',
+        deviceType: 'camera',
+        logs: [],
+        devices: [],
+        ctx: null,
+        canvas: null,
+        init() {
+          this.canvas = document.getElementById('designCanvas')
+          this.ctx = this.canvas.getContext('2d')
+          this.refreshDevices()
+        },
+        log(msg) {
+          this.logs.unshift(`${new Date().toLocaleTimeString()} - ${msg}`)
+          this.logs = this.logs.slice(0, 80)
+        },
+        draw() {
+          const w = this.canvas.width, h = this.canvas.height
+          this.ctx.clearRect(0, 0, w, h)
+          this.ctx.fillStyle = '#ffffff'
+          this.ctx.fillRect(0, 0, w, h)
+          this.ctx.strokeStyle = '#d1d5db'
+          this.ctx.strokeRect(0, 0, w, h)
+
+          for (let i = 1; i < 10; i++) {
+            this.ctx.strokeStyle = '#f3f4f6'
+            this.ctx.beginPath(); this.ctx.moveTo((w/10)*i, 0); this.ctx.lineTo((w/10)*i, h); this.ctx.stroke()
+            this.ctx.beginPath(); this.ctx.moveTo(0, (h/10)*i); this.ctx.lineTo(w, (h/10)*i); this.ctx.stroke()
+          }
+
+          this.devices.forEach(d => {
+            const x = Math.max(0, Math.min(100, d.local_x)) * (w / 100)
+            const y = Math.max(0, Math.min(100, d.local_y)) * (h / 100)
+            this.ctx.fillStyle = '#0053e2'
+            this.ctx.beginPath(); this.ctx.arc(x, y, 5, 0, Math.PI * 2); this.ctx.fill()
+          })
+        },
+        async refreshDevices() {
+          const res = await fetch(`/ui-api/projects/${this.projectId}/devices?site_number=${encodeURIComponent(this.siteNumber)}`)
+          const body = await res.json()
+          this.devices = Array.isArray(body) ? body : []
+          this.draw()
+          this.log(`Loaded ${this.devices.length} devices for site ${this.siteNumber}`)
+        },
+        toLocal(event) {
+          const rect = this.canvas.getBoundingClientRect()
+          const x = ((event.clientX - rect.left) / rect.width) * 100
+          const y = ((event.clientY - rect.top) / rect.height) * 100
+          return { x: Math.max(0, x), y: Math.max(0, y) }
+        },
+        async placeDevice(event) {
+          const pt = this.toLocal(event)
+          const payload = {
+            site_number: this.siteNumber,
+            device_type: this.deviceType,
+            name: `${this.deviceType.toUpperCase()}-${Date.now().toString().slice(-5)}`,
+            local_x: Number(pt.x.toFixed(2)),
+            local_y: Number(pt.y.toFixed(2))
+          }
+          const res = await fetch(`/ui-api/projects/${this.projectId}/devices`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          })
+          const body = await res.json()
+          if (res.ok) {
+            this.log(`Placed ${body.name} at (${body.local_x}, ${body.local_y})`)
+            await this.refreshDevices()
+          } else {
+            this.log(`Failed to place device: ${body.detail || 'unknown error'}`)
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

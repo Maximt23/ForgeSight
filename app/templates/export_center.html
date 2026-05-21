@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" x-data="exportCenter()">
+<html lang="en" x-data="exportCenter()" x-init="init()">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +13,7 @@
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-3xl font-bold">Export Center</h1>
-        <p class="text-gray-600">Build enterprise-grade export packages with metadata controls.</p>
+        <p class="text-gray-600">Run real exports, see audit history, download artifacts.</p>
       </div>
       <div class="flex gap-2">
         <a href="/sectors" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100">Sectors</a>
@@ -41,7 +41,7 @@
           <div class="grid md:grid-cols-3 gap-2 mt-2">
             <template x-for="type in exportTypes" :key="type">
               <button @click="exportType=type" :class="exportType===type ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-3 py-2 rounded-lg text-sm" x-text="type"></button>
-            </template>
+     </template>
           </div>
         </div>
 
@@ -59,7 +59,7 @@
 
         <div class="mb-4">
           <span class="text-sm font-semibold text-gray-700">Include Metadata</span>
-          <div class="grid md:grid-cols-2 gap-2 mt-2 text-sm">
+   <div class="grid md:grid-cols-2 gap-2 mt-2 text-sm">
             <label><input type="checkbox" x-model="includeValidation"> Validation history</label>
             <label><input type="checkbox" x-model="includeAi"> AI suggestions</label>
             <label><input type="checkbox" x-model="includeAudit"> Audit log</label>
@@ -67,21 +67,30 @@
           </div>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <button @click="buildPayload()" class="bg-[#0053e2] text-white px-4 py-2 rounded-lg hover:bg-[#0039a6]">Preview Payload</button>
           <button @click="buildCurl()" class="bg-[#ffc220] text-gray-900 px-4 py-2 rounded-lg hover:bg-[#e6ad00]">Generate cURL</button>
+          <button @click="runExport()" class="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-800" :disabled="running">
+            <span x-show="!running">Run Export</span>
+            <span x-show="running">Running...</span>
+          </button>
+          <button @click="loadHistory()" class="bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-100">Refresh History</button>
         </div>
       </section>
 
       <aside class="bg-white rounded-xl border border-gray-200 p-6">
         <h2 class="text-xl font-bold mb-3">Export Health Check</h2>
         <ul class="space-y-2 text-sm text-gray-700">
-          <li>✅ Required fields included</li>
+          <li>✅ Required fields present</li>
           <li>✅ Coordinate policy: no negatives</li>
           <li>✅ Manifest required</li>
-          <li>⚠️ Critical validation blocks unless override</li>
+          <li>⚠️ Critical validation can block export</li>
         </ul>
-        <p class="text-xs text-gray-500 mt-4">Risk override must include reason for audit compliance.</p>
+        <p class="text-xs text-gray-500 mt-4">Risk override requires reason for audit compliance.</p>
+
+        <template x-if="resultMessage">
+          <div class="mt-4 p-3 rounded-lg" :class="resultOk ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'" x-text="resultMessage"></div>
+        </template>
       </aside>
     </div>
 
@@ -94,6 +103,49 @@
         <h3 class="font-semibold mb-2">cURL Command</h3>
         <pre class="text-xs overflow-auto" x-text="curlPreview"></pre>
       </div>
+    </section>
+
+    <section class="mt-6 bg-white rounded-xl border border-gray-200 p-6">
+      <h3 class="text-xl font-bold mb-3">Latest Export Result</h3>
+      <template x-if="latestResult">
+        <div class="text-sm space-y-1">
+          <div><strong>Export ID:</strong> <span x-text="latestResult.export_id"></span></div>
+          <div><strong>Manifest:</strong> <a class="text-[#0053e2] underline" :href="latestResult.manifest_path" target="_blank" x-text="latestResult.manifest_path"></a></div>
+          <div x-show="latestResult.package_path"><strong>ZIP:</strong> <a class="text-[#0053e2] underline" :href="latestResult.package_path" target="_blank" x-text="latestResult.package_path"></a></div>
+        </div>
+      </template>
+      <template x-if="!latestResult"><p class="text-gray-500">No exports run in this UI session yet.</p></template>
+    </section>
+
+    <section class="mt-6 bg-white rounded-xl border border-gray-200 p-6">
+      <h3 class="text-xl font-bold mb-3">Export History</h3>
+      <div class="overflow-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="p-2 text-left">Export ID</th>
+              <th class="p-2 text-left">Type</th>
+              <th class="p-2 text-left">Created</th>
+              <th class="p-2 text-left">Validation</th>
+              <th class="p-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="row in history" :key="row.export_id">
+              <tr class="border-t">
+                <td class="p-2" x-text="row.export_id"></td>
+                <td class="p-2" x-text="row.export_type"></td>
+                <td class="p-2" x-text="row.created_at"></td>
+                <td class="p-2" x-text="row.validation_score"></td>
+                <td class="p-2">
+                  <button class="text-[#0053e2] underline" @click="loadExportMeta(row.export_id)">Details</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+      <pre class="mt-4 bg-gray-900 text-gray-100 rounded p-3 text-xs overflow-auto" x-text="historyDetail"></pre>
     </section>
   </main>
 
@@ -112,6 +164,12 @@
         includeTransforms: true,
         payloadPreview: '{ }',
         curlPreview: '# generate payload first',
+        latestResult: null,
+        history: [],
+        historyDetail: '{ }',
+        running: false,
+        resultMessage: '',
+        resultOk: true,
         toggleFormat(fmt) {
           if (this.selectedFormats.includes(fmt)) {
             this.selectedFormats = this.selectedFormats.filter(x => x !== fmt)
@@ -131,13 +189,46 @@
             include_coordinate_transforms: this.includeTransforms
           }
         },
-        buildPayload() {
-          this.payloadPreview = JSON.stringify(this.payload(), null, 2)
-        },
+        buildPayload() { this.payloadPreview = JSON.stringify(this.payload(), null, 2) },
         buildCurl() {
           this.buildPayload()
-          this.curlPreview = `curl -X POST http://localhost:9010/api/exports/${this.exportType} \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(this.payload())}'`
-        }
+          this.curlPreview = `curl -X POST /ui-api/exports/${this.exportType} \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(this.payload())}'`
+        },
+        async runExport() {
+          this.resultMessage = ''
+          this.running = true
+          this.buildPayload()
+          try {
+            const res = await fetch(`/ui-api/exports/${this.exportType}`, {
+              method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.payload())
+            })
+            const body = await res.json()
+            if (!res.ok || body.blocked) {
+              this.resultOk = false
+              this.resultMessage = body.block_reason || body.detail || 'Export failed'
+            } else {
+              this.resultOk = true
+              this.resultMessage = `Export completed: ${body.export_id}`
+              this.latestResult = body
+              await this.loadHistory()
+            }
+          } catch (e) {
+            this.resultOk = false
+            this.resultMessage = `Export request failed: ${e}`
+          } finally {
+            this.running = false
+          }
+        },
+        async loadHistory() {
+          const res = await fetch('/ui-api/exports/history?limit=25')
+          this.history = await res.json()
+        },
+        async loadExportMeta(exportId) {
+          const res = await fetch(`/ui-api/exports/${exportId}`)
+          const body = await res.json()
+          this.historyDetail = JSON.stringify(body, null, 2)
+        },
+        async init() { await this.loadHistory(); this.buildPayload(); this.buildCurl() }
       }
     }
   </script>

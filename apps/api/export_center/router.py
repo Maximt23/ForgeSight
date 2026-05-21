@@ -63,6 +63,11 @@ def get_import_metadata(import_id: UUID):
     return match
 
 
+@router.get("/exports/history")
+def get_export_history(limit: int = 50):
+    return EXPORT_SERVICE.repo.list(limit=limit)
+
+
 @router.get("/exports/{export_id}/metadata")
 def get_export_metadata(export_id: str):
     record = EXPORT_SERVICE.repo.get(export_id)

@@ -2,9 +2,10 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pathlib import Path
 import logging
+import httpx
 
 from .config import settings
 
@@ -155,6 +156,106 @@ async def sectors(request: Request):
 @app.get("/export-center", response_class=HTMLResponse)
 async def export_center(request: Request):
     return templates.TemplateResponse(request=request, name="export_center.html", context={"request": request, "brand": BRAND})
+
+
+@app.get("/projects/{project_id}/design", response_class=HTMLResponse)
+async def project_design(request: Request, project_id: str):
+    return templates.TemplateResponse(
+        request=request,
+        name="design_workspace.html",
+        context={"request": request, "brand": BRAND, "project_id": project_id},
+    )
+
+
+# === UI -> CORE API BRIDGE ===
+
+@app.post("/ui-api/exports/{export_type}")
+async def ui_export_bridge(export_type: str, request: Request):
+    payload = await request.json()
+    url = f"{settings.CORE_API_BASE_URL}/api/exports/{export_type}"
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(url, json=payload)
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.get("/ui-api/exports/history")
+async def ui_export_history(limit: int = 25):
+    url = f"{settings.CORE_API_BASE_URL}/api/exports/history"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(url, params={"limit": limit})
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.get("/ui-api/exports/{export_id}")
+async def ui_export_metadata(export_id: str):
+    url = f"{settings.CORE_API_BASE_URL}/api/exports/{export_id}/metadata"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(url)
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.get("/ui-api/projects/{project_id}/devices")
+async def ui_project_devices(project_id: str, site_number: str):
+    url = f"{settings.CORE_API_BASE_URL}/api/v1/devices"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(url, params={"project_id": project_id, "site_number": site_number})
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.post("/ui-api/projects/{project_id}/devices")
+async def ui_create_device(project_id: str, request: Request):
+    payload = await request.json()
+    payload["project_id"] = project_id
+    url = f"{settings.CORE_API_BASE_URL}/api/v1/devices"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, json=payload)
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.get("/ui-api/build-status")
+async def ui_build_status():
+    return {
+        "platform": "ForgeSight / CadOwl / MAXILLM",
+        "directive": "zero-hallucination",
+        "modules": [
+            {"name": "Project Management", "status": "implemented"},
+            {"name": "Design Workspace", "status": "in_progress"},
+            {"name": "Interactive Canvas", "status": "in_progress"},
+            {"name": "Device Library", "status": "planned"},
+            {"name": "Device Families", "status": "planned"},
+            {"name": "Batch Import Center", "status": "implemented"},
+            {"name": "Batch Delete / Re-upload Engine", "status": "planned"},
+            {"name": "Validation Engine", "status": "implemented"},
+            {"name": "Metadata Engine", "status": "implemented"},
+            {"name": "Export Center", "status": "implemented"},
+            {"name": "Zone Engine", "status": "implemented"},
+            {"name": "Cable / Topology Engine", "status": "implemented"},
+            {"name": "Camera FOV / Coverage Engine", "status": "planned"},
+            {"name": "Coordinate / GIS Engine", "status": "implemented"},
+            {"name": "AI Design Command System", "status": "planned"},
+            {"name": "MAXILLM Design Intelligence", "status": "in_progress"},
+            {"name": "Event / Audit Log", "status": "implemented"},
+            {"name": "Revision / Rollback System", "status": "implemented"},
+            {"name": "API Layer", "status": "implemented"},
+            {"name": "Admin / Development Intelligence Layer", "status": "planned"},
+        ],
+        "note": "Modules marked planned are explicitly not complete.",
+    }
 
 
 # === API HEALTH CHECK ===
