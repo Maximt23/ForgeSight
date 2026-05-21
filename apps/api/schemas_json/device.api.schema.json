@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": ["id", "project_id", "site_number", "device_type", "name", "local_x", "local_y", "created_at", "updated_at"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "site_number": {"type": "string", "minLength": 1},
+    "device_type": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "local_x": {"type": "number"},
+    "local_y": {"type": "number"},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  }
+}

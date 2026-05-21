@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "required": ["id", "source_file_name", "source_file_hash", "mode", "status", "record_count", "created_at", "updated_at"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "source_file_name": {"type": "string", "minLength": 1},
+    "source_file_hash": {"type": "string", "minLength": 1},
+    "mode": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "minLength": 1},
+    "record_count": {"type": "integer"},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  }
+}

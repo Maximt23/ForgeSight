@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -109,10 +109,36 @@ class Cable(BaseEntity):
     cable_type: str
 
 
+class ImportBatchCreate(BaseModel):
+    source_file_name: str
+    source_file_hash: str
+    mode: Literal["merge", "overwrite", "append", "replace_batch"] = "merge"
+    records: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ImportBatch(BaseEntity):
+    source_file_name: str
+    source_file_hash: str
+    mode: str
+    status: Literal["uploaded", "validated", "committed"] = "uploaded"
+    record_count: int = 0
+
+
+class RollbackRequest(BaseModel):
+    snapshot_id: Optional[str] = None
+
+
+class RollbackResult(BaseModel):
+    restored_snapshot_id: str
+    restored_event_id: Optional[str] = None
+    restored_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class Event(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     event_type: str
     entity_type: str
     entity_id: UUID
     actor: str = "system"
+    metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)

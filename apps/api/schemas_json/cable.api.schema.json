@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "required": ["id", "project_id", "site_number", "source_device_id", "destination_device_id", "cable_type", "created_at", "updated_at"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "site_number": {"type": "string", "minLength": 1},
+    "source_device_id": {"type": "string", "minLength": 1},
+    "destination_device_id": {"type": "string", "minLength": 1},
+    "cable_type": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  }
+}

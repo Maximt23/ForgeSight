@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "required": ["id", "site_id", "name", "level", "created_at", "updated_at"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "site_id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "level": {"type": "integer"},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  }
+}

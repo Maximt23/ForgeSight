@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "required": ["id", "project_id", "floor_id", "zone_name", "zone_type", "created_at", "updated_at"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "floor_id": {"type": "string", "minLength": 1},
+    "zone_name": {"type": "string", "minLength": 1},
+    "zone_type": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  }
+}
