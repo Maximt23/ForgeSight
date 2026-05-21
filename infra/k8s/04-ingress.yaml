@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cadowl-api
+  namespace: cadowl
+  annotations:
+    # AI Innovation Lab uses these annotations for TLS + auth
+    cert-manager.io/cluster-issuer: walmart-internal-ca
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"  # for DXF/PDF uploads
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - cadowl.walmart.com  # update for your AI Lab subdomain
+      secretName: cadowl-tls
+  rules:
+    - host: cadowl.walmart.com  # update for your AI Lab subdomain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cadowl-api
+                port:
+                  number: 80

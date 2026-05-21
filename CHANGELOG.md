@@ -9,6 +9,43 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added — Production Hardening (2026-05-21)
+- **`packages/integrations/`** — first-class home for external system clients
+  - `doris` — async client with TTL cache, retry, pydantic-settings
+  - `saone` — async camera health client with bulk register
+  - `grafana` — async switch telemetry + camera-to-port diagnosis
+  - `axis` — Site Designer JSON importer with coverage polygons
+  - `gis` — OSM geocoding + building footprint + GPS mapping
+  - `master` — correlation bridge across all of the above
+  - 13 new tests, all green
+- **Containerization**
+  - Production multi-stage `Dockerfile` (non-root user, healthcheck, layer caching)
+  - `docker-compose.yml` with api + worker + postgres + redis
+  - Comprehensive `.dockerignore`
+- **`apps/worker/`** — first async worker (Arq + Redis)
+  - DXF parsing job (stub)
+  - Saone health sync job
+  - Grafana network sync job
+  - Master Bridge dashboard build job
+- **`apps/api/middleware.py`** — observability layer
+  - `X-Request-ID` generation + propagation
+  - Structured logging with request context
+  - Per-request timing
+  - `/metrics` endpoint (Prometheus)
+- **`apps/api/infrastructure_routes.py`** — HTTP endpoints for the master bridge
+  - `GET /api/v1/infrastructure/health/{store}` — Saone camera summary
+  - `GET /api/v1/infrastructure/network/{store}` — Grafana switch summary
+  - `GET /api/v1/infrastructure/diagnose/{store}/{ip}` — auto-diagnosis
+  - `POST /api/v1/infrastructure/dashboard/{store}` — full master view
+- **`infra/k8s/`** — Kubernetes manifests for AI Innovation Lab
+  - Namespace, ConfigMap, Secret template
+  - API deployment with HPA + PodDisruptionBudget
+  - Worker deployment
+  - Ingress with TLS + security headers
+- **`infra/deploy/ai-innovation-lab.md`** — full deployment guide
+- **`requirements.txt`** — pinned exact versions for reproducible builds
+- **`pytest.ini`** — standardized test configuration
+
 ### Added — Documentation Pass (2026-05-21)
 - Flagship `README.md` rewrite with full ecosystem overview
 - `docs/ECOSYSTEM.md` documenting CadOwl + MAXILLM + VIVE-SiteOwl-XR

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cadowl
+  labels:
+    app.kubernetes.io/name: cadowl
+    app.kubernetes.io/part-of: walmart-security-design
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cadowl-config
+  namespace: cadowl
+data:
+  API_PORT: "9010"
+  CADOWL_DATA_DIR: "/data"
+  LOG_LEVEL: "INFO"
+  DORIS_API_URL: "https://doris.walmart.com/api/v1"
+  SAONE_API_URL: "https://saone.walmart.com/api/v1"
+  GRAFANA_URL: "https://sagrafana.sbox.walmart.com"
+  GIS_NOMINATIM_URL: "https://nominatim.openstreetmap.org"
+  GIS_OVERPASS_URL: "https://overpass-api.de/api/interpreter"
+---
+# Secrets are loaded separately — DO NOT commit values!
+# Apply with:
+#   kubectl create secret generic cadowl-secrets -n cadowl \
+#     --from-literal=DORIS_API_KEY=xxx \
+#     --from-literal=SAONE_API_KEY=xxx \
+#     --from-literal=GRAFANA_API_KEY=xxx \
+#     --from-literal=WALMART_CLIENT_SECRET=xxx
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cadowl-secrets
+  namespace: cadowl
+type: Opaque
+stringData:
+  DORIS_API_KEY: "REPLACE_ME"
+  SAONE_API_KEY: "REPLACE_ME"
+  GRAFANA_API_KEY: "REPLACE_ME"
+  WALMART_CLIENT_SECRET: "REPLACE_ME"
+  DATABASE_URL: "postgresql+asyncpg://cadowl:REPLACE_ME@postgres:5432/cadowl"
+  REDIS_URL: "redis://redis:6379/0"
