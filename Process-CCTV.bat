@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 echo ========================================
 echo   CadOwl - CCTV
-echo   System: CCTV
+echo   Flow: Input (DWG) - Staging (DXF) - Output (CSV)
 echo ========================================
 echo.
 
@@ -14,14 +14,8 @@ if exist ".venv\Scripts\activate.bat" (
     call .venv\Scripts\activate.bat
 )
 
-set INPUT_CCTV=C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Input-CCTV
-set OUTPUT_CCTV=C:\Users\vn59j7j\OneDrive - Walmart Inc\Master Excel Pathing\CADtoSiteOwl\Output-CCTV
-
-echo Input:  %INPUT_CCTV%
-echo Output: %OUTPUT_CCTV%
-echo.
-
-python cad2siteowl_enhanced.py --input "%INPUT_CCTV%" --output "%OUTPUT_CCTV%" --system cctv
+REM Use system-aware processing (auto-detects folders)
+python cad2siteowl_enhanced.py --system cctv
 
 echo.
 echo ========================================

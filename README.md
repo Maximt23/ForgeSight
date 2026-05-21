@@ -17,7 +17,7 @@
 | **ForgeSight Vision** | Camera/FOV coverage engine | 🟡 Beta |
 | **ForgeSight Grid** | GIS/coordinates/zoning engine | ✅ Stable |
 | **ForgeSight Core** | API/data platform | ✅ Stable |
-| **ForgeSight AutoDesign** | ML design recommendation engine | 🔴 Alpha |
+| **ForgeSight AutoDesign** | ML recommendation engine | 🔴 Alpha |
 
 ---
 
@@ -90,15 +90,12 @@ forgesight serve --port 9010 --reload
 from forgesight.cad import DXFParser, DeviceDetector, SiteOwlExporter
 from forgesight.grid import CoordinateTransformer, Bounds
 
-# Parse CAD file
 parser = DXFParser("store_1234.dxf")
 entities = parser.extract_blocks()
 
-# Detect devices
 detector = DeviceDetector()
 devices = detector.detect(entities)
 
-# Transform coordinates
 bounds = Bounds.from_points([(d.x, d.y) for d in devices])
 transformer = CoordinateTransformer()
 transformer.set_bounds(bounds)
@@ -107,43 +104,28 @@ for device in devices:
     result = transformer.transform(device.x, device.y)
     print(f"{device.name}: ({result.site_x}, {result.site_y})")
 
-# Export to SiteOwl
 exporter = SiteOwlExporter(store_number="1234")
 exporter.export(devices, "output.csv")
 ```
 
 ---
 
-## 🏗️ Architecture
+## 🧠 Legacy Enhanced Converter Notes
 
+The legacy `cad2siteowl_enhanced.py` path remains supported for teams using cross-reference with FA/Intrusion Excel masters.
+
+```bash
+python cad2siteowl_enhanced.py
+python cad2siteowl_enhanced.py path/to/file.dxf --memory-db cadowl_memory.db
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     🔮 ForgeSight AI                             │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐               │
-│  │📐 CAD   │ │📱 Field │ │👁️ Vision│ │🗺️ Grid  │               │
-│  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘               │
-│       └───────────┴───────────┴───────────┘                     │
-│                         │                                        │
-│                         ▼                                        │
-│              ┌─────────────────────┐                            │
-│              │  ⚡ ForgeSight Core │                            │
-│              │    API Platform     │                            │
-│              └──────────┬──────────┘                            │
-│                         │                                        │
-│                         ▼                                        │
-│              ┌─────────────────────┐                            │
-│              │ 🧠 ForgeSight       │                            │
-│              │    AutoDesign (ML)  │                            │
-│              └─────────────────────┘                            │
-└─────────────────────────────────────────────────────────────────┘
-```
+
+It merges CAD coordinates with Excel naming/type metadata and falls back safely for unmatched rows.
 
 ---
 
 ## 📖 Documentation
 
-Full documentation is available in the [wiki](wiki/Home.md):
+Full docs in [wiki](wiki/Home.md):
 
 - [Quick Start](wiki/Quick-Start.md)
 - [ForgeSight CAD](wiki/ForgeSight-CAD.md)
@@ -158,16 +140,11 @@ Full documentation is available in the [wiki](wiki/Home.md):
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
-# Run tests
 uv run pytest
-
-# Run linting
 uv run ruff check .
-
-# Run type checking
 uv run mypy forgesight/
 ```
 
@@ -177,7 +154,7 @@ uv run mypy forgesight/
 
 Copyright © 2026 Walmart Inc. All rights reserved.
 
-Internal use only. See [LICENSE](LICENSE) for details.
+Internal use only. See [LICENSE](LICENSE).
 
 ---
 
