@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 def build_client(tmp_path):
     os.environ["CADOWL_JSONDB_DIR"] = str(tmp_path / "jsondb")
     os.environ["CADOWL_SCHEMA_DIR"] = str(Path("C:/MAXILLM/cadowl/apps/api/schemas_json"))
+    os.environ["CADOWL_DEV_MODE"] = "true"
 
     import apps.api.store as store_module
     import apps.api.exports.service as export_service_module
@@ -23,10 +24,21 @@ def build_client(tmp_path):
 
 
 def seed_project(client):
-    project = client.post('/api/v1/projects', json={'name': 'Export Program', 'code': 'EXP-001'}).json()
-    site = client.post('/api/v1/sites', json={'project_id': project['id'], 'site_number': '2996', 'name': 'Store 2996'}).json()
-    floor = client.post('/api/v1/floors', json={'site_id': site['id'], 'name': 'Main', 'level': 1}).json()
-    map_obj = client.post('/api/v1/maps', json={'floor_id': floor['id'], 'name': 'FP-1', 'source_type': 'dxf'}).json()
+    project_resp = client.post('/api/v1/projects', json={'name': 'Export Program', 'code': 'EXP-001'})
+    assert project_resp.status_code == 200, project_resp.text
+    project = project_resp.json()
+
+    site_resp = client.post('/api/v1/sites', json={'project_id': project['id'], 'site_number': '2996', 'name': 'Store 2996'})
+    assert site_resp.status_code == 200, site_resp.text
+    site = site_resp.json()
+
+    floor_resp = client.post('/api/v1/floors', json={'site_id': site['id'], 'name': 'Main', 'level': 1})
+    assert floor_resp.status_code == 200, floor_resp.text
+    floor = floor_resp.json()
+
+    map_resp = client.post('/api/v1/maps', json={'floor_id': floor['id'], 'name': 'FP-1', 'source_type': 'dxf'})
+    assert map_resp.status_code == 200, map_resp.text
+    map_obj = map_resp.json()
 
     for i in range(3):
         r = client.post(

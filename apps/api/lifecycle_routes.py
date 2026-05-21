@@ -2,14 +2,17 @@
 Lifecycle API Routes
 
 CRUD and workflow operations for sites and designs with lifecycle management.
+All routes require authentication and a specific permission. The mapping
+follows the Role/Permission model in `apps.api.auth`.
 """
 
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from .auth_deps import Permission, perm
 from .lifecycle import (
     Design, DesignCreate, DesignFilter, DesignStatus, DesignType,
     SiteExtended, SiteCreate, SiteFilter, SiteType,
@@ -17,7 +20,7 @@ from .lifecycle import (
     Priority, VendorStatus, DESIGN_STATUS_TRANSITIONS
 )
 
-router = APIRouter(prefix="/api/v1", tags=["lifecycle"])
+router = APIRouter(prefix="/api/v1/lifecycle", tags=["lifecycle"])
 
 # In-memory stores (replace with database in production)
 _sites: dict[UUID, SiteExtended] = {}
@@ -29,7 +32,7 @@ _sandboxes: dict[UUID, SandboxConfig] = {}
 # SITES
 # =============================================================================
 
-@router.post("/sites", response_model=SiteExtended)
+@router.post("/sites", response_model=SiteExtended, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def create_site(payload: SiteCreate):
     """Create a new site."""
     site = SiteExtended(
@@ -46,7 +49,7 @@ def create_site(payload: SiteCreate):
     return site
 
 
-@router.get("/sites", response_model=List[SiteExtended])
+@router.get("/sites", response_model=List[SiteExtended], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_sites(
     project_id: Optional[UUID] = None,
     site_type: Optional[SiteType] = None,
@@ -68,7 +71,7 @@ def list_sites(
     return results
 
 
-@router.get("/sites/by-type", response_model=SitesByType)
+@router.get("/sites/by-type", response_model=SitesByType, dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def get_sites_by_type(project_id: Optional[UUID] = None):
     """Get count of sites grouped by type."""
     sites = list(_sites.values())
@@ -84,7 +87,7 @@ def get_sites_by_type(project_id: Optional[UUID] = None):
     )
 
 
-@router.get("/sites/{site_id}", response_model=SiteExtended)
+@router.get("/sites/{site_id}", response_model=SiteExtended, dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def get_site(site_id: UUID):
     """Get a specific site."""
     if site_id not in _sites:
@@ -92,7 +95,7 @@ def get_site(site_id: UUID):
     return _sites[site_id]
 
 
-@router.patch("/sites/{site_id}/type")
+@router.patch("/sites/{site_id}/type", dependencies=[Depends(perm(Permission.SITE_TRANSITION))])
 def change_site_type(site_id: UUID, new_type: SiteType, changed_by: str = "system"):
     """Change site type (lifecycle transition)."""
     if site_id not in _sites:
@@ -123,7 +126,7 @@ def change_site_type(site_id: UUID, new_type: SiteType, changed_by: str = "syste
 # DESIGNS
 # =============================================================================
 
-@router.post("/designs", response_model=Design)
+@router.post("/designs", response_model=Design, dependencies=[Depends(perm(Permission.DESIGN_CREATE))])
 def create_design(payload: DesignCreate):
     """Create a new design."""
     design = Design(
@@ -138,7 +141,7 @@ def create_design(payload: DesignCreate):
     return design
 
 
-@router.get("/designs", response_model=List[Design])
+@router.get("/designs", response_model=List[Design], dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def list_designs(
     project_id: Optional[UUID] = None,
     site_id: Optional[UUID] = None,
@@ -167,7 +170,7 @@ def list_designs(
     return results
 
 
-@router.get("/designs/by-status", response_model=DesignsByStatus)
+@router.get("/designs/by-status", response_model=DesignsByStatus, dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def get_designs_by_status(project_id: Optional[UUID] = None, site_id: Optional[UUID] = None):
     """Get count of designs grouped by status."""
     designs = list(_designs.values())
@@ -190,7 +193,7 @@ def get_designs_by_status(project_id: Optional[UUID] = None, site_id: Optional[U
     )
 
 
-@router.get("/designs/{design_id}", response_model=Design)
+@router.get("/designs/{design_id}", response_model=Design, dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def get_design(design_id: UUID):
     """Get a specific design."""
     if design_id not in _designs:
@@ -198,7 +201,7 @@ def get_design(design_id: UUID):
     return _designs[design_id]
 
 
-@router.get("/designs/{design_id}/allowed-transitions")
+@router.get("/designs/{design_id}/allowed-transitions", dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def get_allowed_transitions(design_id: UUID):
     """Get allowed status transitions for a design."""
     if design_id not in _designs:
@@ -213,7 +216,7 @@ def get_allowed_transitions(design_id: UUID):
     }
 
 
-@router.patch("/designs/{design_id}/status")
+@router.patch("/designs/{design_id}/status", dependencies=[Depends(perm(Permission.DESIGN_EDIT))])
 def change_design_status(
     design_id: UUID, 
     new_status: DesignStatus, 
@@ -242,7 +245,7 @@ def change_design_status(
     }
 
 
-@router.patch("/designs/{design_id}/assign")
+@router.patch("/designs/{design_id}/assign", dependencies=[Depends(perm(Permission.DESIGN_EDIT))])
 def assign_design(design_id: UUID, assigned_to: str):
     """Assign design to a user."""
     if design_id not in _designs:
@@ -255,7 +258,7 @@ def assign_design(design_id: UUID, assigned_to: str):
     return {"success": True, "assigned_to": assigned_to}
 
 
-@router.patch("/designs/{design_id}/vendor")
+@router.patch("/designs/{design_id}/vendor", dependencies=[Depends(perm(Permission.DESIGN_EDIT))])
 def assign_vendor(design_id: UUID, vendor_id: UUID, vendor_status: VendorStatus = VendorStatus.ASSIGNED):
     """Assign vendor to a design."""
     if design_id not in _designs:
@@ -273,7 +276,7 @@ def assign_vendor(design_id: UUID, vendor_id: UUID, vendor_status: VendorStatus 
 # SANDBOX
 # =============================================================================
 
-@router.post("/sandbox/clone/{source_site_id}")
+@router.post("/sandbox/clone/{source_site_id}", dependencies=[Depends(perm(Permission.SANDBOX_CREATE))])
 def clone_to_sandbox(source_site_id: UUID, sandbox_name: str, expires_days: int = 30):
     """Clone a site to sandbox for experimentation."""
     if source_site_id not in _sites:
@@ -327,7 +330,7 @@ def clone_to_sandbox(source_site_id: UUID, sandbox_name: str, expires_days: int 
     }
 
 
-@router.post("/sandbox/template")
+@router.post("/sandbox/template", dependencies=[Depends(perm(Permission.SANDBOX_TEMPLATE))])
 def create_template(site_id: UUID, template_name: str):
     """Save a site as a reusable template."""
     if site_id not in _sites:
@@ -344,7 +347,7 @@ def create_template(site_id: UUID, template_name: str):
     return {"success": True, "template_name": template_name, "config_id": str(config.id)}
 
 
-@router.get("/sandbox/templates")
+@router.get("/sandbox/templates", dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def list_templates():
     """List available templates."""
     templates = [c for c in _sandboxes.values() if c.is_template]
@@ -362,7 +365,7 @@ def list_templates():
 # DASHBOARD
 # =============================================================================
 
-@router.get("/dashboard/stats", response_model=DashboardStats)
+@router.get("/dashboard/stats", response_model=DashboardStats, dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def get_dashboard_stats(project_id: Optional[UUID] = None):
     """Get aggregated stats for dashboard."""
     sites = list(_sites.values())

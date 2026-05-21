@@ -9,6 +9,16 @@ from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
 from .auth_deps import Permission, perm
 from .infrastructure_routes import router as infrastructure_router
 from .middleware import install_metrics_endpoint, install_middleware
+
+try:
+    from .lifecycle_routes import router as lifecycle_router
+except Exception:
+    lifecycle_router = None
+
+try:
+    from .maxillm_routes import router as maxillm_router
+except Exception:
+    maxillm_router = None
 from .schemas import (
     AsdpxBatchStageRequest,
     AsdpxBatchStageResponse,
@@ -50,6 +60,12 @@ install_metrics_endpoint(app)
 
 # Mount the infrastructure router (Saone + Grafana + Master Bridge).
 app.include_router(infrastructure_router)
+
+# Mount optional routers when available.
+if lifecycle_router is not None:
+    app.include_router(lifecycle_router)
+if maxillm_router is not None:
+    app.include_router(maxillm_router)
 
 
 def _safe_write(operation):

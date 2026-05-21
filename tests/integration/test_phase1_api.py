@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 def build_client(tmp_path):
     os.environ["CADOWL_JSONDB_DIR"] = str(tmp_path / "jsondb")
     os.environ["CADOWL_SCHEMA_DIR"] = str(Path("C:/MAXILLM/cadowl/apps/api/schemas_json"))
+    os.environ["CADOWL_DEV_MODE"] = "true"
 
     import apps.api.store as store_module
     import apps.api.main as main_module
