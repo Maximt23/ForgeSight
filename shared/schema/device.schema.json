@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gecgithub01.walmart.com/vn59j7j/CadOwl/shared/schema/device.schema.json",
+  "title": "Device",
+  "description": "Cross-platform device definition for CadOwl + VIVE XR",
+  "type": "object",
+  "required": ["id", "type", "coordinates", "source"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique device identifier",
+      "pattern": "^[A-Z0-9_-]+$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Device category",
+      "enum": ["camera", "speaker", "access_point", "sensor", "beacon", "other"]
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Specific device model/variant",
+      "examples": ["dome_camera", "ptz_camera", "speaker_ceiling", "ap_indoor"]
+    },
+    "coordinates": {
+      "type": "object",
+      "description": "Location in SiteOwl normalized space",
+      "required": ["x", "y"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized X (0=left, 1=right)"
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized Y (0=top, 1=bottom)"
+        },
+        "z": {
+          "type": "number",
+          "description": "Elevation in feet above floor"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "description": "Original coordinate source",
+      "required": ["system", "original_coords"],
+      "properties": {
+        "system": {
+          "type": "string",
+          "enum": ["cad", "vive", "manual", "siteowl_import"]
+        },
+        "original_coords": {
+          "type": "object",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" }
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in coordinate accuracy"
+        }
+      }
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Device-specific attributes",
+      "properties": {
+        "name": { "type": "string" },
+        "model": { "type": "string" },
+        "manufacturer": { "type": "string" },
+        "coverage_radius_ft": { "type": "number" },
+        "fov_degrees": { "type": "number" },
+        "rotation_degrees": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "matching": {
+      "type": "object",
+      "description": "Cross-source device matching info",
+      "properties": {
+        "matched_to": {
+          "type": "string",
+          "description": "ID of device from another source this matches"
+        },
+        "match_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "match_method": {
+          "type": "string",
+          "enum": ["proximity", "attribute", "manual", "unmatched"]
+        }
+      }
+    }
+  }
+}

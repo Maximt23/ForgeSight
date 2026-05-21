@@ -1,19 +1,34 @@
+import importlib
+import json
+import os
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
-from apps.api.main import app
+
+def build_client(tmp_path):
+    os.environ["CADOWL_JSONDB_DIR"] = str(tmp_path / "jsondb")
+
+    import apps.api.store as store_module
+    import apps.api.main as main_module
+
+    importlib.reload(store_module)
+    importlib.reload(main_module)
+
+    return TestClient(main_module.app), Path(os.environ["CADOWL_JSONDB_DIR"])
 
 
-client = TestClient(app)
-
-
-def test_health():
+def test_health(tmp_path):
+    client, _ = build_client(tmp_path)
     r = client.get('/api/v1/health')
     assert r.status_code == 200
     body = r.json()
     assert body['status'] == 'ok'
 
 
-def test_core_entity_flow_with_events():
+def test_core_entity_flow_with_events_and_json_persistence(tmp_path):
+    client, jsondb_path = build_client(tmp_path)
+
     project = client.post('/api/v1/projects', json={'name': 'Program Alpha', 'code': 'PA-001'}).json()
     site = client.post(
         '/api/v1/sites',
@@ -75,3 +90,17 @@ def test_core_entity_flow_with_events():
     assert len(events) >= 8
     assert any(e['entity_type'] == 'project' for e in events)
     assert any(e['entity_type'] == 'cable' for e in events)
+
+    # Verify JSON persistence files were written
+    expected_files = [
+        "projects.json", "sites.json", "floors.json", "maps.json",
+        "devices.json", "zones.json", "cables.json", "events.json",
+    ]
+    for name in expected_files:
+        file_path = jsondb_path / name
+        assert file_path.exists()
+        payload = json.loads(file_path.read_text(encoding="utf-8"))
+        assert isinstance(payload, list)
+
+    projects_rows = json.loads((jsondb_path / "projects.json").read_text(encoding="utf-8"))
+    assert len(projects_rows) == 1

@@ -26,7 +26,22 @@ app = FastAPI(title="CadOwl Phase 1 API", version="0.1.0")
 
 @app.get("/api/v1/health")
 def health():
-    return {"status": "ok", "service": "cadowl-api", "phase": "phase1-skeleton"}
+    return {
+        "status": "ok",
+        "service": "cadowl-api",
+        "phase": "phase1-json-store",
+        "tracked_entities": {
+            "projects": len(STORE.projects),
+            "sites": len(STORE.sites),
+            "floors": len(STORE.floors),
+            "maps": len(STORE.maps),
+            "devices": len(STORE.devices),
+            "zones": len(STORE.zones),
+            "cables": len(STORE.cables),
+            "events": len(STORE.events),
+        },
+        "storage": str(STORE.base_dir),
+    }
 
 
 @app.post("/api/v1/projects", response_model=Project)

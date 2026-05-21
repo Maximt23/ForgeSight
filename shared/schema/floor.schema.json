@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gecgithub01.walmart.com/vn59j7j/CadOwl/shared/schema/floor.schema.json",
+  "title": "Floor",
+  "description": "Floor plan definition with coordinate system metadata",
+  "type": "object",
+  "required": ["id", "name", "bounds", "devices"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique floor identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable floor name",
+      "examples": ["Store 3508 - Main Floor", "DC 6043 - Mezzanine"]
+    },
+    "bounds": {
+      "type": "object",
+      "description": "Physical floor boundaries",
+      "required": ["width_ft", "height_ft"],
+      "properties": {
+        "width_ft": {
+          "type": "number",
+          "description": "Floor width in feet"
+        },
+        "height_ft": {
+          "type": "number",
+          "description": "Floor height/depth in feet"
+        },
+        "origin": {
+          "type": "string",
+          "enum": ["top-left", "bottom-left", "center"],
+          "default": "top-left"
+        }
+      }
+    },
+    "coordinate_systems": {
+      "type": "object",
+      "description": "Registered coordinate systems for this floor",
+      "properties": {
+        "cad": {
+          "type": "object",
+          "properties": {
+            "min_x": { "type": "number" },
+            "min_y": { "type": "number" },
+            "max_x": { "type": "number" },
+            "max_y": { "type": "number" },
+            "units": {
+              "type": "string",
+              "enum": ["feet", "inches", "meters", "drawing_units"]
+            },
+            "rotation_deg": {
+              "type": "number",
+              "default": 0
+            },
+            "source_file": { "type": "string" }
+          }
+        },
+        "vive": {
+          "type": "object",
+          "properties": {
+            "room_center_x": { "type": "number" },
+            "room_center_y": { "type": "number" },
+            "room_center_z": { "type": "number" },
+            "rotation_deg": { "type": "number" },
+            "scale": { "type": "number", "default": 1.0 },
+            "calibration_date": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "calibration_points": {
+      "type": "array",
+      "description": "Known reference points for cross-system alignment",
+      "items": {
+        "type": "object",
+        "required": ["label", "siteowl"],
+        "properties": {
+          "label": { "type": "string" },
+          "siteowl": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          },
+          "cad": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          },
+          "vive": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "devices": {
+      "type": "array",
+      "description": "All devices on this floor",
+      "items": {
+        "$ref": "device.schema.json"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "store_number": { "type": "string" },
+        "facility_type": {
+          "type": "string",
+          "enum": ["store", "dc", "fc", "office", "other"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": { "type": "string" }
+      }
+    }
+  }
+}

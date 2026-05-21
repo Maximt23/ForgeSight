@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Cross-platform test vectors for coordinate transformation validation",
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2026-05-21T09:21:24Z",
+    "tolerance": 0.001,
+    "notes": "All implementations must pass these tests within tolerance"
+  },
+  "test_suites": [
+    {
+      "suite": "basic_transform",
+      "description": "Basic coordinate normalization",
+      "config": {
+        "source_system": "cad",
+        "bounds": { "min_x": 0, "min_y": 0, "max_x": 100, "max_y": 80 },
+        "flip_y": true,
+        "rotation_deg": 0
+      },
+      "cases": [
+        {
+          "id": "basic_001",
+          "description": "Origin point",
+          "input": { "x": 0, "y": 0 },
+          "expected": { "x": 0.0, "y": 1.0 }
+        },
+        {
+          "id": "basic_002",
+          "description": "Top-right corner",
+          "input": { "x": 100, "y": 80 },
+          "expected": { "x": 1.0, "y": 0.0 }
+        },
+        {
+          "id": "basic_003",
+          "description": "Center point",
+          "input": { "x": 50, "y": 40 },
+          "expected": { "x": 0.5, "y": 0.5 }
+        },
+        {
+          "id": "basic_004",
+          "description": "Quarter points",
+          "input": { "x": 25, "y": 20 },
+          "expected": { "x": 0.25, "y": 0.75 }
+        },
+        {
+          "id": "basic_005",
+          "description": "Arbitrary point",
+          "input": { "x": 73.5, "y": 52.8 },
+          "expected": { "x": 0.735, "y": 0.34 }
+        }
+      ]
+    },
+    {
+      "suite": "with_offset",
+      "description": "Non-zero origin bounds",
+      "config": {
+        "source_system": "cad",
+        "bounds": { "min_x": -50, "min_y": -40, "max_x": 50, "max_y": 40 },
+        "flip_y": true,
+        "rotation_deg": 0
+      },
+      "cases": [
+        {
+          "id": "offset_001",
+          "description": "Center (source origin)",
+          "input": { "x": 0, "y": 0 },
+          "expected": { "x": 0.5, "y": 0.5 }
+        },
+        {
+          "id": "offset_002",
+          "description": "Min corner",
+          "input": { "x": -50, "y": -40 },
+          "expected": { "x": 0.0, "y": 1.0 }
+        },
+        {
+          "id": "offset_003",
+          "description": "Max corner",
+          "input": { "x": 50, "y": 40 },
+          "expected": { "x": 1.0, "y": 0.0 }
+        }
+      ]
+    },
+    {
+      "suite": "with_rotation",
+      "description": "90-degree rotation",
+      "config": {
+        "source_system": "cad",
+        "bounds": { "min_x": 0, "min_y": 0, "max_x": 100, "max_y": 100 },
+        "flip_y": true,
+        "rotation_deg": 90
+      },
+      "cases": [
+        {
+          "id": "rot_001",
+          "description": "Origin after 90° CCW",
+          "input": { "x": 0, "y": 0 },
+          "expected": { "x": 0.0, "y": 0.0 }
+        },
+        {
+          "id": "rot_002",
+          "description": "Top-right after 90° CCW",
+          "input": { "x": 100, "y": 0 },
+          "expected": { "x": 0.0, "y": 1.0 }
+        },
+        {
+          "id": "rot_003",
+          "description": "Center unchanged",
+          "input": { "x": 50, "y": 50 },
+          "expected": { "x": 0.5, "y": 0.5 }
+        }
+      ]
+    },
+    {
+      "suite": "vive_transform",
+      "description": "VIVE XR room-scale coordinates",
+      "config": {
+        "source_system": "vive",
+        "bounds": { "min_x": -2.5, "min_y": -2.0, "max_x": 2.5, "max_y": 2.0 },
+        "flip_y": true,
+        "rotation_deg": 0,
+        "vive_specific": {
+          "room_scale": 1.0,
+          "tracking_origin": "floor"
+        }
+      },
+      "cases": [
+        {
+          "id": "vive_001",
+          "description": "Room center",
+          "input": { "x": 0, "y": 0, "z": 1.5 },
+          "expected": { "x": 0.5, "y": 0.5 }
+        },
+        {
+          "id": "vive_002",
+          "description": "Near corner",
+          "input": { "x": -2.5, "y": -2.0, "z": 0 },
+          "expected": { "x": 0.0, "y": 1.0 }
+        },
+        {
+          "id": "vive_003",
+          "description": "Far corner",
+          "input": { "x": 2.5, "y": 2.0, "z": 0 },
+          "expected": { "x": 1.0, "y": 0.0 }
+        }
+      ]
+    },
+    {
+      "suite": "inverse_transform",
+      "description": "SiteOwl back to source coordinates",
+      "config": {
+        "source_system": "cad",
+        "bounds": { "min_x": 0, "min_y": 0, "max_x": 200, "max_y": 150 },
+        "flip_y": true,
+        "rotation_deg": 0
+      },
+      "cases": [
+        {
+          "id": "inv_001",
+          "description": "Round-trip origin",
+          "input": { "x": 0.0, "y": 1.0 },
+          "expected": { "x": 0, "y": 0 }
+        },
+        {
+          "id": "inv_002",
+          "description": "Round-trip center",
+          "input": { "x": 0.5, "y": 0.5 },
+          "expected": { "x": 100, "y": 75 }
+        },
+        {
+          "id": "inv_003",
+          "description": "Round-trip arbitrary",
+          "input": { "x": 0.333, "y": 0.666 },
+          "expected": { "x": 66.6, "y": 50.1 }
+        }
+      ]
+    }
+  ],
+  "edge_cases": [
+    {
+      "id": "edge_001",
+      "description": "Out of bounds - should clamp or warn",
+      "config": {
+        "bounds": { "min_x": 0, "min_y": 0, "max_x": 100, "max_y": 100 }
+      },
+      "input": { "x": 150, "y": -20 },
+      "expected_behavior": "clamp_or_warn"
+    },
+    {
+      "id": "edge_002",
+      "description": "Zero-size bounds - should error",
+      "config": {
+        "bounds": { "min_x": 50, "min_y": 50, "max_x": 50, "max_y": 50 }
+      },
+      "input": { "x": 50, "y": 50 },
+      "expected_behavior": "error"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gecgithub01.walmart.com/vn59j7j/CadOwl/shared/schema/transform.schema.json",
+  "title": "TransformConfiguration",
+  "description": "Coordinate transformation parameters",
+  "type": "object",
+  "required": ["source_system", "target_system", "bounds"],
+  "properties": {
+    "source_system": {
+      "type": "string",
+      "enum": ["cad", "vive", "manual"],
+      "description": "Input coordinate system"
+    },
+    "target_system": {
+      "type": "string",
+      "enum": ["siteowl"],
+      "description": "Output coordinate system (always SiteOwl)"
+    },
+    "bounds": {
+      "type": "object",
+      "description": "Source coordinate system bounds",
+      "required": ["min_x", "min_y", "max_x", "max_y"],
+      "properties": {
+        "min_x": { "type": "number" },
+        "min_y": { "type": "number" },
+        "max_x": { "type": "number" },
+        "max_y": { "type": "number" }
+      }
+    },
+    "transformations": {
+      "type": "array",
+      "description": "Ordered list of transformations to apply",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["translate", "scale", "rotate", "flip", "affine"]
+          },
+          "params": {
+            "type": "object",
+            "description": "Transformation-specific parameters"
+          }
+        }
+      }
+    },
+    "flip_y": {
+      "type": "boolean",
+      "default": true,
+      "description": "Flip Y axis (CAD Y-up to SiteOwl Y-down)"
+    },
+    "rotation_deg": {
+      "type": "number",
+      "default": 0,
+      "description": "Rotation in degrees (counterclockwise)"
+    },
+    "offset": {
+      "type": "object",
+      "description": "Additional offset after transformation",
+      "properties": {
+        "x": { "type": "number", "default": 0 },
+        "y": { "type": "number", "default": 0 }
+      }
+    },
+    "calibration": {
+      "type": "object",
+      "description": "Manual calibration using reference points",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "method": {
+          "type": "string",
+          "enum": ["affine", "rigid", "similarity"],
+          "default": "affine"
+        },
+        "reference_points": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["source", "target"],
+            "properties": {
+              "label": { "type": "string" },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "x": { "type": "number" },
+                  "y": { "type": "number" }
+                }
+              },
+              "target": {
+                "type": "object",
+                "properties": {
+                  "x": { "type": "number" },
+                  "y": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "vive_specific": {
+      "type": "object",
+      "description": "VIVE XR-specific transformation settings",
+      "properties": {
+        "room_scale": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Meters to floor-units scale factor"
+        },
+        "height_offset_m": {
+          "type": "number",
+          "default": 0,
+          "description": "Height offset in meters"
+        },
+        "tracking_origin": {
+          "type": "string",
+          "enum": ["floor", "device", "stage"],
+          "default": "floor"
+        }
+      }
+    }
+  }
+}

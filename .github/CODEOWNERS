@@ -1,0 +1,8 @@
+# Default ownership
+* @vn59j7j
+
+# Core platform areas
+/apps/api/ @vn59j7j
+/packages/ @vn59j7j
+/docs/ @vn59j7j
+/tests/ @vn59j7j

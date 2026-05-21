@@ -9,17 +9,23 @@ This repository is transitioning from a CAD-to-SiteOwl converter utility into a 
 - Added architecture/spec documentation under `docs/`
 - Added monorepo folder layout for apps/packages/data/tests/infra
 - Added Phase 1 API skeleton under `apps/api`
-- Added integration tests for API contracts and event logging
+- Added JSON-backed storage under `data/jsondb`
+- Added immutable event tracking for every write
+- Added integration tests for API contracts, persistence, and event logging
+- Added GitHub repo governance templates/workflow under `.github/`
 
 ## Repository Structure
 ```text
 CadOwl/
+  .github/
   apps/
     api/
     worker/
     web/
+    mobile/
   packages/
   data/
+    jsondb/
   docs/
   tests/
   scripts/
@@ -50,5 +56,6 @@ Legacy DXF conversion and SiteOwl CSV workflows remain present in root scripts a
 ## Important Engineering Rules
 - No silent success when failures occur
 - Every mutating API action must emit event logs
+- All core records are stored as JSON in `data/jsondb`
 - Destructive workflows require rollback plans
 - Keep adapters (CSV/CAD/PDF/SiteOwl) decoupled from internal domain model
