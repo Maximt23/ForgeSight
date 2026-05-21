@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦉 CadOwl - Modern Survey Coordination</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .owl-icon {
+            font-size: 4rem;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Landing Page -->
+    <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div class="max-w-4xl w-full">
+            <!-- Hero Card -->
+            <div class="glass rounded-3xl p-12 text-center text-white shadow-2xl">
+                <div class="owl-icon">🦉</div>
+                
+                <h1 class="text-6xl font-bold mb-4">
+                    CadOwl
+                </h1>
+                
+                <p class="text-2xl mb-8 text-white/90">
+                    Modern Survey Coordination Platform
+                </p>
+                
+                <p class="text-lg mb-12 text-white/80 max-w-2xl mx-auto">
+                    The beautiful, AI-powered alternative to SiteOwl Relay Coordinator.
+                    Coordinate CCTV, Fire, and Intrusion surveys with style.
+                </p>
+                
+                <div class="flex gap-4 justify-center">
+                    <a href="/dashboard" 
+                       class="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-purple-50 transition shadow-lg">
+                        Launch Dashboard →
+                    </a>
+                    
+                    <button onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})"
+                            class="glass px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition">
+                        See Features
+                    </button>
+                </div>
+                
+                <div class="mt-12 grid grid-cols-3 gap-8 text-center">
+                    <div>
+                        <div class="text-4xl font-bold">⚡</div>
+                        <div class="text-sm mt-2 text-white/80">Lightning Fast</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold">🤖</div>
+                        <div class="text-sm mt-2 text-white/80">AI Powered</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold">✨</div>
+                        <div class="text-sm mt-2 text-white/80">Beautiful UI</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="mt-8 grid grid-cols-2 gap-4">
+                <div class="glass rounded-2xl p-6 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm text-white/70">System Status</div>
+                            <div class="text-2xl font-bold mt-1">Online</div>
+                        </div>
+                        <div class="text-4xl">✅</div>
+                    </div>
+                </div>
+                
+                <div class="glass rounded-2xl p-6 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm text-white/70">AI Model</div>
+                            <div class="text-2xl font-bold mt-1">MAXILLM</div>
+                        </div>
+                        <div class="text-4xl">🧠</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div id="features" class="bg-white py-20">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-4">Why CadOwl Beats SiteOwl</h2>
+            <p class="text-gray-600 text-center mb-16 max-w-2xl mx-auto">
+                Everything you loved about SiteOwl, but faster, prettier, and smarter.
+            </p>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">🎨</div>
+                    <h3 class="text-xl font-bold mb-2">Modern UI</h3>
+                    <p class="text-gray-700">
+                        No more clunky forms. Beautiful, intuitive interface built with Tailwind CSS.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">🤖</div>
+                    <h3 class="text-xl font-bold mb-2">AI Assistant</h3>
+                    <p class="text-gray-700">
+                        MAXILLM auto-fills surveys based on previous data. Just ask!
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">🗺️</div>
+                    <h3 class="text-xl font-bold mb-2">Visual Floor Plans</h3>
+                    <p class="text-gray-700">
+                        Drag-and-drop equipment on actual floor plans. Export to PDF.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">📸</div>
+                    <h3 class="text-xl font-bold mb-2">Photo Management</h3>
+                    <p class="text-gray-700">
+                        Upload, organize, and auto-tag survey photos. Export to reports.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold mb-2">Lightning Fast</h3>
+                    <p class="text-gray-700">
+                        HTMX-powered. No page reloads, instant updates, offline capable.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-8">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-xl font-bold mb-2">Knowledge Graph</h3>
+                    <p class="text-gray-700">
+                        Powered by your BaselinePrinter graph. Instant access to store history.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mt-16 text-center">
+                <a href="/dashboard" 
+                   class="bg-purple-600 text-white px-12 py-4 rounded-xl font-semibold text-lg hover:bg-purple-700 transition shadow-lg inline-block">
+                    Get Started Now →
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="bg-gray-900 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                🦉 CadOwl - Built with 🐕 Code Puppy | Powered by MAXILLM
+            </p>
+            <p class="text-gray-500 text-sm mt-2">
+                Internal Walmart use only
+            </p>
+        </div>
+    </div>
+</body>
+</html>

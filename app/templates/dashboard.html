@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" x-data="{ darkMode: false, sidebarOpen: true }">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CadOwl</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside x-show="sidebarOpen" 
+               class="w-64 bg-gradient-to-b from-purple-600 to-purple-800 text-white flex-shrink-0">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <span class="text-4xl">🦉</span>
+                    <div>
+                        <h1 class="text-2xl font-bold">CadOwl</h1>
+                        <p class="text-purple-200 text-sm">v1.0.0</p>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="space-y-2">
+                    <a href="/dashboard" class="block px-4 py-3 rounded-lg bg-white/20 font-semibold">
+                        📊 Dashboard
+                    </a>
+                    <a href="/surveys" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        📝 Surveys
+                    </a>
+                    <a href="/stores" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        🏪 Stores
+                    </a>
+                    <a href="/floorplans" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        🗺️ Floor Plans
+                    </a>
+                    <a href="/equipment" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        📦 Equipment
+                    </a>
+                    <a href="/vendors" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        🤝 Vendors
+                    </a>
+                    <a href="/photos" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        📸 Photos
+                    </a>
+                    <a href="/reports" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        📄 Reports
+                    </a>
+                    <hr class="my-4 border-white/20">
+                    <a href="/ai-assistant" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        🤖 AI Assistant
+                    </a>
+                    <a href="/settings" class="block px-4 py-3 rounded-lg hover:bg-white/10 transition">
+                        ⚙️ Settings
+                    </a>
+                </nav>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button @click="sidebarOpen = !sidebarOpen" 
+                                class="p-2 hover:bg-gray-100 rounded-lg">
+                            ☰
+                        </button>
+                        <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <!-- Search -->
+                        <input type="search" 
+                               placeholder="Search stores, surveys..." 
+                               class="px-4 py-2 border border-gray-300 rounded-lg w-64 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        
+                        <!-- Notifications -->
+                        <button class="relative p-2 hover:bg-gray-100 rounded-lg">
+                            🔔
+                            <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full"></span>
+                        </button>
+                        
+                        <!-- User -->
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                M
+                            </div>
+                            <span class="font-semibold">Maxim</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Dashboard Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-gray-600">Total Stores</div>
+                            <div class="text-3xl">🏪</div>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-800" hx-get="/api/stats/stores" hx-trigger="load">
+                            <div class="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+                        </div>
+                        <div class="text-sm text-green-600 mt-2">+5 this month</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-gray-600">Active Surveys</div>
+                            <div class="text-3xl">📝</div>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-800">
+                            <div class="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+                        </div>
+                        <div class="text-sm text-blue-600 mt-2">12 in progress</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-gray-600">Pending Reviews</div>
+                            <div class="text-3xl">⏳</div>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-800">
+                            <div class="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+                        </div>
+                        <div class="text-sm text-orange-600 mt-2">Needs attention</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-gray-600">Vendors</div>
+                            <div class="text-3xl">🤝</div>
+                        </div>
+                        <div class="text-3xl font-bold text-gray-800">
+                            <div class="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-2">All active</div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl shadow-lg p-8 mb-8 text-white">
+                    <h3 class="text-2xl font-bold mb-4">Quick Actions</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button class="bg-white/20 hover:bg-white/30 transition rounded-lg p-4 text-center">
+                            <div class="text-3xl mb-2">➕</div>
+                            <div class="font-semibold">New Survey</div>
+                        </button>
+                        <button class="bg-white/20 hover:bg-white/30 transition rounded-lg p-4 text-center">
+                            <div class="text-3xl mb-2">🗺️</div>
+                            <div class="font-semibold">Floor Plan</div>
+                        </button>
+                        <button class="bg-white/20 hover:bg-white/30 transition rounded-lg p-4 text-center">
+                            <div class="text-3xl mb-2">📸</div>
+                            <div class="font-semibold">Upload Photos</div>
+                        </button>
+                        <button class="bg-white/20 hover:bg-white/30 transition rounded-lg p-4 text-center">
+                            <div class="text-3xl mb-2">🤖</div>
+                            <div class="font-semibold">Ask AI</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Two Column Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Surveys -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <h3 class="text-xl font-bold mb-4">Recent Surveys</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-2xl">
+                                    📹
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold">Store 1018 - CCTV Survey</div>
+                                    <div class="text-sm text-gray-600">CEI - In Progress</div>
+                                </div>
+                                <div class="text-sm text-gray-500">2 days ago</div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-2xl">
+                                    🔥
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold">Store 2047 - Fire Alarm</div>
+                                    <div class="text-sm text-gray-600">SimplexGrinnell - Completed</div>
+                                </div>
+                                <div class="text-sm text-gray-500">1 week ago</div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center text-2xl">
+                                    🚨
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold">Store 3728 - Intrusion</div>
+                                    <div class="text-sm text-gray-600">Pending Review</div>
+                                </div>
+                                <div class="text-sm text-gray-500">3 days ago</div>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full mt-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg font-semibold transition">
+                            View All Surveys →
+                        </button>
+                    </div>
+                    
+                    <!-- AI Assistant Preview -->
+                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-sm p-6 border border-purple-200">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="text-3xl">🤖</div>
+                            <h3 class="text-xl font-bold">AI Assistant</h3>
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">ONLINE</span>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                            <div class="text-sm text-gray-600 mb-2">Try asking:</div>
+                            <div class="space-y-2 text-sm">
+                                <div class="bg-gray-50 p-2 rounded">💬 "Fill survey for store 1018"</div>
+                                <div class="bg-gray-50 p-2 rounded">💬 "Which vendor should do CCTV at store 2047?"</div>
+                                <div class="bg-gray-50 p-2 rounded">💬 "Show me equipment for store 3728"</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" 
+                                   placeholder="Ask AI anything..." 
+                                   class="flex-1 px-4 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold">
+                                Ask
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Knowledge Graph Stats -->
+                <div class="mt-6 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold">Knowledge Graph Status</h3>
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">Connected</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-4 text-center">
+                        <div>
+                            <div class="text-3xl font-bold text-purple-600">750+</div>
+                            <div class="text-sm text-gray-600 mt-1">Stores</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-blue-600">2.5K+</div>
+                            <div class="text-sm text-gray-600 mt-1">Equipment</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-green-600">45</div>
+                            <div class="text-sm text-gray-600 mt-1">Vendors</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-orange-600">1.2K+</div>
+                            <div class="text-sm text-gray-600 mt-1">Surveys</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        // HTMX event logging (dev only)
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            console.log('HTMX updated:', evt.detail.target);
+        });
+    </script>
+</body>
+</html>

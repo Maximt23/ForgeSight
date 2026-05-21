@@ -1,0 +1,40 @@
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+
+# Templates
+jinja2>=3.1.0
+python-multipart>=0.0.6
+
+# AI Integration
+ollama>=0.1.0
+httpx>=0.26.0
+
+# PDF Generation
+reportlab>=4.0.0
+pillow>=10.2.0
+
+# Excel
+openpyxl>=3.1.2
+pandas>=2.2.0
+
+# Utils
+python-dotenv>=1.0.0
+loguru>=0.7.2
+click>=8.1.7
+
+# Image Processing
+pillow>=10.2.0
+
+# Email (optional)
+aiosmtplib>=3.0.0
+
+# Dev
+pytest>=7.4.0
+ruff>=0.1.0
+mypy>=1.8.0
