@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 
 from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
 from .auth_deps import Permission, perm
@@ -105,6 +105,37 @@ def health():
         "storage": str(STORE.base_dir),
         "ledger": str(STORE.ledger_path),
         "snapshots": str(STORE.snapshots_path),
+    }
+
+
+@app.post("/api/forgesearch/classify", dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
+async def forgesearch_classify(request: Request):
+    payload = await request.json()
+    text = str(payload.get("input", "")).strip().lower()
+
+    intent = "query"
+    if any(k in text for k in ("delete", "remove", "clear", "reset")):
+        intent = "destructive"
+    elif any(k in text for k in ("validate", "audit", "check", "compliance")):
+        intent = "validate"
+    elif any(k in text for k in ("move", "rename", "connect", "reassign")):
+        intent = "modify"
+    elif any(k in text for k in ("export", "csv", "pdf", "siteowl")):
+        intent = "export"
+    elif any(k in text for k in ("create", "add", "generate", "design", "draw")):
+        intent = "generate"
+
+    return {"intent": intent, "confidence": 0.72, "source": "rules-v1"}
+
+
+@app.post("/api/forgesearch/execute", dependencies=[Depends(perm(Permission.DESIGN_CREATE))])
+async def forgesearch_execute(request: Request):
+    payload = await request.json()
+    return {
+        "status": "accepted",
+        "summary": "Execution preview generated.",
+        "intent": payload.get("intent", "query"),
+        "results": payload.get("results", []),
     }
 
 

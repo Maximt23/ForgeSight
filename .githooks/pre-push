@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+# ForgeSight safety gate for every push (manual or autopush).
+# Block push on safety violations.
+
+if [ "${FORGESIGHT_SAFETY_DISABLE:-0}" = "1" ]; then
+  echo "[pre-push] safety gate disabled by FORGESIGHT_SAFETY_DISABLE=1"
+  exit 0
+fi
+
+MODE="${FORGESIGHT_SAFETY_MODE:-full}"
+echo "[pre-push] running safety gate (mode=$MODE)"
+
+python -m scripts.safety.prepush_gate --mode "$MODE"
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+  echo "[pre-push] blocked by safety gate"
+  exit $STATUS
+fi
+
+echo "[pre-push] passed"
+exit 0

@@ -188,6 +188,39 @@ async def project_design(request: Request, project_id: str):
     )
 
 
+# === FORGESEARCH API (design baseline contract) ===
+
+@app.post("/api/forgesearch/classify")
+async def forgesearch_classify(request: Request):
+    payload = await request.json()
+    text = str(payload.get("input", "")).strip().lower()
+
+    intent = "query"
+    if any(k in text for k in ("delete", "remove", "clear", "reset")):
+        intent = "destructive"
+    elif any(k in text for k in ("validate", "audit", "check", "compliance")):
+        intent = "validate"
+    elif any(k in text for k in ("move", "rename", "connect", "reassign")):
+        intent = "modify"
+    elif any(k in text for k in ("export", "csv", "pdf", "siteowl")):
+        intent = "export"
+    elif any(k in text for k in ("create", "add", "generate", "design", "draw")):
+        intent = "generate"
+
+    return {"intent": intent, "confidence": 0.72, "source": "rules-v1"}
+
+
+@app.post("/api/forgesearch/execute")
+async def forgesearch_execute(request: Request):
+    payload = await request.json()
+    return {
+        "status": "accepted",
+        "summary": "Execution preview generated.",
+        "intent": payload.get("intent", "query"),
+        "results": payload.get("results", []),
+    }
+
+
 # === UI -> CORE API BRIDGE ===
 
 @app.post("/ui-api/exports/{export_type}")
