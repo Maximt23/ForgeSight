@@ -3,9 +3,10 @@ from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 
 from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
+from .auth_deps import Permission, perm
 from .infrastructure_routes import router as infrastructure_router
 from .middleware import install_metrics_endpoint, install_middleware
 from .schemas import (
@@ -36,8 +37,11 @@ from .schemas import (
     ZoneCreate,
 )
 from .store import STORE
+from .exports.router import router as export_router
 
-app = FastAPI(title="CadOwl Phase 2 API", version="0.2.1")
+app = FastAPI(title="CadOwl Phase 2 API", version="0.3.0")
+
+app.include_router(export_router)
 
 # Production hardening: structured logging + request IDs + metrics endpoint.
 # Safe to call multiple times; idempotent.
@@ -78,23 +82,23 @@ def health():
     }
 
 
-@app.post("/api/v1/projects", response_model=Project)
+@app.post("/api/v1/projects", response_model=Project, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def create_project(payload: ProjectCreate):
     return _safe_write(lambda: STORE.add_project(Project(name=payload.name, code=payload.code)))
 
 
-@app.get("/api/v1/projects", response_model=list[Project])
+@app.get("/api/v1/projects", response_model=list[Project], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_projects():
     return list(STORE.projects.values())
 
 
-@app.post("/api/v1/sites", response_model=Site)
+@app.post("/api/v1/sites", response_model=Site, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def create_site(payload: SiteCreate):
     model = Site(project_id=payload.project_id, site_number=payload.site_number, name=payload.name)
     return _safe_write(lambda: STORE.add_site(model))
 
 
-@app.get("/api/v1/sites", response_model=list[Site])
+@app.get("/api/v1/sites", response_model=list[Site], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_sites(project_id: Optional[UUID] = None):
     items = list(STORE.sites.values())
     if project_id:
@@ -102,13 +106,13 @@ def list_sites(project_id: Optional[UUID] = None):
     return items
 
 
-@app.post("/api/v1/floors", response_model=Floor)
+@app.post("/api/v1/floors", response_model=Floor, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def create_floor(payload: FloorCreate):
     model = Floor(site_id=payload.site_id, name=payload.name, level=payload.level)
     return _safe_write(lambda: STORE.add_floor(model))
 
 
-@app.get("/api/v1/floors", response_model=list[Floor])
+@app.get("/api/v1/floors", response_model=list[Floor], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_floors(site_id: Optional[UUID] = None):
     items = list(STORE.floors.values())
     if site_id:
@@ -116,13 +120,13 @@ def list_floors(site_id: Optional[UUID] = None):
     return items
 
 
-@app.post("/api/v1/maps", response_model=MapModel)
+@app.post("/api/v1/maps", response_model=MapModel, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def create_map(payload: MapCreate):
     model = MapModel(floor_id=payload.floor_id, name=payload.name, source_type=payload.source_type)
     return _safe_write(lambda: STORE.add_map(model))
 
 
-@app.get("/api/v1/maps", response_model=list[MapModel])
+@app.get("/api/v1/maps", response_model=list[MapModel], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_maps(floor_id: Optional[UUID] = None):
     items = list(STORE.maps.values())
     if floor_id:
@@ -130,7 +134,7 @@ def list_maps(floor_id: Optional[UUID] = None):
     return items
 
 
-@app.post("/api/v1/devices", response_model=Device)
+@app.post("/api/v1/devices", response_model=Device, dependencies=[Depends(perm(Permission.DESIGN_CREATE))])
 def create_device(payload: DeviceCreate):
     model = Device(
         project_id=payload.project_id,
@@ -145,7 +149,7 @@ def create_device(payload: DeviceCreate):
     return _safe_write(lambda: STORE.add_device(model))
 
 
-@app.get("/api/v1/devices", response_model=list[Device])
+@app.get("/api/v1/devices", response_model=list[Device], dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def list_devices(project_id: Optional[UUID] = None, site_number: Optional[str] = None):
     items = list(STORE.devices.values())
     if project_id:
@@ -155,7 +159,7 @@ def list_devices(project_id: Optional[UUID] = None, site_number: Optional[str] =
     return items
 
 
-@app.post("/api/v1/zones", response_model=Zone)
+@app.post("/api/v1/zones", response_model=Zone, dependencies=[Depends(perm(Permission.DESIGN_CREATE))])
 def create_zone(payload: ZoneCreate):
     model = Zone(
         project_id=payload.project_id,
@@ -166,7 +170,7 @@ def create_zone(payload: ZoneCreate):
     return _safe_write(lambda: STORE.add_zone(model))
 
 
-@app.get("/api/v1/zones", response_model=list[Zone])
+@app.get("/api/v1/zones", response_model=list[Zone], dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def list_zones(project_id: Optional[UUID] = None, floor_id: Optional[UUID] = None):
     items = list(STORE.zones.values())
     if project_id:
@@ -176,7 +180,7 @@ def list_zones(project_id: Optional[UUID] = None, floor_id: Optional[UUID] = Non
     return items
 
 
-@app.post("/api/v1/cables", response_model=Cable)
+@app.post("/api/v1/cables", response_model=Cable, dependencies=[Depends(perm(Permission.DESIGN_CREATE))])
 def create_cable(payload: CableCreate):
     model = Cable(
         project_id=payload.project_id,
@@ -188,7 +192,7 @@ def create_cable(payload: CableCreate):
     return _safe_write(lambda: STORE.add_cable(model))
 
 
-@app.get("/api/v1/cables", response_model=list[Cable])
+@app.get("/api/v1/cables", response_model=list[Cable], dependencies=[Depends(perm(Permission.DESIGN_VIEW))])
 def list_cables(project_id: Optional[UUID] = None, site_number: Optional[str] = None):
     items = list(STORE.cables.values())
     if project_id:
@@ -198,7 +202,7 @@ def list_cables(project_id: Optional[UUID] = None, site_number: Optional[str] = 
     return items
 
 
-@app.post("/api/v1/import/batch", response_model=ImportBatch)
+@app.post("/api/v1/import/batch", response_model=ImportBatch, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def create_import_batch(payload: ImportBatchCreate, idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key")):
     if not idempotency_key:
         raise HTTPException(status_code=400, detail="Idempotency-Key header is required for import batch writes")
@@ -224,12 +228,12 @@ def create_import_batch(payload: ImportBatchCreate, idempotency_key: Optional[st
     )
 
 
-@app.get("/api/v1/import/batches", response_model=list[ImportBatch])
+@app.get("/api/v1/import/batches", response_model=list[ImportBatch], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_import_batches():
     return list(STORE.import_batches.values())
 
 
-@app.post("/api/v1/import/asdpx/preview", response_model=AsdpxPreviewResponse)
+@app.post("/api/v1/import/asdpx/preview", response_model=AsdpxPreviewResponse, dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def preview_asdpx(payload: AsdpxPreviewRequest):
     src = payload.source_path.strip()
     if not src.lower().endswith(".asdpx"):
@@ -259,7 +263,7 @@ def preview_asdpx(payload: AsdpxPreviewRequest):
     )
 
 
-@app.post("/api/v1/import/asdpx/batch", response_model=AsdpxBatchStageResponse)
+@app.post("/api/v1/import/asdpx/batch", response_model=AsdpxBatchStageResponse, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def stage_asdpx_batch(
     payload: AsdpxBatchStageRequest,
     idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
@@ -297,7 +301,7 @@ def stage_asdpx_batch(
     return AsdpxBatchStageResponse(batch=ImportBatch.model_validate(result["batch"]), staged_row_count=result["staged_row_count"])
 
 
-@app.post("/api/v1/import/{batch_id}/commit", response_model=ImportBatchCommitResponse)
+@app.post("/api/v1/import/{batch_id}/commit", response_model=ImportBatchCommitResponse, dependencies=[Depends(perm(Permission.SITE_CREATE))])
 def commit_batch(batch_id: UUID, payload: ImportBatchCommitRequest):
     result = _safe_write(
         lambda: STORE.commit_import_batch(
@@ -312,17 +316,17 @@ def commit_batch(batch_id: UUID, payload: ImportBatchCommitRequest):
     return ImportBatchCommitResponse.model_validate(result)
 
 
-@app.get("/api/v1/events")
+@app.get("/api/v1/events", dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_events():
     return STORE.events
 
 
-@app.get("/api/v1/revisions/snapshots")
+@app.get("/api/v1/revisions/snapshots", dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_snapshots():
     return STORE.list_snapshots()
 
 
-@app.post("/api/v1/revisions/rollback", response_model=RollbackResult)
+@app.post("/api/v1/revisions/rollback", response_model=RollbackResult, dependencies=[Depends(perm(Permission.ADMIN_SETTINGS))])
 def rollback(payload: RollbackRequest):
     if not payload.snapshot_id:
         raise HTTPException(status_code=400, detail="snapshot_id is required")
