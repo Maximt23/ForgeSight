@@ -8,6 +8,8 @@
     "source_device_id": {"type": "string", "minLength": 1},
     "destination_device_id": {"type": "string", "minLength": 1},
     "cable_type": {"type": "string", "minLength": 1},
+    "path_points": {"type": "array"},
+    "estimated_length": {"type": "number"},
     "created_at": {"type": "string", "minLength": 1},
     "updated_at": {"type": "string", "minLength": 1}
   }

@@ -227,6 +227,54 @@ async def ui_create_device(project_id: str, request: Request):
         return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
 
 
+@app.get("/ui-api/projects/{project_id}/zones")
+async def ui_project_zones(project_id: str, floor_id: str):
+    url = f"{settings.CORE_API_BASE_URL}/api/v1/zones"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(url, params={"project_id": project_id, "floor_id": floor_id})
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.post("/ui-api/projects/{project_id}/zones")
+async def ui_create_zone(project_id: str, request: Request):
+    payload = await request.json()
+    payload["project_id"] = project_id
+    url = f"{settings.CORE_API_BASE_URL}/api/v1/zones"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, json=payload)
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.get("/ui-api/projects/{project_id}/cables")
+async def ui_project_cables(project_id: str, site_number: str):
+    url = f"{settings.CORE_API_BASE_URL}/api/v1/cables"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(url, params={"project_id": project_id, "site_number": site_number})
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
+@app.post("/ui-api/projects/{project_id}/cables")
+async def ui_create_cable(project_id: str, request: Request):
+    payload = await request.json()
+    payload["project_id"] = project_id
+    url = f"{settings.CORE_API_BASE_URL}/api/v1/cables"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, json=payload)
+        return JSONResponse(status_code=response.status_code, content=response.json())
+    except Exception as exc:
+        return JSONResponse(status_code=502, content={"detail": f"Core API unavailable: {exc}"})
+
+
 @app.get("/ui-api/build-status")
 async def ui_build_status():
     return {

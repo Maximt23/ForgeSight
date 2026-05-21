@@ -9,38 +9,73 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
-  <main class="max-w-7xl mx-auto p-6 md:p-8">
-    <div class="flex items-center justify-between mb-6">
+  <main class="max-w-7xl mx-auto p-6 md:p-8 space-y-6">
+    <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold">Design Workspace</h1>
-        <p class="text-gray-600">Project <code class="bg-gray-100 px-1 rounded">{{ project_id }}</code> • Real canvas placement persisted to API.</p>
+        <p class="text-gray-600">Project <code class="bg-gray-100 px-1 rounded">{{ project_id }}</code> • real devices/zones/cables persisted via API.</p>
       </div>
       <a href="/dashboard" class="px-4 py-2 rounded-lg bg-[#0053e2] text-white hover:bg-[#0039a6]">← Dashboard</a>
     </div>
 
-    <section class="grid lg:grid-cols-4 gap-6">
-      <div class="lg:col-span-3 bg-white rounded-xl border border-gray-200 p-4">
-        <div class="flex items-center gap-2 mb-3">
-          <label class="text-sm font-semibold">Site #</label>
-          <input x-model="siteNumber" class="border rounded px-2 py-1 text-sm w-28">
-          <label class="text-sm font-semibold ml-2">Device Type</label>
-          <input x-model="deviceType" class="border rounded px-2 py-1 text-sm w-32">
-          <button @click="refreshDevices()" class="ml-auto border px-3 py-1 rounded text-sm">Refresh</button>
-        </div>
-        <div class="border border-gray-300 rounded-lg overflow-hidden bg-white">
-          <canvas id="designCanvas" width="960" height="540" class="w-full h-auto cursor-crosshair" @click="placeDevice($event)"></canvas>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">Click canvas to place device. Coordinates saved in 0..100 range and rendered back from API.</p>
+    <section class="bg-white rounded-xl border border-gray-200 p-4 grid lg:grid-cols-4 gap-3 text-sm">
+      <label>Site #<input x-model="siteNumber" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>Floor ID (UUID)<input x-model="floorId" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>Device Type<input x-model="deviceType" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>FOV° (camera)<input type="number" x-model.number="fovDegrees" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>FOV Range<input type="number" x-model.number="fovRange" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>Zone Name<input x-model="zoneName" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>Zone Type<input x-model="zoneType" class="mt-1 border rounded px-2 py-1 w-full"></label>
+      <label>Cable Type<input x-model="cableType" class="mt-1 border rounded px-2 py-1 w-full"></label>
+    </section>
+
+    <section class="bg-white rounded-xl border border-gray-200 p-4">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <button @click="mode='device'" :class="btnClass('device')" class="px-3 py-1 rounded">Place Device</button>
+        <button @click="startZone()" :class="btnClass('zone')" class="px-3 py-1 rounded">Draw Zone</button>
+        <button @click="startCable()" :class="btnClass('cable')" class="px-3 py-1 rounded">Draw Cable Path</button>
+        <button @click="saveZone()" class="px-3 py-1 rounded border">Save Zone</button>
+        <button @click="saveCable()" class="px-3 py-1 rounded border">Save Cable</button>
+        <button @click="resetDraft()" class="px-3 py-1 rounded border">Reset Draft</button>
+        <button @click="refreshAll()" class="ml-auto px-3 py-1 rounded border">Refresh All</button>
       </div>
 
-      <aside class="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 class="font-bold mb-2">Placement Log</h2>
-        <div class="text-xs text-gray-700 space-y-1 max-h-[460px] overflow-auto">
-          <template x-for="line in logs" :key="line">
-            <div x-text="line"></div>
-          </template>
+      <div class="grid md:grid-cols-2 gap-3 mb-3 text-sm">
+        <label>From Device
+          <select x-model="cableSourceId" class="mt-1 border rounded px-2 py-1 w-full">
+            <option value="">Select source</option>
+            <template x-for="d in devices" :key="d.id"><option :value="d.id" x-text="`${d.name} (${d.id.slice(0,8)})`"></option></template>
+          </select>
+        </label>
+        <label>To Device
+          <select x-model="cableDestId" class="mt-1 border rounded px-2 py-1 w-full">
+            <option value="">Select destination</option>
+            <template x-for="d in devices" :key="d.id + '-dest'"><option :value="d.id" x-text="`${d.name} (${d.id.slice(0,8)})`"></option></template>
+          </select>
+        </label>
+      </div>
+
+      <div class="border border-gray-300 rounded-lg overflow-hidden bg-white">
+        <canvas id="designCanvas" width="1120" height="620" class="w-full h-auto cursor-crosshair" @click="onCanvasClick($event)" @dblclick="onCanvasDoubleClick($event)"></canvas>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Modes: device click = create device, zone clicks = polygon points (double-click closes), cable clicks = path points.</p>
+    </section>
+
+    <section class="grid lg:grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <h2 class="font-bold mb-2">Design Summary</h2>
+        <ul class="text-sm text-gray-700 space-y-1">
+          <li>Devices: <strong x-text="devices.length"></strong></li>
+          <li>Zones: <strong x-text="zones.length"></strong></li>
+          <li>Cables: <strong x-text="cables.length"></strong></li>
+        </ul>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <h2 class="font-bold mb-2">Event Log</h2>
+        <div class="text-xs text-gray-700 space-y-1 max-h-48 overflow-auto">
+          <template x-for="line in logs" :key="line"><div x-text="line"></div></template>
         </div>
-      </aside>
+      </div>
     </section>
   </main>
 
@@ -49,75 +84,193 @@
       return {
         projectId: '{{ project_id }}',
         siteNumber: '2996',
+        floorId: '',
         deviceType: 'camera',
-        logs: [],
+        fovDegrees: 90,
+        fovRange: 18,
+        zoneName: 'Coverage Zone',
+        zoneType: 'security',
+        cableType: 'cat6',
+        mode: 'device',
         devices: [],
-        ctx: null,
+        zones: [],
+        cables: [],
+        zoneDraft: [],
+        cableDraft: [],
+        cableSourceId: '',
+        cableDestId: '',
+        logs: [],
         canvas: null,
+        ctx: null,
+
         init() {
           this.canvas = document.getElementById('designCanvas')
           this.ctx = this.canvas.getContext('2d')
-          this.refreshDevices()
+          this.refreshAll()
+        },
+        btnClass(target) {
+          return this.mode === target ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'
         },
         log(msg) {
           this.logs.unshift(`${new Date().toLocaleTimeString()} - ${msg}`)
-          this.logs = this.logs.slice(0, 80)
+          this.logs = this.logs.slice(0, 100)
         },
-        draw() {
-          const w = this.canvas.width, h = this.canvas.height
-          this.ctx.clearRect(0, 0, w, h)
-          this.ctx.fillStyle = '#ffffff'
-          this.ctx.fillRect(0, 0, w, h)
-          this.ctx.strokeStyle = '#d1d5db'
-          this.ctx.strokeRect(0, 0, w, h)
-
-          for (let i = 1; i < 10; i++) {
-            this.ctx.strokeStyle = '#f3f4f6'
-            this.ctx.beginPath(); this.ctx.moveTo((w/10)*i, 0); this.ctx.lineTo((w/10)*i, h); this.ctx.stroke()
-            this.ctx.beginPath(); this.ctx.moveTo(0, (h/10)*i); this.ctx.lineTo(w, (h/10)*i); this.ctx.stroke()
+        clamp(v) { return Math.max(0, Math.min(100, v)) },
+        toLocal(event) {
+          const r = this.canvas.getBoundingClientRect()
+          return {
+            x: this.clamp(((event.clientX - r.left) / r.width) * 100),
+            y: this.clamp(((event.clientY - r.top) / r.height) * 100)
           }
+        },
+        toCanvas(pt) {
+          return { x: (this.clamp(pt.x) / 100) * this.canvas.width, y: (this.clamp(pt.y) / 100) * this.canvas.height }
+        },
 
-          this.devices.forEach(d => {
-            const x = Math.max(0, Math.min(100, d.local_x)) * (w / 100)
-            const y = Math.max(0, Math.min(100, d.local_y)) * (h / 100)
-            this.ctx.fillStyle = '#0053e2'
-            this.ctx.beginPath(); this.ctx.arc(x, y, 5, 0, Math.PI * 2); this.ctx.fill()
-          })
+        async refreshAll() {
+          await Promise.all([this.refreshDevices(), this.refreshZones(), this.refreshCables()])
+          this.draw()
         },
         async refreshDevices() {
           const res = await fetch(`/ui-api/projects/${this.projectId}/devices?site_number=${encodeURIComponent(this.siteNumber)}`)
-          const body = await res.json()
-          this.devices = Array.isArray(body) ? body : []
-          this.draw()
-          this.log(`Loaded ${this.devices.length} devices for site ${this.siteNumber}`)
+          this.devices = res.ok ? await res.json() : []
         },
-        toLocal(event) {
-          const rect = this.canvas.getBoundingClientRect()
-          const x = ((event.clientX - rect.left) / rect.width) * 100
-          const y = ((event.clientY - rect.top) / rect.height) * 100
-          return { x: Math.max(0, x), y: Math.max(0, y) }
+        async refreshZones() {
+          if (!this.floorId) { this.zones = []; return }
+          const res = await fetch(`/ui-api/projects/${this.projectId}/zones?floor_id=${encodeURIComponent(this.floorId)}`)
+          this.zones = res.ok ? await res.json() : []
         },
-        async placeDevice(event) {
+        async refreshCables() {
+          const res = await fetch(`/ui-api/projects/${this.projectId}/cables?site_number=${encodeURIComponent(this.siteNumber)}`)
+          this.cables = res.ok ? await res.json() : []
+        },
+
+        async onCanvasClick(event) {
           const pt = this.toLocal(event)
+          if (this.mode === 'device') return this.createDevice(pt)
+          if (this.mode === 'zone') { this.zoneDraft.push(pt); this.draw(); this.log(`Zone point ${this.zoneDraft.length} @ (${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`) }
+          if (this.mode === 'cable') { this.cableDraft.push(pt); this.draw(); this.log(`Cable point ${this.cableDraft.length} @ (${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`) }
+        },
+        onCanvasDoubleClick() {
+          if (this.mode === 'zone' && this.zoneDraft.length >= 3) this.log('Zone draft closed. Click Save Zone to persist.')
+          if (this.mode === 'cable' && this.cableDraft.length >= 2) this.log('Cable draft closed. Click Save Cable to persist.')
+        },
+
+        async createDevice(pt) {
+          const isCamera = this.deviceType.toLowerCase().includes('camera')
           const payload = {
             site_number: this.siteNumber,
+            floor_id: this.floorId || null,
             device_type: this.deviceType,
             name: `${this.deviceType.toUpperCase()}-${Date.now().toString().slice(-5)}`,
             local_x: Number(pt.x.toFixed(2)),
-            local_y: Number(pt.y.toFixed(2))
+            local_y: Number(pt.y.toFixed(2)),
+            fov_degrees: isCamera ? this.fovDegrees : null,
+            fov_range: isCamera ? this.fovRange : null,
           }
-          const res = await fetch(`/ui-api/projects/${this.projectId}/devices`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-          })
+          const res = await fetch(`/ui-api/projects/${this.projectId}/devices`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
           const body = await res.json()
-          if (res.ok) {
-            this.log(`Placed ${body.name} at (${body.local_x}, ${body.local_y})`)
-            await this.refreshDevices()
-          } else {
-            this.log(`Failed to place device: ${body.detail || 'unknown error'}`)
+          if (!res.ok) return this.log(`Device create failed: ${body.detail || 'unknown error'}`)
+          this.log(`Created ${body.name}`)
+          await this.refreshDevices(); this.draw()
+        },
+
+        startZone() { this.mode = 'zone'; this.zoneDraft = []; this.cableDraft = [] },
+        startCable() { this.mode = 'cable'; this.cableDraft = []; this.zoneDraft = [] },
+        resetDraft() { this.zoneDraft = []; this.cableDraft = []; this.draw(); this.log('Draft cleared') },
+
+        async saveZone() {
+          if (!this.floorId) return this.log('Zone save blocked: floor_id is required')
+          if (this.zoneDraft.length < 3) return this.log('Zone save blocked: need at least 3 points')
+          const payload = { floor_id: this.floorId, zone_name: this.zoneName, zone_type: this.zoneType, points: this.zoneDraft.map(p => ({x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2))})) }
+          const res = await fetch(`/ui-api/projects/${this.projectId}/zones`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+          const body = await res.json()
+          if (!res.ok) return this.log(`Zone save failed: ${body.detail || 'unknown error'}`)
+          this.log(`Zone saved: ${body.zone_name}`)
+          this.zoneDraft = []
+          await this.refreshZones(); this.draw()
+        },
+
+        polyLen(points) {
+          let len = 0
+          for (let i = 1; i < points.length; i++) {
+            const dx = points[i].x - points[i-1].x, dy = points[i].y - points[i-1].y
+            len += Math.sqrt(dx*dx + dy*dy)
           }
+          return len
+        },
+        async saveCable() {
+          if (!this.cableSourceId || !this.cableDestId) return this.log('Cable save blocked: select source + destination')
+          if (this.cableSourceId === this.cableDestId) return this.log('Cable save blocked: source and destination cannot match')
+          if (this.cableDraft.length < 2) return this.log('Cable save blocked: need at least 2 path points')
+          const payload = {
+            site_number: this.siteNumber,
+            source_device_id: this.cableSourceId,
+            destination_device_id: this.cableDestId,
+            cable_type: this.cableType,
+            path_points: this.cableDraft.map(p => ({x: Number(p.x.toFixed(2)), y: Number(p.y.toFixed(2))})),
+            estimated_length: Number(this.polyLen(this.cableDraft).toFixed(2)),
+          }
+          const res = await fetch(`/ui-api/projects/${this.projectId}/cables`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+          const body = await res.json()
+          if (!res.ok) return this.log(`Cable save failed: ${body.detail || 'unknown error'}`)
+          this.log(`Cable saved: ${body.cable_type} (${payload.estimated_length})`)
+          this.cableDraft = []
+          await this.refreshCables(); this.draw()
+        },
+
+        drawZonePoly(points, colorFill, colorLine) {
+          if (!points || points.length < 2) return
+          this.ctx.beginPath()
+          const p0 = this.toCanvas(points[0]); this.ctx.moveTo(p0.x, p0.y)
+          for (let i = 1; i < points.length; i++) { const p = this.toCanvas(points[i]); this.ctx.lineTo(p.x, p.y) }
+          this.ctx.closePath()
+          this.ctx.fillStyle = colorFill; this.ctx.fill()
+          this.ctx.strokeStyle = colorLine; this.ctx.lineWidth = 1.5; this.ctx.stroke()
+        },
+        drawLine(points, color) {
+          if (!points || points.length < 2) return
+          this.ctx.beginPath()
+          const p0 = this.toCanvas(points[0]); this.ctx.moveTo(p0.x, p0.y)
+          for (let i = 1; i < points.length; i++) { const p = this.toCanvas(points[i]); this.ctx.lineTo(p.x, p.y) }
+          this.ctx.strokeStyle = color; this.ctx.lineWidth = 2; this.ctx.stroke()
+        },
+        drawFov(device) {
+          if (!device.fov_degrees || !device.fov_range) return
+          const center = this.toCanvas({x: device.local_x, y: device.local_y})
+          const radius = (this.clamp(device.fov_range) / 100) * this.canvas.width
+          const half = (device.fov_degrees * Math.PI / 180) / 2
+          const start = -half, end = half
+          this.ctx.beginPath(); this.ctx.moveTo(center.x, center.y)
+          this.ctx.arc(center.x, center.y, radius, start, end)
+          this.ctx.closePath()
+          this.ctx.fillStyle = 'rgba(0, 83, 226, 0.12)'
+          this.ctx.fill()
+        },
+
+        draw() {
+          const w = this.canvas.width, h = this.canvas.height
+          this.ctx.clearRect(0, 0, w, h)
+          this.ctx.fillStyle = '#fff'; this.ctx.fillRect(0, 0, w, h)
+          this.ctx.strokeStyle = '#e5e7eb'; this.ctx.strokeRect(0, 0, w, h)
+          for (let i=1;i<20;i++) {
+            this.ctx.strokeStyle = '#f3f4f6'
+            this.ctx.beginPath(); this.ctx.moveTo((w/20)*i,0); this.ctx.lineTo((w/20)*i,h); this.ctx.stroke()
+            this.ctx.beginPath(); this.ctx.moveTo(0,(h/20)*i); this.ctx.lineTo(w,(h/20)*i); this.ctx.stroke()
+          }
+
+          this.zones.forEach(z => this.drawZonePoly(z.points || [], 'rgba(255,194,32,0.15)', 'rgba(153,82,19,0.8)'))
+          this.cables.forEach(c => this.drawLine(c.path_points || [], '#2a8703'))
+
+          if (this.zoneDraft.length >= 2) this.drawZonePoly(this.zoneDraft, 'rgba(0,83,226,0.08)', 'rgba(0,83,226,0.9)')
+          if (this.cableDraft.length >= 2) this.drawLine(this.cableDraft, '#ea1100')
+
+          this.devices.forEach(d => {
+            this.drawFov(d)
+            const p = this.toCanvas({x: d.local_x, y: d.local_y})
+            this.ctx.fillStyle = '#0053e2'; this.ctx.beginPath(); this.ctx.arc(p.x, p.y, 5, 0, Math.PI*2); this.ctx.fill()
+            this.ctx.fillStyle = '#111827'; this.ctx.font = '10px sans-serif'; this.ctx.fillText(d.name || d.device_type, p.x + 7, p.y - 7)
+          })
         }
       }
     }

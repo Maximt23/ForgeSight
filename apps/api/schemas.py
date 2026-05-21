@@ -130,8 +130,68 @@ class ImportBatch(BaseEntity):
     source_file_name: str
     source_file_hash: str
     mode: str
-    status: Literal["uploaded", "validated", "committed"] = "uploaded"
+    status: Literal["uploaded", "validated", "committed", "quarantined", "reuploaded", "reverted"] = "uploaded"
     record_count: int = 0
+
+
+class ImportBatchValidationIssue(BaseModel):
+    row_index: int
+    field: str
+    message: str
+
+
+class ImportBatchValidateResponse(BaseModel):
+    batch_id: UUID
+    total_rows: int
+    valid_rows: int
+    quarantined_rows: int
+    health_score: float
+    status: str
+    issues: list[ImportBatchValidationIssue] = Field(default_factory=list)
+
+
+class ImportDeletePreviewRequest(BaseModel):
+    batch_id: UUID
+
+
+class ImportDeletePreviewResponse(BaseModel):
+    batch_id: UUID
+    deletable_device_ids: list[UUID] = Field(default_factory=list)
+    deletable_count: int = 0
+
+
+class ImportDeleteCommitRequest(BaseModel):
+    actor: str = "system"
+
+
+class ImportDeleteCommitResponse(BaseModel):
+    batch_id: UUID
+    deleted_devices: int
+    rollback_snapshot_id: str
+    status: str
+
+
+class ImportReuploadPreviewRequest(BaseModel):
+    records: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ImportReuploadPreviewResponse(BaseModel):
+    batch_id: UUID
+    old_count: int
+    new_count: int
+    added_count: int
+    removed_count: int
+
+
+class ImportReuploadCommitRequest(BaseModel):
+    source_file_hash: str
+    records: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ImportReuploadCommitResponse(BaseModel):
+    batch_id: UUID
+    record_count: int
+    status: str
 
 
 class AsdpxPreviewRequest(BaseModel):

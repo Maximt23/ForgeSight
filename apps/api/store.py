@@ -141,6 +141,11 @@ class JsonStore:
             if field not in payload:
                 continue
             value = payload[field]
+            if value is None:
+                # Treat null as allowed unless explicitly modeled otherwise.
+                # Our lightweight validator does not currently implement
+                # full JSON-Schema unions like ["number", "null"].
+                continue
             rule_type = rules.get("type")
             if rule_type == "string" and not isinstance(value, str):
                 raise ValueError(f"Schema validation failed: field '{field}' must be string")
@@ -320,6 +325,7 @@ class JsonStore:
                 raise ValueError("Cannot commit: staged batch has no rows")
 
             committed = 0
+            committed_device_ids: list[str] = []
             for idx, row in enumerate(rows, start=1):
                 local_x, local_y = self._parse_coordinates(str(row.get("Coordinates", "")))
                 name = str(row.get("Name", "")).strip() or f"Imported Device {idx}"
@@ -338,14 +344,21 @@ class JsonStore:
                 validated = device.model_dump(mode="json")
                 self._validate_json_schema("device", validated)
                 self.devices[device.id] = self._stamp(device)
+                committed_device_ids.append(str(device.id))
                 committed += 1
 
             batch.status = "committed"
             batch.updated_at = datetime.utcnow()
             self.import_batches[batch.id] = batch
 
+            staged_meta = staged.get("metadata", {})
+            staged_meta["committed_device_ids"] = committed_device_ids
+            staged["metadata"] = staged_meta
+            self.import_batch_payloads[str(batch_id)] = staged
+
             self._persist_entities("devices", self.devices)
             self._persist_entities("import_batches", self.import_batches)
+            self._write_json(self.import_batch_payloads_path, self.import_batch_payloads)
 
             self._event(
                 "import_batch_committed",

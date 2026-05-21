@@ -7,6 +7,7 @@
     "floor_id": {"type": "string", "minLength": 1},
     "zone_name": {"type": "string", "minLength": 1},
     "zone_type": {"type": "string", "minLength": 1},
+    "points": {"type": "array"},
     "created_at": {"type": "string", "minLength": 1},
     "updated_at": {"type": "string", "minLength": 1}
   }

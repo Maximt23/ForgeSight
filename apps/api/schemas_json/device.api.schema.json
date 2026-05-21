@@ -9,6 +9,8 @@
     "name": {"type": "string", "minLength": 1},
     "local_x": {"type": "number"},
     "local_y": {"type": "number"},
+    "fov_degrees": {"type": "number"},
+    "fov_range": {"type": "number"},
     "created_at": {"type": "string", "minLength": 1},
     "updated_at": {"type": "string", "minLength": 1}
   }
