@@ -138,6 +138,34 @@ Full docs in [wiki](wiki/Home.md):
 
 ---
 
+## 🎨 UI Baseline (21st.dev build)
+
+Design source of truth is now tracked in:
+
+- `docs/design-research/DESIGN_SYSTEM.md`
+- `docs/design-research/design-preview.html`
+- `docs/design-research/forgesearch-preview.html`
+
+Use these as the visual contract for all app UI changes.
+
+---
+
+## 🔁 Auto-push
+
+Auto-push is now enabled via tracked git hooks (`.githooks/post-commit`).
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Disable in a shell session when needed:
+
+```powershell
+$env:FORGESIGHT_AUTOPUSH = "0"
+```
+
+---
+
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

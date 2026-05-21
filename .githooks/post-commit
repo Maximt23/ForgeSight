@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+# ForgeSight guarded autopush hook
+# Behavior:
+# - Auto-pushes current branch after each commit (non-destructive)
+# - Skips if FORGESIGHT_AUTOPUSH=0
+# - Skips detached HEAD / no upstream branch / merge commits still in progress
+
+if [ "${FORGESIGHT_AUTOPUSH:-1}" = "0" ]; then
+  echo "[autopush] disabled by FORGESIGHT_AUTOPUSH=0"
+  exit 0
+fi
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+if [ "$BRANCH" = "HEAD" ] || [ -z "$BRANCH" ]; then
+  echo "[autopush] detached HEAD, skipping"
+  exit 0
+fi
+
+# Avoid accidental push during unresolved merge/rebase/cherry-pick states
+if [ -f .git/MERGE_HEAD ] || [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] || [ -f .git/CHERRY_PICK_HEAD ]; then
+  echo "[autopush] repo mid-operation, skipping"
+  exit 0
+fi
+
+# Ensure upstream exists
+if ! git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
+  echo "[autopush] no upstream for '$BRANCH', set with: git push -u origin $BRANCH"
+  exit 0
+fi
+
+echo "[autopush] pushing $BRANCH..."
+if git push; then
+  echo "[autopush] push ok"
+else
+  echo "[autopush] push failed (network/permissions/conflict). Resolve manually."
+fi

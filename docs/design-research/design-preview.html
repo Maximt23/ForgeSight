@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CadOwl — Field intelligence, unified.</title>
+<meta name="description" content="CadOwl unifies CAD design, XR field mapping, AI assistance, and SiteOwl-grade survey ops in one machine that cannot be ignored." />
+
+<!-- Tailwind CDN (prototype only; prod will be a build) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Geist', 'ui-sans-serif', 'system-ui', '"Segoe UI Variable"', '"Segoe UI"', 'Inter', 'sans-serif'],
+          body:    ['Inter', 'ui-sans-serif', 'system-ui', '"Segoe UI"', 'sans-serif'],
+          mono:    ['"Geist Mono"', 'ui-monospace', '"Cascadia Code"', '"JetBrains Mono"', 'monospace'],
+        },
+        colors: {
+          base:       '#0a0a0c',
+          surface:    '#131318',
+          elevated:   '#1c1c23',
+          subtle:     '#232329',
+          strong:     '#34343d',
+          brand:      { DEFAULT: '#0053e2', hi: '#1a66ea', lo: '#003db8' },
+          spark:      { DEFAULT: '#ffc220', amber: '#995213' },
+          ink:        { primary: '#fafafa', secondary: '#a1a1aa', tertiary: '#71717a', disabled: '#52525b' },
+        },
+        boxShadow: {
+          glow: '0 0 0 1px rgba(0,83,226,0.35), 0 8px 32px -8px rgba(0,83,226,0.4)',
+          card: '0 1px 0 rgba(255,255,255,0.04) inset, 0 24px 48px -24px rgba(0,0,0,0.6)',
+        },
+        animation: {
+          'anthropic-in': 'anthropic-in 600ms cubic-bezier(0.22,1,0.36,1) backwards',
+          'aurora-shift': 'aurora-shift 14s ease-in-out infinite',
+          'beam':         'beam-flow 3.2s ease-in-out infinite',
+          'shimmer':      'shimmer 2.6s linear infinite',
+          'pulse-glow':   'pulse-glow 3.4s ease-in-out infinite',
+          'float-y':      'float-y 8s ease-in-out infinite',
+          'sparkle':      'sparkle 2.4s ease-in-out infinite',
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Google Fonts (graceful fallback to system) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Lucide icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<style>
+  /* ───────── Design tokens ───────── */
+  :root {
+    --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  html, body { background: #0a0a0c; color: #fafafa; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  body { font-feature-settings: "ss01","cv11","calt"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+  /* ───────── Keyframes ───────── */
+  @keyframes anthropic-in {
+    from { opacity: 0; transform: translateY(8px); filter: blur(6px); }
+    to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+  }
+  @keyframes aurora-shift {
+    0%,100% { transform: translate3d(0,0,0) scale(1); opacity: .85; }
+    50%     { transform: translate3d(-4%, 2%, 0) scale(1.08); opacity: 1; }
+  }
+  @keyframes beam-flow {
+    0%   { stroke-dashoffset: 240; opacity: 0; }
+    20%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { stroke-dashoffset: 0;  opacity: 0; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position:  200% 0; }
+  }
+  @keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,83,226,0.45); }
+    50%     { box-shadow: 0 0 0 18px rgba(0,83,226,0); }
+  }
+  @keyframes float-y {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
+  }
+  @keyframes sparkle {
+    0%,100% { opacity: 0; transform: scale(0.4); }
+    50%     { opacity: 1; transform: scale(1); }
+  }
+  @keyframes grid-pan {
+    from { background-position: 0 0; }
+    to   { background-position: 56px 56px; }
+  }
+
+  /* ───────── Backgrounds (the 5 laws made tangible) ───────── */
+  .bg-aurora {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,.40), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 20% 10%, rgba(0,83,226,.45), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 10%, rgba(236,72,153,.30), transparent 70%);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 30%, transparent 80%);
+    animation: grid-pan 30s linear infinite;
+  }
+  .bg-dot {
+    background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .glass {
+    background: rgba(28,28,35,0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, #fff 0%, #c7d2fe 40%, #93c5fd 70%, #fff 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+  .aurora-text {
+    background: linear-gradient(120deg, #0053e2, #7c3aed, #ec4899, #ffc220, #0053e2);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    animation: shimmer 6s linear infinite;
+  }
+
+  /* Border-beam: a single rotating gradient ring */
+  .border-beam { position: relative; overflow: hidden; }
+  .border-beam::before {
+    content: ""; position: absolute; inset: -1px; padding: 1px; border-radius: inherit;
+    background: conic-gradient(from var(--angle, 0deg), transparent 0 70%, #0053e2 80%, #ec4899 90%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: spin 6s linear infinite;
+  }
+  @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+  @keyframes spin { to { --angle: 360deg; } }
+
+  /* Shimmer button */
+  .shimmer-btn {
+    position: relative; isolation: isolate;
+    background: linear-gradient(110deg, #0053e2 0%, #1a66ea 50%, #0053e2 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  /* Reveal cascade */
+  .reveal { animation: anthropic-in 700ms var(--ease-out) backwards; }
+  .reveal-1 { animation-delay: 80ms; }
+  .reveal-2 { animation-delay: 160ms; }
+  .reveal-3 { animation-delay: 240ms; }
+  .reveal-4 { animation-delay: 320ms; }
+  .reveal-5 { animation-delay: 400ms; }
+  .reveal-6 { animation-delay: 480ms; }
+
+  /* Reduced motion guard */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus ring (WCAG 2.2 AA) */
+  :focus-visible { outline: 2px solid #1a66ea; outline-offset: 2px; border-radius: 6px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0a0a0c; }
+  ::-webkit-scrollbar-thumb { background: #34343d; border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a4a55; }
+</style>
+</head>
+<body class="font-body antialiased min-h-screen">
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- NAV                                                                   -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<header class="fixed top-0 inset-x-0 z-50 reveal">
+  <div class="max-w-7xl mx-auto px-6 mt-4">
+    <nav class="glass rounded-2xl px-5 py-3 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2 font-display font-semibold text-[15px]">
+        <span class="grid place-items-center w-7 h-7 rounded-md bg-gradient-to-br from-brand to-fuchsia-600 shadow-glow">
+          <i data-lucide="hexagon" class="w-4 h-4 text-white"></i>
+        </span>
+        CadOwl
+        <span class="ml-2 text-[10px] uppercase tracking-[0.18em] text-ink-tertiary border border-subtle rounded-full px-2 py-0.5">v0.1 preview</span>
+      </a>
+      <ul class="hidden md:flex items-center gap-7 text-[13.5px] text-ink-secondary">
+        <li><a href="#features" class="hover:text-ink-primary transition-colors">Features</a></li>
+        <li><a href="#chat" class="hover:text-ink-primary transition-colors">MAXILLM</a></li>
+        <li><a href="#dashboard" class="hover:text-ink-primary transition-colors">Dashboard</a></li>
+        <li><a href="#stack" class="hover:text-ink-primary transition-colors">Stack</a></li>
+      </ul>
+      <div class="flex items-center gap-2">
+        <button class="hidden sm:inline-flex items-center gap-1.5 text-[12.5px] text-ink-secondary glass rounded-md px-2.5 py-1.5 hover:text-ink-primary">
+          <i data-lucide="search" class="w-3.5 h-3.5"></i> Search
+          <kbd class="font-mono text-[10px] text-ink-tertiary border border-subtle rounded px-1">⌘K</kbd>
+        </button>
+        <button class="shimmer-btn text-white text-[13px] font-medium rounded-md px-3.5 py-1.5 shadow-glow">
+          Open app
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- HERO                                                                  -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="relative pt-40 pb-36 overflow-hidden">
+  <div class="absolute inset-0 bg-aurora animate-aurora-shift"></div>
+  <div class="absolute inset-0 bg-grid"></div>
+  <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent"></div>
+
+  <!-- Floating sparkles -->
+  <div class="absolute inset-0 pointer-events-none">
+    <span class="absolute top-[18%] left-[12%] w-1 h-1 rounded-full bg-white animate-sparkle" style="animation-delay:.2s"></span>
+    <span class="absolute top-[28%] left-[78%] w-1.5 h-1.5 rounded-full bg-white animate-sparkle" style="animation-delay:.9s"></span>
+    <span class="absolute top-[55%] left-[22%] w-1 h-1 rounded-full bg-spark animate-sparkle" style="animation-delay:1.6s"></span>
+    <span class="absolute top-[40%] left-[88%] w-1 h-1 rounded-full bg-fuchsia-400 animate-sparkle" style="animation-delay:2.1s"></span>
+    <span class="absolute top-[70%] left-[10%] w-1.5 h-1.5 rounded-full bg-white animate-sparkle" style="animation-delay:1.1s"></span>
+  </div>
+
+  <div class="relative max-w-7xl mx-auto px-6 text-center">
+    <div class="reveal reveal-1 inline-flex items-center gap-2 glass rounded-full pl-2 pr-4 py-1 text-[12px] text-ink-secondary mb-8">
+      <span class="bg-brand text-white text-[10px] font-medium rounded-full px-2 py-0.5">NEW</span>
+      Local-first AI · CAD · XR · Survey ops — one cockpit
+      <i data-lucide="arrow-right" class="w-3 h-3"></i>
+    </div>
+
+    <h1 class="reveal reveal-2 font-display font-bold tracking-[-0.035em] leading-[1.02]
+               text-[clamp(2.6rem,6.5vw,5.5rem)] max-w-5xl mx-auto">
+      <span class="gradient-text">Field intelligence,</span><br/>
+      <span class="aurora-text">unified.</span>
+    </h1>
+
+    <p class="reveal reveal-3 mt-8 max-w-2xl mx-auto text-[17px] leading-[1.6] text-ink-secondary">
+      CadOwl fuses your <span class="text-ink-primary">CAD designs</span>,
+      <span class="text-ink-primary">XR field maps</span>,
+      <span class="text-ink-primary">local LLM assistant</span>, and
+      <span class="text-ink-primary">survey workflows</span> into one machine
+      built for the people actually walking the floor.
+    </p>
+
+    <div class="reveal reveal-4 mt-10 flex items-center justify-center gap-3">
+      <button class="shimmer-btn group inline-flex items-center gap-2 text-white text-[14px] font-medium rounded-lg px-5 py-3 shadow-glow animate-pulse-glow">
+        Launch CadOwl
+        <i data-lucide="arrow-up-right" class="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
+      </button>
+      <button class="glass inline-flex items-center gap-2 text-ink-primary text-[14px] font-medium rounded-lg px-5 py-3 hover:bg-elevated transition-colors">
+        <i data-lucide="play" class="w-4 h-4"></i>
+        Watch the 90s demo
+      </button>
+    </div>
+
+    <!-- Trust strip -->
+    <div class="reveal reveal-5 mt-16 flex items-center justify-center gap-x-10 gap-y-4 flex-wrap text-ink-tertiary text-[12px] uppercase tracking-[0.18em]">
+      <span class="flex items-center gap-2"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Runs on your laptop</span>
+      <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5"></i> No cloud required</span>
+      <span class="flex items-center gap-2"><i data-lucide="lock" class="w-3.5 h-3.5"></i> Walmart-grade privacy</span>
+      <span class="flex items-center gap-2"><i data-lucide="git-branch" class="w-3.5 h-3.5"></i> Built on Ollama + FastAPI</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- BENTO FEATURES                                                        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="features" class="relative py-28">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <p class="reveal text-[12px] uppercase tracking-[0.22em] text-brand font-medium mb-4">Four pillars · one app</p>
+      <h2 class="reveal reveal-1 font-display font-semibold text-[clamp(2rem,4vw,3.2rem)] tracking-[-0.025em] leading-[1.05] max-w-3xl mx-auto gradient-text">
+        Everything you used to alt-tab between.
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-12 gap-4">
+      <!-- Card 1: MAXILLM (large, animated beam) -->
+      <article class="reveal reveal-1 col-span-12 lg:col-span-7 row-span-2 border-beam rounded-2xl bg-surface p-8 shadow-card relative overflow-hidden min-h-[360px]">
+        <div class="absolute inset-0 bg-dot opacity-40"></div>
+        <div class="relative">
+          <div class="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-ink-tertiary mb-4">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> qwen2.5:7b · live · 4.7 GB
+          </div>
+          <h3 class="font-display font-semibold text-3xl mb-3 tracking-[-0.02em]">MAXILLM, always at hand.</h3>
+          <p class="text-ink-secondary text-[15px] leading-relaxed max-w-md">
+            Your private 7B model runs on the laptop. Excel formulas, survey QA, vendor email drafts —
+            with zero data ever leaving your machine.
+          </p>
+
+          <!-- Animated beam diagram -->
+          <svg class="absolute right-6 bottom-6 w-[320px] h-[180px]" viewBox="0 0 320 180" fill="none">
+            <defs>
+              <linearGradient id="beam1" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#0053e2" stop-opacity="0"/>
+                <stop offset="50%" stop-color="#0053e2" stop-opacity="1"/>
+                <stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M30 90 Q 160 30 290 90" stroke="rgba(255,255,255,.08)" stroke-width="1" fill="none"/>
+            <path d="M30 90 Q 160 30 290 90" stroke="url(#beam1)" stroke-width="2" stroke-dasharray="40 240" fill="none" class="animate-beam"/>
+            <path d="M30 90 Q 160 150 290 90" stroke="rgba(255,255,255,.08)" stroke-width="1" fill="none"/>
+            <path d="M30 90 Q 160 150 290 90" stroke="url(#beam1)" stroke-width="2" stroke-dasharray="40 240" fill="none" class="animate-beam" style="animation-delay:1.6s"/>
+            <circle cx="30"  cy="90" r="14" fill="#0a0a0c" stroke="#34343d"/>
+            <circle cx="290" cy="90" r="14" fill="#0a0a0c" stroke="#34343d"/>
+            <text x="30"  y="94" text-anchor="middle" fill="#fafafa" font-size="10" font-family="Geist Mono, monospace">CAD</text>
+            <text x="290" y="94" text-anchor="middle" fill="#fafafa" font-size="10" font-family="Geist Mono, monospace">XR</text>
+            <circle cx="160" cy="60" r="22" fill="#131318" stroke="#0053e2" class="animate-float-y"/>
+            <text x="160" y="64" text-anchor="middle" fill="#fafafa" font-size="11" font-family="Geist, sans-serif" font-weight="600">LLM</text>
+          </svg>
+        </div>
+      </article>
+
+      <!-- Card 2: CAD viewer -->
+      <article class="reveal reveal-2 col-span-12 sm:col-span-6 lg:col-span-5 rounded-2xl bg-surface border border-subtle p-7 shadow-card relative overflow-hidden min-h-[170px]">
+        <i data-lucide="ruler" class="w-5 h-5 text-brand mb-3"></i>
+        <h3 class="font-display font-semibold text-xl tracking-[-0.015em] mb-2">CAD that talks back.</h3>
+        <p class="text-ink-secondary text-[14px] leading-relaxed">
+          DWG/DXF imports, layer trees, and a viewer that highlights the camera you just clicked in your XR walkthrough.
+        </p>
+        <div class="absolute -right-8 -bottom-8 w-44 h-44 rounded-full bg-brand/10 blur-2xl"></div>
+      </article>
+
+      <!-- Card 3: XR -->
+      <article class="reveal reveal-3 col-span-12 sm:col-span-6 lg:col-span-5 rounded-2xl bg-surface border border-subtle p-7 shadow-card relative overflow-hidden min-h-[170px]">
+        <i data-lucide="orbit" class="w-5 h-5 text-fuchsia-400 mb-3"></i>
+        <h3 class="font-display font-semibold text-xl tracking-[-0.015em] mb-2">VIVE-XR field mapping.</h3>
+        <p class="text-ink-secondary text-[14px] leading-relaxed">
+          Walk the store, drop devices in 3D space, and watch coordinates align to your CAD floor plan in realtime.
+        </p>
+        <div class="absolute -right-8 -bottom-8 w-44 h-44 rounded-full bg-fuchsia-500/10 blur-2xl"></div>
+      </article>
+
+      <!-- Card 4: Survey ops -->
+      <article class="reveal reveal-4 col-span-12 lg:col-span-4 rounded-2xl bg-surface border border-subtle p-7 shadow-card relative overflow-hidden min-h-[170px]">
+        <i data-lucide="clipboard-check" class="w-5 h-5 text-emerald-400 mb-3"></i>
+        <h3 class="font-display font-semibold text-xl tracking-[-0.015em] mb-2">Survey ops that ship.</h3>
+        <p class="text-ink-secondary text-[14px] leading-relaxed">
+          CCTV/FA/Intrusion templates, vendor email blasts, SiteOwl-ready CSV exports. The boring stuff, automated.
+        </p>
+      </article>
+
+      <!-- Card 5: Stat counter -->
+      <article class="reveal reveal-5 col-span-6 lg:col-span-4 rounded-2xl glass p-7 shadow-card min-h-[170px] flex flex-col justify-between">
+        <p class="text-[12px] uppercase tracking-[0.18em] text-ink-tertiary">Store 3508</p>
+        <div>
+          <p class="font-display font-bold text-5xl tracking-[-0.035em] aurora-text leading-none">247</p>
+          <p class="text-ink-secondary text-[13px] mt-2">devices aligned & exported · ready for SiteOwl import</p>
+        </div>
+      </article>
+
+      <!-- Card 6: Local-first badge -->
+      <article class="reveal reveal-6 col-span-6 lg:col-span-4 rounded-2xl bg-surface border border-subtle p-7 shadow-card min-h-[170px] relative overflow-hidden">
+        <div class="absolute inset-0 bg-grid opacity-30"></div>
+        <div class="relative">
+          <i data-lucide="cpu" class="w-5 h-5 text-spark mb-3"></i>
+          <h3 class="font-display font-semibold text-xl tracking-[-0.015em] mb-2">100% local.</h3>
+          <p class="text-ink-secondary text-[14px] leading-relaxed">
+            RTX 2000 Ada · Intel Arc Pro · zero outbound API calls. Works on Eagle WiFi, hotspot, or off-grid.
+          </p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- AI CHAT PREVIEW                                                       -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="chat" class="relative py-28 overflow-hidden">
+  <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-strong to-transparent"></div>
+  <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+    <div>
+      <p class="reveal text-[12px] uppercase tracking-[0.22em] text-fuchsia-400 font-medium mb-4">MAXILLM surface</p>
+      <h2 class="reveal reveal-1 font-display font-semibold text-[clamp(1.8rem,3.6vw,2.8rem)] tracking-[-0.025em] leading-[1.08] mb-5 gradient-text">
+        A chat that <em class="not-italic aurora-text">knows your store</em>.
+      </h2>
+      <p class="reveal reveal-2 text-ink-secondary text-[15.5px] leading-[1.6] mb-6">
+        Pulls context from your CAD layers, survey rows, and XR scans. Drafts vendor emails. Writes the Excel formula. Suggests the next camera.
+      </p>
+      <ul class="reveal reveal-3 space-y-3 text-[14.5px] text-ink-secondary">
+        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5"></i> Streams ~25s/answer once warm</li>
+        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5"></i> ⌘K command palette to switch agents</li>
+        <li class="flex items-start gap-3"><i data-lucide="check" class="w-4 h-4 text-emerald-400 mt-0.5"></i> Drag-drop a DWG, get a survey checklist</li>
+      </ul>
+    </div>
+
+    <!-- Mock chat -->
+    <div class="reveal reveal-2 border-beam rounded-2xl bg-surface p-1 shadow-card">
+      <div class="rounded-[14px] bg-base/80 backdrop-blur p-5 font-mono text-[13px] leading-[1.7]">
+        <div class="flex items-center gap-2 pb-3 border-b border-subtle">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/70"></span>
+          <span class="ml-2 text-ink-tertiary text-[11px]">maxillm · qwen2.5:7b · localhost:11434</span>
+        </div>
+
+        <div class="mt-4 space-y-4">
+          <div class="reveal reveal-3 text-ink-secondary">
+            <span class="text-brand">›</span> <span class="text-ink-primary">Draft a vendor email asking ADT for camera quote on store 3508, attach the aligned CSV.</span>
+          </div>
+          <div class="reveal reveal-4 pl-3 border-l-2 border-brand/40">
+            <p class="text-ink-secondary text-[12px] uppercase tracking-[0.18em] mb-2">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 align-middle animate-pulse"></span>
+              maxillm thinking
+            </p>
+<pre class="text-ink-primary whitespace-pre-wrap">Subject: Store 3508 — Camera Replacement Quote Request
+
+Hi <span class="text-spark">{vendor_contact}</span>,
+
+Attached is the aligned device list for Store 3508
+(<span class="text-brand">247 devices</span>, validated against the CAD floor plan).
+
+We need quotes on the <span class="text-fuchsia-400">14 cameras flagged</span>
+for replacement in the &quot;EOL&quot; column. Site walk
+is scheduled for next Tuesday — please confirm
+availability.
+
+Thanks,
+Maxim<span class="inline-block w-2 h-4 bg-brand align-middle ml-0.5 animate-pulse"></span>
+</pre>
+          </div>
+          <div class="reveal reveal-5 flex items-center gap-2 pt-3">
+            <button class="text-[11px] glass rounded px-2 py-1 hover:text-ink-primary text-ink-secondary">Copy</button>
+            <button class="text-[11px] glass rounded px-2 py-1 hover:text-ink-primary text-ink-secondary">Send via Outlook</button>
+            <button class="text-[11px] glass rounded px-2 py-1 hover:text-ink-primary text-ink-secondary">Regenerate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- DASHBOARD PREVIEW                                                     -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="dashboard" class="relative py-28">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <p class="reveal text-[12px] uppercase tracking-[0.22em] text-spark font-medium mb-4">Dashboard chrome</p>
+      <h2 class="reveal reveal-1 font-display font-semibold text-[clamp(1.8rem,3.6vw,2.8rem)] tracking-[-0.025em] leading-[1.08] gradient-text">
+        One sidebar to rule them all.
+      </h2>
+    </div>
+
+    <div class="reveal reveal-2 rounded-2xl border border-subtle bg-surface overflow-hidden shadow-card">
+      <div class="grid grid-cols-[64px_1fr] sm:grid-cols-[220px_1fr] min-h-[480px]">
+        <!-- Sidebar mock -->
+        <aside class="border-r border-subtle p-3 bg-base/60">
+          <div class="flex items-center gap-2 px-2 py-2 mb-4">
+            <span class="grid place-items-center w-7 h-7 rounded-md bg-gradient-to-br from-brand to-fuchsia-600">
+              <i data-lucide="hexagon" class="w-4 h-4 text-white"></i>
+            </span>
+            <span class="hidden sm:inline font-display font-semibold text-[14px]">CadOwl</span>
+          </div>
+          <ul class="space-y-1 text-[13px]">
+            <li><a href="#" class="flex items-center gap-2.5 px-2.5 py-2 rounded-md bg-brand/15 text-ink-primary border border-brand/30">
+              <i data-lucide="layout-dashboard" class="w-4 h-4 text-brand"></i><span class="hidden sm:inline">Overview</span></a></li>
+            <li><a href="#" class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+              <i data-lucide="ruler" class="w-4 h-4"></i><span class="hidden sm:inline">CAD viewer</span></a></li>
+            <li><a href="#" class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+              <i data-lucide="orbit" class="w-4 h-4"></i><span class="hidden sm:inline">XR field maps</span></a></li>
+            <li><a href="#" class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+              <i data-lucide="sparkles" class="w-4 h-4"></i><span class="hidden sm:inline">MAXILLM</span></a></li>
+            <li><a href="#" class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+              <i data-lucide="clipboard-check" class="w-4 h-4"></i><span class="hidden sm:inline">Surveys</span></a></li>
+            <li><a href="#" class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+              <i data-lucide="table-2" class="w-4 h-4"></i><span class="hidden sm:inline">Devices</span></a></li>
+          </ul>
+
+          <div class="mt-6 pt-4 border-t border-subtle">
+            <p class="hidden sm:block text-[10px] uppercase tracking-[0.18em] text-ink-tertiary px-2 mb-2">Stores</p>
+            <ul class="space-y-1 text-[13px]">
+              <li><a class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="hidden sm:inline">3508 · Bentonville</span></a></li>
+              <li><a class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-ink-secondary hover:bg-elevated">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="hidden sm:inline">2191 · Rogers</span></a></li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- Main panel mock -->
+        <div class="p-6 bg-gradient-to-br from-base via-base to-surface relative">
+          <div class="flex items-start justify-between mb-6">
+            <div>
+              <p class="text-[11px] uppercase tracking-[0.18em] text-ink-tertiary mb-1">Store 3508</p>
+              <h3 class="font-display font-semibold text-2xl tracking-[-0.02em]">Overview</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="glass text-[12px] px-3 py-1.5 rounded-md text-ink-secondary hover:text-ink-primary">Last 30 days</button>
+              <button class="shimmer-btn text-white text-[12px] font-medium px-3 py-1.5 rounded-md">+ New survey</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div class="rounded-xl bg-elevated/60 border border-subtle p-4">
+              <p class="text-[11px] uppercase tracking-[0.18em] text-ink-tertiary">Devices</p>
+              <p class="font-display font-semibold text-2xl mt-1">247</p>
+              <p class="text-[11px] text-emerald-400 mt-1">↑ 12 this week</p>
+            </div>
+            <div class="rounded-xl bg-elevated/60 border border-subtle p-4">
+              <p class="text-[11px] uppercase tracking-[0.18em] text-ink-tertiary">Aligned</p>
+              <p class="font-display font-semibold text-2xl mt-1">100<span class="text-ink-tertiary text-lg">%</span></p>
+              <p class="text-[11px] text-emerald-400 mt-1">CAD ↔ XR matched</p>
+            </div>
+            <div class="rounded-xl bg-elevated/60 border border-subtle p-4">
+              <p class="text-[11px] uppercase tracking-[0.18em] text-ink-tertiary">EOL flagged</p>
+              <p class="font-display font-semibold text-2xl mt-1 text-spark">14</p>
+              <p class="text-[11px] text-ink-tertiary mt-1">replacement queued</p>
+            </div>
+            <div class="rounded-xl bg-elevated/60 border border-subtle p-4">
+              <p class="text-[11px] uppercase tracking-[0.18em] text-ink-tertiary">SiteOwl export</p>
+              <p class="font-display font-semibold text-2xl mt-1 text-emerald-400">Ready</p>
+              <p class="text-[11px] text-ink-tertiary mt-1">CSV · 23.8 KB</p>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-subtle bg-base/60 overflow-hidden">
+            <table class="w-full text-[13px]">
+              <thead class="text-[11px] uppercase tracking-[0.14em] text-ink-tertiary bg-elevated/40">
+                <tr>
+                  <th class="text-left px-4 py-2.5 font-medium">Device</th>
+                  <th class="text-left px-4 py-2.5 font-medium">Type</th>
+                  <th class="text-left px-4 py-2.5 font-medium">Zone</th>
+                  <th class="text-left px-4 py-2.5 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-subtle">
+                <tr class="hover:bg-elevated/30 transition-colors">
+                  <td class="px-4 py-2.5 font-mono text-[12px]">CAM-001</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Dome IP</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Front entrance</td>
+                  <td class="px-4 py-2.5"><span class="text-[11px] bg-emerald-400/10 text-emerald-400 rounded-full px-2 py-0.5">aligned</span></td>
+                </tr>
+                <tr class="hover:bg-elevated/30 transition-colors">
+                  <td class="px-4 py-2.5 font-mono text-[12px]">CAM-002</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">PTZ</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Loss prevention</td>
+                  <td class="px-4 py-2.5"><span class="text-[11px] bg-spark/10 text-spark rounded-full px-2 py-0.5">EOL · replace</span></td>
+                </tr>
+                <tr class="hover:bg-elevated/30 transition-colors">
+                  <td class="px-4 py-2.5 font-mono text-[12px]">FA-019</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Pull station</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Receiving dock</td>
+                  <td class="px-4 py-2.5"><span class="text-[11px] bg-emerald-400/10 text-emerald-400 rounded-full px-2 py-0.5">aligned</span></td>
+                </tr>
+                <tr class="hover:bg-elevated/30 transition-colors">
+                  <td class="px-4 py-2.5 font-mono text-[12px]">INT-007</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Motion sensor</td>
+                  <td class="px-4 py-2.5 text-ink-secondary">Office hallway</td>
+                  <td class="px-4 py-2.5"><span class="text-[11px] bg-brand/10 text-brand rounded-full px-2 py-0.5">new · pending QA</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- STACK / FOOTER                                                        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="stack" class="relative py-24 border-t border-subtle">
+  <div class="max-w-5xl mx-auto px-6 text-center">
+    <p class="reveal text-[12px] uppercase tracking-[0.22em] text-ink-tertiary mb-6">Built on</p>
+    <div class="reveal reveal-1 flex items-center justify-center gap-x-10 gap-y-4 flex-wrap text-ink-secondary text-[14px]">
+      <span class="flex items-center gap-2 font-mono"><i data-lucide="server" class="w-4 h-4"></i> FastAPI</span>
+      <span class="flex items-center gap-2 font-mono"><i data-lucide="zap" class="w-4 h-4"></i> HTMX</span>
+      <span class="flex items-center gap-2 font-mono"><i data-lucide="palette" class="w-4 h-4"></i> Tailwind</span>
+      <span class="flex items-center gap-2 font-mono"><i data-lucide="database" class="w-4 h-4"></i> SQLite</span>
+      <span class="flex items-center gap-2 font-mono"><i data-lucide="brain-circuit" class="w-4 h-4"></i> Ollama</span>
+      <span class="flex items-center gap-2 font-mono"><i data-lucide="box" class="w-4 h-4"></i> three.js</span>
+    </div>
+  </div>
+</section>
+
+<footer class="border-t border-subtle py-10">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between text-[12.5px] text-ink-tertiary">
+    <p>CadOwl preview · 2026 · Maxim Tsitolovsky</p>
+    <p class="font-mono">design system v0.1 · built by 🐶 Code Puppy</p>
+  </div>
+</footer>
+
+<script>
+  // Initialize Lucide icons
+  if (window.lucide) lucide.createIcons();
+</script>
+</body>
+</html>

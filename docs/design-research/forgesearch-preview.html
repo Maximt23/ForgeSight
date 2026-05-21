@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ForgeSearch — The AI spine of CadOwl</title>
+<meta name="description" content="Google-grade AI command and search system for CadOwl. Query, modify, generate, validate, export — by typing." />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: {
+      fontFamily: {
+        display: ['Geist','ui-sans-serif','system-ui','"Segoe UI Variable"','Inter','sans-serif'],
+        body:    ['Inter','ui-sans-serif','system-ui','"Segoe UI"','sans-serif'],
+        mono:    ['"Geist Mono"','ui-monospace','"Cascadia Code"','monospace'],
+      },
+      colors: {
+        /* CHROME: only these three families on the marketing surface */
+        base:'#0a0a0c', surface:'#131318', elevated:'#1c1c23',
+        subtle:'#232329', strong:'#34343d', stronger:'#44444f',
+        brand:{DEFAULT:'#0053e2',hi:'#1a66ea',lo:'#003db8'},
+        ink:{primary:'#fafafa',secondary:'#a1a1aa',tertiary:'#71717a',quad:'#52525b'},
+        /* Intent colors: USED ONLY inside the live classifier badge & result chips */
+        intent:{
+          query:'#4a8eff',   /* lighter blue so it doesn't collide with brand */
+          modify:'#a855f7',
+          generate:'#ec4899',
+          validate:'#ffc220',
+          export:'#22c55e',
+          danger:'#ef4444',
+        }
+      },
+      boxShadow: {
+        bar:'0 0 0 1px rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.06) inset, 0 12px 32px -12px rgba(0,0,0,0.6)',
+        barFocus:'0 0 0 1px rgba(0,83,226,0.55), 0 0 0 6px rgba(0,83,226,0.10), 0 18px 48px -12px rgba(0,83,226,0.30)',
+        card:'0 1px 0 rgba(255,255,255,0.04) inset, 0 24px 48px -24px rgba(0,0,0,0.6)',
+        primary:'0 0 0 1px rgba(0,83,226,0.45), 0 12px 32px -8px rgba(0,83,226,0.35)',
+      }
+    }}
+  }
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  html { scroll-behavior: smooth; }
+  html, body { background:#0a0a0c; color:#fafafa; font-family:'Inter',ui-sans-serif,system-ui,sans-serif; }
+  body { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  section[id]{ scroll-margin-top: 120px; }  /* FIX: sticky header clipping */
+
+  /* ── Reveal ── */
+  @keyframes reveal-in { from{opacity:0;transform:translateY(8px);filter:blur(6px)} to{opacity:1;transform:translateY(0);filter:blur(0)} }
+  .reveal{ animation:reveal-in 700ms var(--ease-out) backwards }
+  .reveal-1{animation-delay:80ms} .reveal-2{animation-delay:160ms} .reveal-3{animation-delay:240ms} .reveal-4{animation-delay:320ms}
+
+  /* ── Ambient ── */
+  @keyframes aurora { 0%,100%{transform:translate3d(0,0,0) scale(1);opacity:.7} 50%{transform:translate3d(-3%,2%,0) scale(1.08);opacity:.95} }
+  .bg-aurora-mono { background:
+    radial-gradient(ellipse 70% 50% at 50% -15%, rgba(0,83,226,.45), transparent 70%),
+    radial-gradient(ellipse 40% 40% at 30% 0%, rgba(0,83,226,.25), transparent 70%),
+    radial-gradient(ellipse 40% 40% at 75% 0%, rgba(0,83,226,.25), transparent 70%);
+    animation: aurora 16s ease-in-out infinite; }
+  .bg-grid { background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:56px 56px;
+    mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 30%, transparent 80%); }
+
+  /* ── Surfaces ── */
+  .glass        { background:rgba(28,28,35,.55); backdrop-filter:blur(20px) saturate(140%); -webkit-backdrop-filter:blur(20px) saturate(140%); border:1px solid rgba(255,255,255,.06); }
+  .glass-strong { background:rgba(19,19,24,.72); backdrop-filter:blur(28px) saturate(160%); -webkit-backdrop-filter:blur(28px) saturate(160%); border:1px solid rgba(255,255,255,.08); }
+
+  /* ── Typography ── */
+  /* Single magic-word aurora — used at most once per section */
+  @keyframes shimmer{from{background-position:-200% 0}to{background-position:200% 0}}
+  .magic-word {
+    background: linear-gradient(110deg,#4a8eff 0%,#9333ea 35%,#ec4899 60%,#4a8eff 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    animation: shimmer 8s linear infinite;
+    /* Force min lightness to keep contrast acceptable */
+    text-shadow: 0 0 1px rgba(255,255,255,.15);
+  }
+  .underline-brand {
+    background-image: linear-gradient(180deg,transparent 86%, rgba(0,83,226,.7) 86%, rgba(0,83,226,.7) 96%, transparent 96%);
+    background-repeat:no-repeat;
+  }
+
+  /* ── ForgeSearch bar (THE component) ── */
+  .forge-bar {
+    background: linear-gradient(180deg, rgba(28,28,35,.85), rgba(19,19,24,.85));
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255,255,255,.07);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset, 0 12px 40px -12px rgba(0,0,0,.65);
+    transition: box-shadow 300ms var(--ease-out), border-color 300ms var(--ease-out), transform 300ms var(--ease-out);
+    /* NOTE: view-transition-name applied INLINE on the single header instance only
+       (spec requires unique names per frame; multiple elements would abort the transition). */
+  }
+  .forge-bar:focus-within, .forge-bar.is-focused {
+    border-color: rgba(0,83,226,.45);
+    box-shadow: 0 0 0 1px rgba(0,83,226,.55), 0 0 0 6px rgba(0,83,226,.10), 0 18px 56px -12px rgba(0,83,226,.30);
+    transform: translateY(-1px);
+  }
+
+  /* Shared-element morph: declare on the TWO participants only, via dedicated classes */
+  .vt-forge-source { view-transition-name: forge-bar; }
+  .vt-forge-target { view-transition-name: forge-bar; }
+
+  ::view-transition-old(forge-bar),
+  ::view-transition-new(forge-bar) {
+    animation-duration: 420ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Crossfade is the default — nudge it to be a true morph by adjusting both layers */
+  ::view-transition-old(forge-bar) { animation-name: -ua-view-transition-fade-out, -ua-mix-blend-mode-plus-lighter; }
+  ::view-transition-new(forge-bar) { animation-name: -ua-view-transition-fade-in,  -ua-mix-blend-mode-plus-lighter; }
+
+  /* Intent badge: tiny by default, expressive only when classifying */
+  .intent-pill { transition: all 260ms var(--ease-spring); }
+  @keyframes badge-pop { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+  .badge-pop { animation: badge-pop 280ms var(--ease-spring); }
+
+  /* Caret */
+  @keyframes caret { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  .caret { display:inline-block; width:2px; height:1.05em; background:#1a66ea; vertical-align:text-bottom; margin-left:1px; animation: caret 1s steps(1) infinite; }
+
+  /* Primary CTA — no shimmer rainbow, just clean blue with subtle gloss */
+  .btn-primary {
+    background: linear-gradient(180deg, #1a66ea 0%, #0053e2 60%, #003db8 100%);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.10) inset, 0 0 0 1px rgba(0,83,226,.45), 0 12px 32px -8px rgba(0,83,226,.4);
+    transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(255,255,255,.14) inset, 0 0 0 1px rgba(0,83,226,.6), 0 16px 40px -8px rgba(0,83,226,.55); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); transition: background 180ms, border-color 180ms; }
+  .btn-ghost:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+
+  /* Result row hover */
+  .result-row { transition: background 160ms var(--ease-out); }
+  .result-row:hover, .result-row.is-active { background: rgba(0,83,226,.08); }
+
+  /* Canvas blueprint */
+  .blueprint { background:
+    radial-gradient(ellipse at center, rgba(0,83,226,.10), transparent 70%),
+    linear-gradient(rgba(0,83,226,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,83,226,.08) 1px, transparent 1px),
+    #07070a;
+    background-size: auto, 32px 32px, 32px 32px; }
+  @keyframes ping-soft { 0%{transform:scale(1);opacity:1} 80%{transform:scale(2.6);opacity:0} 100%{transform:scale(2.6);opacity:0} }
+  .ping-dot::after {
+    content:""; position:absolute; inset:0; border-radius:9999px;
+    box-shadow: 0 0 0 0 currentColor; animation: ping-soft 2.4s var(--ease-out) infinite;
+    background: currentColor; opacity: .5;
+  }
+
+  /* Autoplay loop styles */
+  .typewriter-text::after { content:"|"; margin-left:1px; color:#1a66ea; animation: caret 1s steps(1) infinite; }
+  @keyframes line-slide-up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .line-in { animation: line-slide-up 320ms var(--ease-out) backwards; }
+
+  /* kbd consistency */
+  kbd { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10.5px; color: #a1a1aa;
+        background: rgba(28,28,35,.7); border: 1px solid #232329; border-bottom-color: #34343d;
+        border-radius: 4px; padding: 1px 5px; line-height: 1; vertical-align: middle; }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+  :focus-visible { outline: 2px solid #1a66ea; outline-offset: 2px; border-radius: 6px; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background:#0a0a0c; }
+  ::-webkit-scrollbar-thumb { background:#34343d; border-radius:6px; }
+
+  [x-cloak] { display:none !important; }
+</style>
+</head>
+
+<body x-data="forgesearch()" x-init="initAutoplay()"
+      @keydown.window.meta.k.prevent="openOverlay()"
+      @keydown.window.ctrl.k.prevent="openOverlay()"
+      @keydown.window.escape="closeOverlay()">
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- TOP NAV + PERSISTENT FORGESEARCH BAR                                 -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<header class="fixed top-0 inset-x-0 z-40">
+  <div class="max-w-[1400px] mx-auto px-6 mt-3">
+    <div class="flex items-center gap-3">
+
+      <!-- Brand -->
+      <a href="#" class="flex items-center gap-2 font-display font-semibold text-[14px] glass rounded-xl px-3 py-2.5 shrink-0 hover:bg-elevated/60 transition-colors">
+        <span class="grid place-items-center w-6 h-6 rounded-md bg-brand">
+          <i data-lucide="hexagon" class="w-3.5 h-3.5 text-white"></i>
+        </span>
+        CadOwl
+      </a>
+
+      <!-- THE bar (VT source) -->
+      <button type="button" class="forge-bar vt-forge-source rounded-xl flex-1 max-w-[720px] mx-auto flex items-center gap-2 px-3 py-2 text-left"
+              x-show="!open" x-transition.opacity
+              @click="openOverlay()" aria-label="Open ForgeSearch command bar">
+        <span class="flex items-center gap-1.5 text-[12px] text-ink-secondary bg-elevated/60 border border-subtle rounded-md pl-1.5 pr-2 py-1 shrink-0">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          Store 3508
+          <i data-lucide="chevron-down" class="w-3 h-3 opacity-60"></i>
+        </span>
+
+        <!-- Tiny sparkle — single brand color -->
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand shrink-0"></i>
+
+        <span class="flex-1 text-[14px] text-ink-tertiary truncate" aria-hidden="true">
+          Ask ForgeSearch — <span class="text-ink-secondary" x-text="hintRotation"></span>
+        </span>
+
+        <kbd class="shrink-0">⌘K</kbd>
+      </button>
+
+      <!-- Right -->
+      <div class="hidden md:flex items-center gap-1 glass rounded-xl px-2 py-2 shrink-0">
+        <button class="p-2 rounded-md text-ink-secondary hover:text-ink-primary hover:bg-elevated/60" title="Notifications"><i data-lucide="bell" class="w-4 h-4"></i></button>
+        <button class="p-2 rounded-md text-ink-secondary hover:text-ink-primary hover:bg-elevated/60" title="Settings"><i data-lucide="settings" class="w-4 h-4"></i></button>
+        <div class="w-7 h-7 rounded-full bg-elevated border border-subtle grid place-items-center text-[11px] font-semibold text-ink-primary">MT</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- HERO — monochrome typography with single magic word                  -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="relative pt-32 pb-16 overflow-hidden">
+  <div class="absolute inset-0 bg-aurora-mono"></div>
+  <div class="absolute inset-0 bg-grid"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 text-center">
+    <div class="reveal reveal-1 inline-flex items-center gap-2 glass rounded-full pl-1.5 pr-3 py-1 text-[12px] text-ink-secondary mb-7">
+      <span class="bg-brand text-white text-[10px] font-semibold tracking-wider rounded-full px-2 py-0.5">FORGESEARCH</span>
+      The AI spine of CadOwl · ⌘K from anywhere
+    </div>
+
+    <h1 class="reveal reveal-2 font-display font-bold tracking-[-0.04em] leading-[1.02] text-[clamp(2.4rem,6vw,5rem)] text-white">
+      Type a sentence.<br/>
+      <span class="font-medium text-ink-secondary">Move the </span><span class="magic-word">design</span><span class="font-medium text-ink-secondary">.</span>
+    </h1>
+
+    <p class="reveal reveal-3 mt-7 max-w-2xl mx-auto text-[16.5px] leading-[1.6] text-ink-secondary">
+      ForgeSearch is a Google-grade AI command bar that <span class="text-ink-primary">queries</span>,
+      <span class="text-ink-primary">modifies</span>, <span class="text-ink-primary">generates</span>,
+      <span class="text-ink-primary">validates</span>, and <span class="text-ink-primary">exports</span>
+      your CCTV / FA / Intrusion design — directly on the canvas, tables, and zones. Not a chatbot. An operator.
+    </p>
+
+    <div class="reveal reveal-4 mt-8 flex items-center justify-center gap-3">
+      <button @click="openOverlay()" class="btn-primary inline-flex items-center gap-2 text-white text-[14px] font-medium rounded-lg px-5 py-3">
+        Open ForgeSearch
+        <kbd class="bg-white/15 border-white/20 text-white">⌘K</kbd>
+      </button>
+      <a href="#examples" class="btn-ghost inline-flex items-center gap-2 text-ink-primary text-[14px] font-medium rounded-lg px-5 py-3">
+        See example commands <i data-lucide="arrow-down" class="w-4 h-4"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- AUTOPLAY LOOP — the spine, moving on its own                          -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section class="relative pt-2 pb-24">
+  <div class="max-w-3xl mx-auto px-6">
+    <div class="reveal reveal-3 glass-strong rounded-2xl shadow-card overflow-hidden">
+
+      <!-- Faux window chrome -->
+      <div class="flex items-center gap-2 px-4 py-2.5 border-b border-subtle bg-base/40">
+        <span class="w-2.5 h-2.5 rounded-full bg-strong"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-strong"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-strong"></span>
+        <span class="ml-3 text-[11px] text-ink-tertiary font-mono">ForgeSearch · live demo · self-driving</span>
+        <span class="ml-auto flex items-center gap-1.5 text-[10px] text-ink-tertiary font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> auto
+        </span>
+      </div>
+
+      <!-- The mini bar -->
+      <div class="px-5 py-4">
+        <div class="forge-bar rounded-xl flex items-center gap-2.5 px-3 py-2.5">
+          <i data-lucide="sparkles" class="w-4 h-4 text-brand"></i>
+          <span class="text-[14.5px] text-ink-primary flex-1 typewriter-text font-display tracking-[-0.01em]" x-text="autoplay.typed"></span>
+          <!-- Live classified badge: dot only when not classified, dot+label when classified -->
+          <span class="intent-pill flex items-center gap-1.5 rounded-full border text-[11px] font-medium"
+                :class="autoplay.showBadge ? 'badge-pop px-2 py-0.5' : 'px-1 py-0.5'"
+                :style="`color:${autoplay.intent.color};border-color:${autoplay.intent.color}55;background:${autoplay.intent.color}15`">
+            <span class="inline-flex" x-html="iconSvg(autoplay.intent.icon)"></span>
+            <span x-show="autoplay.showBadge" x-text="autoplay.intent.label"></span>
+          </span>
+        </div>
+
+        <!-- Streaming results -->
+        <div class="mt-4 min-h-[180px]" x-show="autoplay.phase === 'results'" x-transition.opacity>
+          <p class="text-[10.5px] uppercase tracking-[0.2em] text-ink-tertiary mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full" :style="`background:${autoplay.intent.color}`"></span>
+            <span x-text="autoplay.intent.label"></span>
+            <span class="ml-auto font-mono text-ink-quad" x-text="autoplay.timing"></span>
+          </p>
+          <p class="text-[13.5px] text-ink-secondary leading-relaxed mb-3" x-html="autoplay.synthesis"></p>
+          <ul class="space-y-1">
+            <template x-for="(row,i) in autoplay.rows" :key="row.id">
+              <li class="line-in flex items-center gap-3 text-[12.5px] px-2 py-1.5 rounded-md hover:bg-elevated/40"
+                  :style="`animation-delay:${i*70}ms`">
+                <span class="font-mono text-ink-quad w-20 shrink-0" x-text="row.id"></span>
+                <span class="text-ink-primary flex-1 truncate" x-text="row.label"></span>
+                <span class="text-[10.5px] rounded px-1.5 py-0.5 border"
+                      :style="`color:${row.color};border-color:${row.color}55;background:${row.color}15`"
+                      x-text="row.tag"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        <!-- Empty/typing placeholder -->
+        <div x-show="autoplay.phase !== 'results'" class="mt-4 min-h-[180px] grid place-items-center">
+          <p class="text-[12px] text-ink-tertiary font-mono">
+            <span x-show="autoplay.phase === 'typing'">classifying intent…</span>
+            <span x-show="autoplay.phase === 'thinking'">querying local design context…</span>
+            <span x-show="autoplay.phase === 'idle'">&nbsp;</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-4 text-center text-[11.5px] text-ink-tertiary font-mono">
+      Runs unattended every ~12s · 4 example commands · powered by local <span class="text-ink-secondary">qwen2.5:7b</span>
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- SIX INTENTS — restrained, brand-colored eyebrow                       -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="intents" class="relative py-20 border-t border-subtle">
+  <div class="max-w-6xl mx-auto px-6">
+    <p class="reveal text-center text-[11px] uppercase tracking-[0.22em] text-brand font-semibold mb-3">Intent classification</p>
+    <h2 class="reveal reveal-1 text-center font-display font-semibold text-[clamp(1.6rem,3vw,2.3rem)] tracking-[-0.025em] leading-[1.1] text-white max-w-2xl mx-auto mb-3">
+      Six things it can do.
+    </h2>
+    <p class="reveal reveal-2 text-center text-[15px] text-ink-secondary max-w-xl mx-auto mb-12">
+      As you type, ForgeSearch classifies your intent and routes execution. Color appears only here, and only inside the badge.
+    </p>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <template x-for="(intent,i) in intents" :key="intent.id">
+        <article class="reveal rounded-xl bg-surface border border-subtle p-5 hover:border-strong transition-colors"
+                 :style="`animation-delay:${80*(i+1)}ms`">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded-md border"
+                  :style="`color:${intent.color};border-color:${intent.color}55;background:${intent.color}15`">
+              <i :data-lucide="intent.icon" class="w-3 h-3"></i>
+            </span>
+            <p class="text-[10.5px] uppercase tracking-[0.2em] font-semibold text-ink-secondary" x-text="intent.label"></p>
+          </div>
+          <p class="font-display font-semibold text-[17px] mb-2 tracking-[-0.012em] text-ink-primary" x-text="intent.title"></p>
+          <p class="text-[13px] text-ink-secondary leading-relaxed mb-3" x-text="intent.desc"></p>
+          <p class="text-[12px] font-mono text-ink-tertiary"><span class="text-ink-secondary">›</span> <span x-text="intent.example"></span></p>
+        </article>
+      </template>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- EXAMPLES                                                              -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="examples" class="relative py-20 border-t border-subtle">
+  <div class="max-w-6xl mx-auto px-6">
+    <p class="reveal text-center text-[11px] uppercase tracking-[0.22em] text-brand font-semibold mb-3">Live examples</p>
+    <h2 class="reveal reveal-1 text-center font-display font-semibold text-[clamp(1.6rem,3vw,2.3rem)] tracking-[-0.025em] leading-[1.1] text-white mb-3">
+      Click any prompt to run it.
+    </h2>
+    <p class="reveal reveal-2 text-center text-[15px] text-ink-secondary max-w-xl mx-auto mb-12">
+      Each opens ForgeSearch pre-filled with a mocked result so you can see the shape of the real answer.
+    </p>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <template x-for="(ex,i) in examples" :key="ex.q">
+        <button @click="runExample(ex)"
+                class="reveal text-left rounded-xl bg-surface border border-subtle hover:border-brand/40 hover:bg-elevated/40 transition-all p-4 group"
+                :style="`animation-delay:${50*(i+1)}ms`">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-1.5 h-1.5 rounded-full" :style="`background:${intentColor(ex.intent)}`"></span>
+            <span class="text-[10px] uppercase tracking-[0.2em] font-semibold text-ink-tertiary group-hover:text-ink-secondary transition-colors" x-text="ex.intent"></span>
+          </div>
+          <p class="text-[14px] text-ink-primary leading-snug" x-text="ex.q"></p>
+          <p class="text-[11.5px] text-ink-tertiary mt-2 flex items-center gap-1">
+            <i data-lucide="corner-down-right" class="w-3 h-3"></i> <span x-text="ex.preview"></span>
+          </p>
+        </button>
+      </template>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- CANVAS MODE                                                           -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<section id="canvas" class="relative py-20 border-t border-subtle">
+  <div class="max-w-6xl mx-auto px-6">
+    <p class="reveal text-center text-[11px] uppercase tracking-[0.22em] text-brand font-semibold mb-3">Canvas mode</p>
+    <h2 class="reveal reveal-1 text-center font-display font-semibold text-[clamp(1.6rem,3vw,2.3rem)] tracking-[-0.025em] leading-[1.1] text-white mb-3">
+      Operates on the design directly.
+    </h2>
+    <p class="reveal reveal-2 text-center text-[15px] text-ink-secondary max-w-xl mx-auto mb-12">
+      The floating pill follows you onto the canvas. Queries highlight devices. Generate proposes preview overlays. Modify applies in place.
+    </p>
+
+    <div class="reveal reveal-2 relative rounded-2xl overflow-hidden border border-subtle shadow-card aspect-[16/9] blueprint">
+      <svg class="absolute inset-0 w-full h-full">
+        <rect x="6%" y="10%" width="88%" height="80%" fill="none" stroke="rgba(0,83,226,0.35)" stroke-width="1.5"/>
+        <line x1="40%" y1="10%" x2="40%" y2="55%" stroke="rgba(0,83,226,0.25)" stroke-width="1"/>
+        <line x1="40%" y1="55%" x2="94%" y2="55%" stroke="rgba(0,83,226,0.25)" stroke-width="1"/>
+        <!-- Brighter zone labels for AA -->
+        <text x="22%" y="32%" fill="#fafafa" fill-opacity="0.55" font-size="11" font-weight="600" letter-spacing="2" font-family="Geist Mono,monospace">GROCERY</text>
+        <text x="63%" y="32%" fill="#fafafa" fill-opacity="0.55" font-size="11" font-weight="600" letter-spacing="2" font-family="Geist Mono,monospace">ELECTRONICS</text>
+        <text x="63%" y="74%" fill="#fafafa" fill-opacity="0.55" font-size="11" font-weight="600" letter-spacing="2" font-family="Geist Mono,monospace">PHARMACY</text>
+      </svg>
+
+      <!-- Dots as DOM so we can pulse properly -->
+      <div class="absolute inset-0 pointer-events-none">
+        <template x-for="(d,i) in canvasDots" :key="i">
+          <span class="absolute w-2.5 h-2.5 rounded-full"
+                :class="d.flag && 'ping-dot'"
+                :style="`left:${d.x}%;top:${d.y}%;transform:translate(-50%,-50%);background:${d.flag?'#ec4899':'#22c55e'};color:${d.flag?'#ec4899':'#22c55e'}`"></span>
+        </template>
+      </div>
+
+      <!-- Floating pill -->
+      <button type="button" class="forge-bar absolute top-4 left-1/2 -translate-x-1/2 rounded-full flex items-center gap-2 pl-3 pr-2 py-1.5 max-w-[500px] w-[90%] text-left"
+              @click="openOverlay()" aria-label="Open ForgeSearch on canvas">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand"></i>
+        <span class="flex-1 text-[13px] text-ink-tertiary truncate">Find · modify · generate on this canvas…</span>
+        <kbd>⌘K</kbd>
+      </button>
+
+      <!-- Result callout -->
+      <div class="absolute bottom-4 left-4 glass-strong rounded-lg px-3.5 py-2.5 max-w-[360px]">
+        <p class="text-[10px] uppercase tracking-[0.2em] font-semibold mb-1.5 flex items-center gap-1.5 text-ink-secondary">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:#4a8eff;box-shadow:0 0 8px #4a8eff"></span>
+          Query · <span class="text-ink-tertiary">4 results highlighted</span>
+        </p>
+        <p class="text-[13px] text-ink-primary mb-2.5">4 cameras missing DORIS numbers</p>
+        <div class="flex items-center gap-2">
+          <button class="btn-primary text-[11px] text-white rounded-md px-2.5 py-1">Auto-assign</button>
+          <button class="btn-ghost text-[11px] text-ink-secondary rounded-md px-2.5 py-1 hover:text-ink-primary">Export list</button>
+          <button class="text-[11px] text-ink-tertiary hover:text-ink-primary px-2 py-1">Dismiss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- FOOTER                                                                -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<footer class="border-t border-subtle py-10 mt-10">
+  <div class="max-w-[1400px] mx-auto px-6 flex items-center justify-between text-[12px] text-ink-tertiary">
+    <p>ForgeSearch · ForgeSight / CadOwl / MAXILLM · v0.2 preview</p>
+    <p class="font-mono">Press <kbd>⌘K</kbd> from anywhere · 🐶 Code Puppy</p>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ⌘K OVERLAY                                                            -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div x-show="open" x-cloak
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 flex items-start justify-center pt-[14vh] px-4 backdrop-blur-md bg-base/70"
+     @click.self="closeOverlay()">
+
+  <div x-show="open"
+       x-transition:enter="transition ease-out duration-250"
+       x-transition:enter-start="opacity-0 scale-[0.97] -translate-y-1"
+       x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+       class="vt-forge-target w-full max-w-[680px] glass-strong rounded-2xl shadow-[0_32px_96px_-16px_rgba(0,0,0,0.7)] overflow-hidden">
+
+    <div class="flex items-center gap-3 px-5 py-4 border-b border-subtle">
+      <i data-lucide="sparkles" class="w-5 h-5 text-brand"></i>
+      <input x-ref="overlayInput" x-model="query" @input="onType()" type="text"
+             placeholder="Find · modify · generate · validate · export…"
+             class="flex-1 bg-transparent text-[17px] text-ink-primary placeholder:text-ink-tertiary outline-none font-display tracking-[-0.01em]"/>
+      <template x-if="query.length > 0">
+        <span class="badge-pop flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border"
+              :style="`color:${currentIntent.color};border-color:${currentIntent.color}55;background:${currentIntent.color}15`">
+          <span class="inline-flex" x-html="iconSvg(currentIntent.icon)"></span>
+          <span x-text="currentIntent.label"></span>
+        </span>
+      </template>
+      <kbd>ESC</kbd>
+    </div>
+
+    <!-- Slash commands -->
+    <div x-show="query.startsWith('/')" class="px-2 py-2 border-b border-subtle">
+      <p class="text-[10px] uppercase tracking-[0.2em] text-ink-tertiary px-3 py-1.5">Slash commands</p>
+      <template x-for="cmd in slashCommands" :key="cmd.id">
+        <button @click="query=cmd.id+' '; onType()" class="w-full result-row flex items-center gap-3 px-3 py-2 rounded-md text-left">
+          <i :data-lucide="cmd.icon" class="w-4 h-4 text-ink-secondary"></i>
+          <span class="font-mono text-[13px] text-ink-primary" x-text="cmd.id"></span>
+          <span class="text-[12px] text-ink-tertiary" x-text="cmd.hint"></span>
+        </button>
+      </template>
+    </div>
+
+    <!-- Result -->
+    <div x-show="result && !query.startsWith('/')" class="max-h-[60vh] overflow-y-auto">
+      <div class="px-5 py-4 border-b border-subtle">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-[10px] uppercase tracking-[0.2em] font-semibold flex items-center gap-1.5 text-ink-secondary">
+            <span class="w-1.5 h-1.5 rounded-full" :style="`background:${currentIntent.color}`"></span>
+            ForgeSearch · <span x-text="currentIntent.label"></span>
+          </span>
+          <span class="text-[10px] text-ink-tertiary ml-auto font-mono" x-text="result?.timing"></span>
+        </div>
+        <p class="text-[14px] text-ink-primary leading-relaxed" x-html="result?.synthesis"></p>
+      </div>
+
+      <template x-if="result?.entities?.length">
+        <div class="py-2">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-ink-tertiary px-5 py-1.5" x-text="`${result.entities.length} results`"></p>
+          <template x-for="ent in result.entities" :key="ent.id">
+            <div class="result-row flex items-center gap-3 px-5 py-2">
+              <span class="font-mono text-[11.5px] text-ink-tertiary w-20 shrink-0" x-text="ent.id"></span>
+              <span class="text-[13px] text-ink-primary flex-1 truncate" x-text="ent.label"></span>
+              <span class="text-[10.5px] rounded px-1.5 py-0.5 border shrink-0"
+                    :style="`color:${ent.tagColor};border-color:${ent.tagColor}55;background:${ent.tagColor}15`"
+                    x-text="ent.tag"></span>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <div class="px-5 py-3 border-t border-subtle flex items-center gap-2 flex-wrap bg-elevated/30">
+        <template x-for="(action,ai) in result?.actions || []" :key="action.label">
+          <button class="text-[12px] rounded-md px-3 py-1.5 font-medium"
+                  :class="ai===0 ? 'btn-primary text-white' : 'btn-ghost text-ink-secondary hover:text-ink-primary'"
+                  x-text="action.label"></button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Suggestions -->
+    <div x-show="!result && !query.startsWith('/')" class="py-2">
+      <p class="text-[10px] uppercase tracking-[0.2em] text-ink-tertiary px-5 py-2">Try one of these</p>
+      <template x-for="ex in examples.slice(0,6)" :key="ex.q">
+        <button @click="runExample(ex)" class="w-full result-row flex items-center gap-3 px-5 py-2.5 text-left">
+          <span class="w-1.5 h-1.5 rounded-full shrink-0" :style="`background:${intentColor(ex.intent)}`"></span>
+          <span class="text-[13.5px] text-ink-primary flex-1 truncate" x-text="ex.q"></span>
+          <i data-lucide="corner-down-left" class="w-3.5 h-3.5 text-ink-tertiary shrink-0"></i>
+        </button>
+      </template>
+    </div>
+
+    <div class="px-5 py-2.5 border-t border-subtle bg-elevated/20 flex items-center justify-between text-[11px] text-ink-tertiary font-mono">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1"><kbd>↑↓</kbd> nav</span>
+        <span class="flex items-center gap-1"><kbd>↵</kbd> run</span>
+        <span class="flex items-center gap-1"><kbd>/</kbd> cmds</span>
+        <span class="flex items-center gap-1"><kbd>@</kbd> scope</span>
+      </div>
+      <span>qwen2.5:7b · local</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function forgesearch(){
+  /* Inline SVG icons (lucide stroke style) — used where Alpine rebinds reactively
+     because once lucide.createIcons() replaces <i>, Alpine can't reach the data-lucide attr anymore. */
+  const ICONS = {
+    search:      '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+    move:        '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/></svg>',
+    sparkles:    '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>',
+    'shield-check':'<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
+    download:    '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+    'trash-2':   '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>',
+  };
+  return {
+    open:false, query:'', result:null, hintRotation:'find all cameras missing DORIS numbers',
+    iconSvg(name){ return ICONS[name] || ''; },
+
+    intents:[
+      {id:'query',   color:'#4a8eff', icon:'search',       label:'Query',      title:'Find anything',           desc:'Locate devices, zones, cables, validation issues, exports.', example:'find all cameras missing DORIS numbers'},
+      {id:'modify',  color:'#a855f7', icon:'move',         label:'Modify',     title:'Operate on the design',   desc:'Move, rename, reassign, connect, retag devices and zones.', example:'move all RX devices to zone Pharmacy'},
+      {id:'generate',color:'#ec4899', icon:'sparkles',     label:'Generate',   title:'Create new design',       desc:'Draw cameras, lay cables, design coverage from patterns.',  example:'add cameras every 20 feet along this wall'},
+      {id:'validate',color:'#ffc220', icon:'shield-check', label:'Validate',   title:'Audit against standards', desc:'Compare to Walmart standards, find blind spots, low confidence.', example:'compare this design against Walmart standards'},
+      {id:'export',  color:'#22c55e', icon:'download',     label:'Export',     title:'Ship to SiteOwl & others',desc:'Generate CSV, QA package, cable schedule, vendor email.',   example:'export this design to SiteOwl format'},
+      {id:'danger',  color:'#ef4444', icon:'trash-2',      label:'Destructive',title:'Removes data — confirms', desc:'Delete devices, clear zones, reset designs. Always confirms.', example:'delete all cameras in zone Sales Floor'},
+    ],
+
+    examples:[
+      {intent:'query',    q:'Find all cameras missing DORIS numbers',                  preview:'4 devices · pulses on canvas', mock:'doris'},
+      {intent:'query',    q:'Show me every device in Grocery',                         preview:'18 devices in zone Grocery'},
+      {intent:'query',    q:'Highlight blind spots near entrances',                    preview:'3 coverage gaps detected'},
+      {intent:'generate', q:'Add cameras every 20 feet along this exterior wall',      preview:'7 new cameras · preview on canvas', mock:'addCams'},
+      {intent:'generate', q:'Create a CCTV design for this floor using the 2996 pattern', preview:'42 cameras + 5 IDFs · ready to apply'},
+      {intent:'modify',   q:'Move all RX devices to zone Pharmacy',                    preview:'12 RX devices reassigned'},
+      {intent:'modify',   q:'Connect these cameras to IDF-2',                          preview:'8 cables drawn · 240 ft total'},
+      {intent:'validate', q:'Compare this design against Walmart standards',           preview:'3 fails · 11 warnings · 89 passes', mock:'walmartCheck'},
+      {intent:'validate', q:'What is wrong with this design?',                         preview:'6 issues found across 4 zones'},
+      {intent:'export',   q:'Export this design to SiteOwl format',                    preview:'CSV · 247 rows · 23.8 KB', mock:'siteowl'},
+      {intent:'export',   q:'Generate a cable schedule',                               preview:'PDF · 14 pages · 1,840 ft'},
+      {intent:'export',   q:'Generate a final QA package',                             preview:'PDF + CSV + DWG + email draft'},
+    ],
+
+    slashCommands:[
+      {id:'/design',   icon:'sparkles',       hint:'Generate a new design from a pattern'},
+      {id:'/qa',       icon:'shield-check',   hint:'Run validation against Walmart standards'},
+      {id:'/export',   icon:'arrow-up-right', hint:'Export to SiteOwl / CSV / PDF / DWG'},
+      {id:'/find',     icon:'search',         hint:'Query devices, zones, cables, issues'},
+      {id:'/explain',  icon:'help-circle',    hint:'Ask MAXILLM to explain a selection'},
+      {id:'/fix',      icon:'wand-2',         hint:'Auto-fix safe issues (e.g. import errors)'},
+    ],
+
+    canvasDots:[
+      {x:15,y:20,flag:false},{x:25,y:20,flag:false},{x:35,y:20,flag:true},
+      {x:15,y:40,flag:false},{x:25,y:40,flag:true},
+      {x:50,y:20,flag:false},{x:65,y:20,flag:false},{x:80,y:20,flag:true},
+      {x:50,y:40,flag:false},{x:65,y:40,flag:false},{x:80,y:40,flag:false},
+      {x:50,y:75,flag:false},{x:70,y:75,flag:true},{x:85,y:75,flag:false},
+    ],
+
+    intentColor(id){ return this.intents.find(i=>i.id===id)?.color || '#4a8eff' },
+
+    get currentIntent(){
+      const q = this.query.toLowerCase();
+      if (!q) return this.intents[0];
+      const rules = [
+        ['danger',   /\b(delete|remove|clear|drop|wipe)\b/],
+        ['export',   /\b(export|generate.*(csv|pdf|package|schedule|email)|save|send|ship|download)\b/],
+        ['validate', /\b(validate|check|compare|audit|verify|wrong with|standard|qa|low confidence|blind spot)\b/],
+        ['generate', /\b(add|create|generate|design|draw|propose|lay |make )\b/],
+        ['modify',   /\b(move|connect|rename|reassign|retag|change|update|swap|fix)\b/],
+        ['query',    /\b(find|show|list|highlight|where|what|how many|count)\b/],
+      ];
+      for (const [id,re] of rules) if (re.test(q)) return this.intents.find(i=>i.id===id);
+      return this.intents[0];
+    },
+
+    /* SHARED-ELEMENT MORPH via View Transitions API */
+    openOverlay(){
+      const go = () => { this.open = true; this.$nextTick(()=>{ this.$refs.overlayInput?.focus(); refreshIcons(); }); };
+      if (document.startViewTransition) document.startViewTransition(go);
+      else go();
+    },
+    closeOverlay(){
+      const go = () => { this.open = false; this.query=''; this.result=null; };
+      if (document.startViewTransition) document.startViewTransition(go);
+      else go();
+    },
+
+    onType(){ if (!this.query) this.result = null; },
+
+    runExample(ex){
+      if (!this.open) this.openOverlay();
+      this.query = ex.q;
+      this.$nextTick(()=>{ this.$refs.overlayInput?.focus(); });
+      this.result = this.mockResult(ex);
+      setTimeout(refreshIcons, 30);
+    },
+
+    mockResult(ex){
+      const I = this.currentIntent;
+      if (ex.mock === 'doris') return {
+        timing:'127 ms',
+        synthesis:`Found <b>4 cameras</b> in Store 3508 missing DORIS numbers. All four were created during last week's XR walkthrough — before the DORIS assignment job ran.`,
+        entities:[
+          {id:'CAM-014', label:'Dome IP · Grocery aisle 7',      tag:'no DORIS', tagColor:'#ec4899'},
+          {id:'CAM-022', label:'Dome IP · Grocery checkout',     tag:'no DORIS', tagColor:'#ec4899'},
+          {id:'CAM-031', label:'PTZ · Electronics entrance',     tag:'no DORIS', tagColor:'#ec4899'},
+          {id:'CAM-038', label:'Dome IP · Electronics back wall',tag:'no DORIS', tagColor:'#ec4899'},
+        ],
+        actions:[{label:'Auto-assign DORIS'},{label:'Highlight on canvas'},{label:'Export list'}]
+      };
+      if (ex.mock === 'addCams') return {
+        timing:'342 ms',
+        synthesis:`Proposing <b>7 new dome cameras</b> spaced every 20 ft along the selected 140 ft exterior wall. Complies with Walmart standard <span class="font-mono text-ink-secondary">CCTV-EXT-2024</span>. Preview drawn on canvas.`,
+        entities:[
+          {id:'CAM-NEW-1', label:'Dome IP @ (12.0, 0.0) ft', tag:'proposed', tagColor:'#ec4899'},
+          {id:'CAM-NEW-2', label:'Dome IP @ (32.0, 0.0) ft', tag:'proposed', tagColor:'#ec4899'},
+          {id:'CAM-NEW-3', label:'Dome IP @ (52.0, 0.0) ft', tag:'proposed', tagColor:'#ec4899'},
+          {id:'CAM-NEW-4', label:'Dome IP @ (72.0, 0.0) ft', tag:'proposed', tagColor:'#ec4899'},
+        ],
+        actions:[{label:'Apply to design'},{label:'Tweak spacing'},{label:'Cancel'}]
+      };
+      if (ex.mock === 'walmartCheck') return {
+        timing:'891 ms',
+        synthesis:`Audited against Walmart standards 2024: <span class="text-emerald-400 font-semibold">89 pass</span>, <span class="text-spark font-semibold" style="color:#ffc220">11 warn</span>, <span class="text-red-400 font-semibold">3 fail</span>. Failures block SiteOwl submission.`,
+        entities:[
+          {id:'FAIL-01', label:'Front entrance has 0 coverage',     tag:'critical', tagColor:'#ef4444'},
+          {id:'FAIL-02', label:'IDF-2 over capacity (34/32)',       tag:'critical', tagColor:'#ef4444'},
+          {id:'FAIL-03', label:'Pharmacy missing FA pull station',  tag:'critical', tagColor:'#ef4444'},
+          {id:'WARN-04', label:'CAM-022 confidence 0.62 (< 0.7)',   tag:'warning',  tagColor:'#ffc220'},
+          {id:'WARN-05', label:'Cable run 312 ft (> 295 ft limit)', tag:'warning',  tagColor:'#ffc220'},
+        ],
+        actions:[{label:'Auto-fix safe issues'},{label:'Export QA report'},{label:'Email QA reviewer'}]
+      };
+      if (ex.mock === 'siteowl') return {
+        timing:'214 ms',
+        synthesis:`Generated SiteOwl-format CSV for Store 3508. <b>247 devices</b> across 7 zones, all coordinates validated against the CAD floor plan. Ready for direct import — no manual cleanup required.`,
+        entities:[
+          {id:'CCTV-CAM', label:'118 cameras · Dome IP + PTZ',       tag:'aligned', tagColor:'#22c55e'},
+          {id:'FA-PULL',  label:'42 fire alarm pull stations',         tag:'aligned', tagColor:'#22c55e'},
+          {id:'FA-SMOKE', label:'56 smoke detectors',                  tag:'aligned', tagColor:'#22c55e'},
+          {id:'INT-MOT',  label:'31 intrusion motion sensors',         tag:'aligned', tagColor:'#22c55e'},
+        ],
+        actions:[{label:'Download CSV'},{label:'Open in SiteOwl'},{label:'Schedule import'}]
+      };
+      return {
+        timing: Math.floor(80+Math.random()*400)+' ms',
+        synthesis: `ForgeSearch interpreted your <b>${I.label.toLowerCase()}</b> command. In the real app this runs against the live design context and returns scoped results with applicable actions.`,
+        entities:[{id:'EX-001',label:'Sample result row',tag:I.label,tagColor:I.color}],
+        actions:[{label:'Apply'},{label:'Preview'},{label:'Dismiss'}]
+      };
+    },
+
+    /* ──────────── AUTOPLAY LOOP ──────────── */
+    autoplay:{
+      typed:'', intent:null, showBadge:false, phase:'idle', synthesis:'', rows:[], timing:'',
+    },
+    _autoplayTimer:null,
+    initAutoplay(){
+      this.autoplay.intent = this.intents[0];
+      const loop = [
+        {ex:this.examples[0],  intentId:'query'},
+        {ex:this.examples[3],  intentId:'generate'},
+        {ex:this.examples[7],  intentId:'validate'},
+        {ex:this.examples[9],  intentId:'export'},
+      ];
+      let i = 0;
+      const tick = async () => {
+        if (this.open) { setTimeout(tick, 1500); return; }
+        const step = loop[i % loop.length]; i++;
+        await this.autoplayCycle(step.ex, step.intentId);
+        setTimeout(tick, 2200);
+      };
+      setTimeout(tick, 1200);
+    },
+    sleep(ms){ return new Promise(r=>setTimeout(r,ms)); },
+    async autoplayCycle(ex, intentId){
+      const a = this.autoplay;
+      a.typed=''; a.showBadge=false; a.phase='typing'; a.rows=[]; a.synthesis='';
+      a.intent = this.intents.find(x=>x.id===intentId) || this.intents[0];
+      this.hintRotation = ex.q;
+      for (let i=0; i<ex.q.length; i++){
+        a.typed += ex.q[i];
+        if (i === Math.min(12, Math.floor(ex.q.length/3))) a.showBadge = true;
+        await this.sleep(70 + Math.random()*35);  /* slower: ~80ms/char avg per qa-kitten v2 */
+      }
+      a.phase = 'thinking';
+      await this.sleep(650);
+      const r = this.mockResult(ex);
+      a.synthesis = r.synthesis;
+      a.rows = (r.entities||[]).slice(0,4).map(e=>({id:e.id,label:e.label,tag:e.tag,color:e.tagColor}));
+      a.timing = r.timing;
+      a.phase = 'results';
+      await this.sleep(7000);  /* longer dwell so results actually breathe */
+    },
+  }
+}
+
+function refreshIcons(){ if (window.lucide) lucide.createIcons(); }
+window.addEventListener('alpine:init', ()=> setTimeout(refreshIcons, 50));
+document.addEventListener('DOMContentLoaded', ()=> refreshIcons());
+</script>
+</body>
+</html>
