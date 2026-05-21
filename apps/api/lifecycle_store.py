@@ -437,7 +437,6 @@ class LifecycleStore:
                 raise ValueError(f"Source site not found: {source_site_id}")
             
             # Create sandbox site
-            from uuid import uuid4
             sandbox_site = SiteExtended(
                 project_id=source.project_id,
                 site_number=f"SB-{source.site_number}",
@@ -460,22 +459,27 @@ class LifecycleStore:
             )
             self._sandboxes[str(config.id)] = config
             
-            # Clone designs
+            # Clone designs from a stable snapshot to avoid mutating the dict
+            # while iterating over it.
             cloned_designs = []
-            for design in self._designs.values():
-                if str(design.site_id) == str(source_site_id):
-                    cloned = Design(
-                        project_id=design.project_id,
-                        site_id=sandbox_site.id,
-                        name=f"[SANDBOX] {design.name}",
-                        design_type=design.design_type,
-                        description=design.description,
-                        priority=design.priority,
-                        status=DesignStatus.DRAFT,
-                        created_by=user
-                    )
-                    self._designs[str(cloned.id)] = cloned
-                    cloned_designs.append(str(cloned.id))
+            source_designs = [
+                design
+                for design in self._designs.values()
+                if str(design.site_id) == str(source_site_id)
+            ]
+            for design in source_designs:
+                cloned = Design(
+                    project_id=design.project_id,
+                    site_id=sandbox_site.id,
+                    name=f"[SANDBOX] {design.name}",
+                    design_type=design.design_type,
+                    description=design.description,
+                    priority=design.priority,
+                    status=DesignStatus.DRAFT,
+                    created_by=user
+                )
+                self._designs[str(cloned.id)] = cloned
+                cloned_designs.append(str(cloned.id))
             
             self._persist_sites()
             self._persist_designs()

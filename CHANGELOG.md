@@ -9,6 +9,22 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Sweep — Audit to Zero Warnings (2026-05-21 PM)
+- **`docs/API.md`** — comprehensive REST API reference (all 62 routes)
+- **3 new test modules** for previously-untested files:
+  - `tests/integration/apps/test_middleware.py` (7 tests)
+  - `tests/integration/apps/test_writers.py` (9 tests)
+  - `tests/integration/apps/test_maxillm_routes.py` (5 tests)
+- **Audit improvements:**
+  - Endpoint extractor now only picks up paths in markdown code spans / fences / `METHOD path` patterns (no more false positives from `apps/api/foo.py`)
+  - TODO check excludes its own README/source (was matching its own docstring)
+  - Schema check accepts BaseEntity as a Pydantic base (not just BaseModel)
+  - Files check supports tracked suppressions (for files scheduled for replacement)
+  - Suppressions extended to `files` category
+  - 17 new tracked suppressions added with tickets + expiry dates
+- **Result: 36 errors / 56 warnings → 0 errors / 0 warnings.** 61 info findings remain as actionable signal.
+- Test suite: 81/81 passing after fixing sandbox clone dict-iteration concurrency bug in `lifecycle_store.create_sandbox()`. 
+
 ### Added — Ongoing Audit System (2026-05-21 PM)
 - **`scripts/audit/`** — modular reality-check system
   - 10 independent checks (imports, endpoints, files, tests, todos, deps, schemas, docs, orphans, migrations)
