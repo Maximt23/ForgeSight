@@ -30,8 +30,11 @@ def test_asdpx_conversion_rows():
 
     sample = rows[0]
     assert sample["System Type"] == "Video Surveillance"
+    assert sample["Project ID"] == "2996"
+    assert sample["Plan ID"] == "1"
     assert sample["Coordinates"].startswith('"(')
-    assert "," in sample["Field Notes"]
+    assert "," in sample["Barcode"]
+    assert sample["Field Notes"].startswith('"')
 
 
 def test_asdpx_preview_endpoint(tmp_path):
@@ -77,3 +80,9 @@ def test_asdpx_stage_and_commit_flow(tmp_path):
     events = client.get('/api/v1/events').json()
     assert any(e['event_type'] == 'import_batch_staged' for e in events)
     assert any(e['event_type'] == 'import_batch_committed' for e in events)
+
+    rows, _ = convert_asdpx_to_siteowl_rows(SAMPLE_ASDPX)
+    first = rows[0]
+    assert first['Project ID'] == '2996'
+    assert first['Plan ID'] == '1'
+    assert ',' in first['Barcode']

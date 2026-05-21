@@ -12,11 +12,14 @@ Use Axis SiteDesigner `.asdpx` exports as an import adapter for SiteOwl-compatib
 ## Outputs
 - normalized SiteOwl rows (56-column schema)
 - key fields mapped:
+  - Project ID = inferred site number (from ASDPX project name/file)
+  - Plan ID = per-device sequence number (`1..N`)
   - Device ID
   - Name
   - System Type
   - Device/Task Type
   - Part Number
+  - Barcode = GPS (`lat,lng`)
   - Coverage Direction/Angle/Range
   - Height (ft)
   - Field Notes (GPS)
