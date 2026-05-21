@@ -1,6 +1,7 @@
 import csv
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -63,9 +64,23 @@ def _extract_children(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
+def _infer_site_number(asdpx_path: Path, payload: dict[str, Any]) -> str:
+    project = payload.get("project", {})
+    candidate_values = []
+    if isinstance(project, dict):
+        candidate_values.append(str(project.get("name") or ""))
+    candidate_values.append(asdpx_path.stem)
+
+    for candidate in candidate_values:
+        match = re.search(r"(\d{3,})", candidate)
+        if match:
+            return match.group(1)
+    return asdpx_path.stem
+
 def convert_asdpx_to_siteowl_rows(asdpx_path: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     data = json.loads(asdpx_path.read_text(encoding="utf-8"))
     children = _extract_children(data)
+    site_number = _infer_site_number(asdpx_path, data)
 
     floor_plans = [x for x in children if x.get("type") == "floorPlan" and isinstance(x.get("image"), dict)]
     if not floor_plans:
@@ -148,6 +163,8 @@ def convert_asdpx_to_siteowl_rows(asdpx_path: Path) -> tuple[list[dict[str, Any]
         replacement_cost = float(pricing.get(part_number, 0)) if part_number else 0.0
 
         row = {h: "" for h in SITEOWL_HEADERS}
+        row["Project ID"] = site_number
+        row["Plan ID"] = str(idx)
         row["Device ID"] = f"New{idx:04d}"
         row["Name"] = model_name
         row["Device / Task"] = "Device"
@@ -160,7 +177,9 @@ def convert_asdpx_to_siteowl_rows(asdpx_path: Path) -> tuple[list[dict[str, Any]
         row["Coverage Angle"] = str(coverage_angle)
         row["Coverage Range"] = str(coverage_range)
         row["Height (ft)"] = f"{height_ft_device:.1f}"
-        row["Field Notes"] = f'"{lat}, {lng}"'
+        gps_text = f"{lat:.6f},{lng:.6f}"
+        row["Barcode"] = gps_text
+        row["Field Notes"] = f'"{gps_text}"'
         row["Replacement Cost"] = f"{replacement_cost:.2f}"
         row["Coordinates"] = _fmt_coordinates(display_x, display_y)
 
@@ -171,6 +190,7 @@ def convert_asdpx_to_siteowl_rows(asdpx_path: Path) -> tuple[list[dict[str, Any]
 
     metadata = {
         "source": str(asdpx_path),
+        "site_number": site_number,
         "row_count": len(rows),
         "floorplan_count": len(floor_plans),
         "target_width": target_width,
