@@ -6,6 +6,8 @@ from uuid import UUID
 from fastapi import FastAPI, Header, HTTPException
 
 from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
+from .infrastructure_routes import router as infrastructure_router
+from .middleware import install_metrics_endpoint, install_middleware
 from .schemas import (
     AsdpxBatchStageRequest,
     AsdpxBatchStageResponse,
@@ -36,6 +38,14 @@ from .schemas import (
 from .store import STORE
 
 app = FastAPI(title="CadOwl Phase 2 API", version="0.2.1")
+
+# Production hardening: structured logging + request IDs + metrics endpoint.
+# Safe to call multiple times; idempotent.
+install_middleware(app)
+install_metrics_endpoint(app)
+
+# Mount the infrastructure router (Saone + Grafana + Master Bridge).
+app.include_router(infrastructure_router)
 
 
 def _safe_write(operation):

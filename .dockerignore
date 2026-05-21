@@ -1,0 +1,93 @@
+# Files NOT to copy into Docker images. Keep images small + secrets safe.
+
+# ─── VCS ────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# ─── Python ─────────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# ─── Secrets — NEVER ship to image ──────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# ─── IDE / OS ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── Docs (not needed in image) ─────────────────────────────────────────
+docs/
+*.md
+!README.md
+!AUTHORS.md
+!LICENSE
+CHANGELOG.md
+CONTRIBUTING.md
+GOVERNANCE.md
+PROJECT_STATUS.md
+SUPPORT.md
+SECURITY.md
+CODE_OF_CONDUCT.md
+
+# ─── Local data (not for prod image) ───────────────────────────────────
+data/jsondb/
+data/storage/
+data/cache/
+Input/
+Output/
+exports/
+uploads/
+*.csv
+*.xlsx
+*.dwg
+*.dxf
+
+# ─── Logs ───────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Test artifacts ─────────────────────────────────────────────────────
+tests/
+test_*.py
+*_test.py
+
+# ─── Misc ───────────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+node_modules/
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+*.bat
+*.lsp
+*.vbs
+relayops/
+.puppy_coordination/

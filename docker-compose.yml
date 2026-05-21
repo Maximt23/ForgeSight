@@ -1,0 +1,106 @@
+# ──────────────────────────────────────────────────────────────────────
+# CadOwl local development stack
+#
+# Brings up the full platform locally:
+#   - api      : FastAPI service
+#   - worker   : Async job worker
+#   - postgres : Database (for Phase 1.1 migration target)
+#   - redis    : Queue / cache
+#
+# Usage:
+#   docker compose up -d            # Start everything
+#   docker compose logs -f api      # Tail API logs
+#   docker compose down             # Stop everything
+#   docker compose down -v          # Stop AND wipe data
+# ──────────────────────────────────────────────────────────────────────
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cadowl-api:local
+    container_name: cadowl-api
+    restart: unless-stopped
+    ports:
+      - "9010:9010"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://cadowl:cadowl@postgres:5432/cadowl
+      REDIS_URL: redis://redis:6379/0
+      CADOWL_DATA_DIR: /data
+      CADOWL_DEV_MODE: "true"
+    volumes:
+      - cadowl-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9010/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cadowl-worker:local
+    container_name: cadowl-worker
+    restart: unless-stopped
+    command: ["python", "-m", "apps.worker.main"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://cadowl:cadowl@postgres:5432/cadowl
+      REDIS_URL: redis://redis:6379/0
+      CADOWL_DATA_DIR: /data
+    volumes:
+      - cadowl-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: cadowl-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cadowl
+      POSTGRES_PASSWORD: cadowl
+      POSTGRES_DB: cadowl
+    ports:
+      - "5432:5432"
+    volumes:
+      - cadowl-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cadowl -d cadowl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cadowl-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - cadowl-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cadowl-data:
+  cadowl-postgres:
+  cadowl-redis:

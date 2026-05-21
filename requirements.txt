@@ -1,40 +1,67 @@
-fastapi>=0.109.0
-uvicorn>=0.27.0
-pydantic>=2.5.0
-pydantic-settings>=2.1.0
+# CadOwl runtime dependencies — production pinned.
+#
+# Update strategy:
+#   1. Bump versions in this file
+#   2. Run: pip install -r requirements.txt
+#   3. Run: pip freeze > requirements.lock (locks transitive deps)
+#   4. Run tests
+#   5. Commit both files together
+#
+# Walmart install command:
+#   pip install -r requirements.txt \
+#     --index-url https://pypi.ci.artifacts.walmart.com/artifactory/api/pypi/external-pypi/simple \
+#     --allow-insecure-host pypi.ci.artifacts.walmart.com
 
-# Database
-sqlalchemy>=2.0.0
-alembic>=1.13.0
+# ─── Web framework ─────────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+pydantic-settings==2.6.0
+python-multipart==0.0.12
 
-# Templates
-jinja2>=3.1.0
-python-multipart>=0.0.6
+# ─── Async worker (Arq) ────────────────────────────────────────────────
+arq==0.26.1
+redis==5.2.0
 
-# AI Integration
-ollama>=0.1.0
-httpx>=0.26.0
+# ─── Database (Phase 1.1 target) ───────────────────────────────────────
+sqlalchemy==2.0.36
+alembic==1.13.3
+asyncpg==0.30.0
+psycopg[binary]==3.2.3
 
-# PDF Generation
-reportlab>=4.0.0
-pillow>=10.2.0
+# ─── Auth ──────────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+httpx==0.27.2
 
-# Excel
-openpyxl>=3.1.2
-pandas>=2.2.0
+# ─── Templates / output formats ────────────────────────────────────────
+jinja2==3.1.4
+reportlab==4.2.5
+openpyxl==3.1.5
+pandas==2.2.3
+pillow==11.0.0
 
-# Utils
-python-dotenv>=1.0.0
-loguru>=0.7.2
-click>=8.1.7
+# ─── CAD / file parsing (legacy + new integrations) ────────────────────
+ezdxf==1.3.5
+pypdf==5.1.0
+PyMuPDF==1.24.13
 
-# Image Processing
-pillow>=10.2.0
+# ─── ML / GIS support ──────────────────────────────────────────────────
+numpy==2.1.3
+scikit-learn==1.5.2
+shapely==2.0.6
 
-# Email (optional)
-aiosmtplib>=3.0.0
+# ─── Observability ─────────────────────────────────────────────────────
+prometheus-client==0.21.0
+loguru==0.7.2
 
-# Dev
-pytest>=7.4.0
-ruff>=0.1.0
-mypy>=1.8.0
+# ─── Utilities ─────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+click==8.1.7
+rapidfuzz==3.10.1
+
+# ─── Dev tooling (move to requirements-dev.txt eventually) ─────────────
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+ruff==0.7.4
+mypy==1.13.0
