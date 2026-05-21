@@ -1,21 +1,53 @@
-MIT License
+PROPRIETARY AND CONFIDENTIAL
 
-Copyright (c) 2026 vn59j7j
+Copyright (c) 2024-2026 Walmart Inc. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and associated documentation files (the "Software") are the
+proprietary and confidential property of Walmart Inc. ("Walmart"), and are
+protected by trade secret, copyright, and other intellectual property laws.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+PERMITTED USE
+-------------
+The Software may only be used:
+  1. By Walmart employees and authorized Walmart contractors,
+  2. For Walmart business purposes,
+  3. Within Walmart's internal infrastructure and approved environments,
+  4. In accordance with Walmart's Information Security Policy and
+     Code of Business Conduct.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+PROHIBITED USE
+--------------
+Without prior written authorization from Walmart Legal, you may NOT:
+  - Copy, distribute, publish, or transmit the Software outside Walmart,
+  - Modify the Software for non-Walmart purposes,
+  - Reverse engineer, decompile, or disassemble the Software,
+  - Remove or alter any proprietary notices or labels,
+  - Use the Software to create competing products,
+  - Disclose the Software to third parties.
+
+AUTHORSHIP
+----------
+This Software was conceived and architected by Maxim Tsitolovsky and
+developed with contributions from Walmart team members and AI coding
+agents. See AUTHORS.md for the full attribution. Walmart Inc. owns the
+intellectual property in the Software; individual authors retain
+authorship recognition rights as described in AUTHORS.md.
+
+NO WARRANTY
+-----------
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+THIRD-PARTY COMPONENTS
+----------------------
+This Software incorporates third-party open source components. Each is
+governed by its own license terms. See requirements.txt and any
+THIRD_PARTY_LICENSES.md file in this repository for details.
+
+CONTACT
+-------
+Walmart Legal Department for licensing questions.
+Repository maintainer (see .github/CODEOWNERS) for technical questions.
+
+For Walmart internal use only. Do not distribute.

@@ -314,3 +314,6 @@ Internal Walmart project. See [LICENSE](LICENSE) for details.
 
 > **Built by Maxim Tsitolovsky** with the help of a pack of loyal Code Puppies 🐶  
 > *Replacing fragile point tools with auditable, intelligent automation.*
+>
+> **Lead Architect**: Maxim Tsitolovsky | See [AUTHORS.md](AUTHORS.md) for full credits.  
+> **Copyright**: © 2024–2026 Walmart Inc. All rights reserved. See [LICENSE](LICENSE).

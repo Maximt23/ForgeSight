@@ -1,8 +1,41 @@
-# Default ownership
+# CadOwl CODEOWNERS
+#
+# This file defines who reviews and approves changes to specific parts of
+# the repository. Lead author / architect: @vn59j7j (Maxim Tsitolovsky).
+#
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+
+# ─── Default ownership ──────────────────────────────────────────────
+# Lead architect reviews everything by default
 * @vn59j7j
 
-# Core platform areas
-/apps/api/ @vn59j7j
-/packages/ @vn59j7j
-/docs/ @vn59j7j
-/tests/ @vn59j7j
+# ─── Core platform ──────────────────────────────────────────────────
+/apps/             @vn59j7j
+/apps/api/         @vn59j7j
+/apps/worker/      @vn59j7j
+/apps/web/         @vn59j7j
+/packages/         @vn59j7j
+
+# ─── Data + schemas (extra care) ────────────────────────────────────
+/data/             @vn59j7j
+/data/schemas/     @vn59j7j
+/data/jsondb/      @vn59j7j
+
+# ─── Tests ──────────────────────────────────────────────────────────
+/tests/            @vn59j7j
+
+# ─── Documentation ──────────────────────────────────────────────────
+/docs/             @vn59j7j
+*.md               @vn59j7j
+
+# ─── Governance + legal ─────────────────────────────────────────────
+/LICENSE           @vn59j7j
+/AUTHORS.md        @vn59j7j
+/GOVERNANCE.md     @vn59j7j
+/SECURITY.md       @vn59j7j
+/CODE_OF_CONDUCT.md @vn59j7j
+
+# ─── CI / infrastructure ────────────────────────────────────────────
+/.github/          @vn59j7j
+/infra/            @vn59j7j
+/scripts/          @vn59j7j
