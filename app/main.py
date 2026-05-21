@@ -22,7 +22,13 @@ app = FastAPI(
 
 # Setup static files and templates
 BASE_DIR = Path(__file__).parent
+PROJECT_ROOT = BASE_DIR.parent
+DESIGN_RESEARCH_DIR = PROJECT_ROOT / "docs" / "design-research"
+
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+if DESIGN_RESEARCH_DIR.exists():
+    app.mount("/design-research", StaticFiles(directory=DESIGN_RESEARCH_DIR), name="design-research")
+
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 BRAND = {
@@ -156,6 +162,21 @@ async def sectors(request: Request):
 @app.get("/export-center", response_class=HTMLResponse)
 async def export_center(request: Request):
     return templates.TemplateResponse(request=request, name="export_center.html", context={"request": request, "brand": BRAND})
+
+
+@app.get("/design-lab", response_class=HTMLResponse)
+async def design_lab(request: Request):
+    """Stable in-repo UI playground using the 2026-05-21 design baseline."""
+    return templates.TemplateResponse(
+        request=request,
+        name="design_lab.html",
+        context={
+            "request": request,
+            "brand": BRAND,
+            "baseline_available": DESIGN_RESEARCH_DIR.exists(),
+            "baseline_path": str(DESIGN_RESEARCH_DIR),
+        },
+    )
 
 
 @app.get("/projects/{project_id}/design", response_class=HTMLResponse)
