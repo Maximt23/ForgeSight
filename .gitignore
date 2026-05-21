@@ -1,33 +1,171 @@
-# Python virtual environment
+# ─────────────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────────────
 .venv/
+venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
 
-# Watcher log
-watcher.log
+# ─────────────────────────────────────────────────────────────────────
+# Secrets — NEVER COMMIT
+# ─────────────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+secrets/
+credentials/
+*credentials*.json
+*service_account*.json
+api_keys.txt
+*API*KEY*
 
-# AutoCAD backup files
+# ─────────────────────────────────────────────────────────────────────
+# AutoCAD intermediate / output files
+# ─────────────────────────────────────────────────────────────────────
 *.bak
 *.dwl
 *.dwl2
 *.tmp
 *_recover.dwg
-
-# DXF files (intermediate - too large)
 *.dxf
-
-# DWG files (source files - user provides)
 *.dwg
+!data/fixtures/**/*.dxf
+!data/fixtures/**/*.dwg
 
-# Output files (don't commit data)
+# ─────────────────────────────────────────────────────────────────────
+# Data files — DO NOT COMMIT customer/store data
+# ─────────────────────────────────────────────────────────────────────
 *.csv
+*.xlsx
+*.xls
 *_log.txt
+Input/
+Output/
+exports/
+uploads/
+photos/
+videos/
+training_data/
 
-# OS files
+# Allow schema and fixture data
+!data/schemas/**
+!data/fixtures/**
+!data/jsondb/.gitkeep
+!docs/**/*.csv
+
+# ─────────────────────────────────────────────────────────────────────
+# Databases
+# ─────────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ─────────────────────────────────────────────────────────────────────
+# ML models / artifacts
+# ─────────────────────────────────────────────────────────────────────
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.h5
+models/*.pkl
+models/*.joblib
+*.weights
+!models/.gitkeep
+ml_patterns.json
+ml_cache/
+
+# ─────────────────────────────────────────────────────────────────────
+# Cache files from integrations
+# ─────────────────────────────────────────────────────────────────────
+.doris_cache.json
+.saone_device_mapping.json
+.grafana_cache.json
+.osm_cache/
+
+# ─────────────────────────────────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+watcher.log
+*.log.gz
+
+# ─────────────────────────────────────────────────────────────────────
+# Temporary / scratch
+# ─────────────────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+.scratch/
+scratch/
+*.swp
+*.swo
+*~
+
+# ─────────────────────────────────────────────────────────────────────
+# OS / IDE
+# ─────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
+.idea/
+.vscode/
+!.vscode/settings.json.example
+!.vscode/extensions.json
+*.iml
+.project
+.pydevproject
+.settings/
 
-# Editor files
-*.swp
-*~
+# ─────────────────────────────────────────────────────────────────────
+# Node (for future web/mobile apps)
+# ─────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+.nuxt/
+dist-electron/
+out/
+
+# ─────────────────────────────────────────────────────────────────────
+# Puppy coordination (local-only, not for GitHub)
+# ─────────────────────────────────────────────────────────────────────
+.puppy_coordination/
+relayops/state/conflicts.md.lock
+
+# ─────────────────────────────────────────────────────────────────────
+# Generated reports / dashboards
+# ─────────────────────────────────────────────────────────────────────
+*_dashboard.json
+*_health_report.json
+master_dashboard_*.json
+store_*_dashboard.json
