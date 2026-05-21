@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pathlib import Path
 import logging
 
@@ -24,13 +24,29 @@ BASE_DIR = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
+BRAND = {
+    "app_name": settings.BRAND_APP_NAME,
+    "tagline": settings.BRAND_TAGLINE,
+    "icon_path": settings.BRAND_ICON_PATH,
+    "shortcut_path": settings.BRAND_SHORTCUT_PATH,
+    "primary_color": "#0053e2",
+    "accent_color": "#ffc220",
+}
+templates.env.globals["brand"] = BRAND
+
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    icon_file = BASE_DIR / "static" / "branding" / "cadowl.ico"
+    return FileResponse(icon_file)
+
 
 # === HOME PAGE ===
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Landing page."""
-    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request, "brand": BRAND})
 
 
 # === DASHBOARD ===
@@ -40,6 +56,7 @@ async def dashboard(request: Request):
     """Main dashboard."""
     return templates.TemplateResponse(request=request, name="dashboard.html", context={
         "request": request,
+        "brand": BRAND,
         "stats": {
             "total_stores": 0,
             "active_surveys": 0,
@@ -53,47 +70,47 @@ async def dashboard(request: Request):
 
 @app.get("/surveys", response_class=HTMLResponse)
 async def surveys(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Surveys", "emoji": "📝"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Surveys", "emoji": "📝"})
 
 
 @app.get("/stores", response_class=HTMLResponse)
 async def stores(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Stores", "emoji": "🏪"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Stores", "emoji": "🏪"})
 
 
 @app.get("/floorplans", response_class=HTMLResponse)
 async def floorplans(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Floor Plans", "emoji": "🗺️"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Floor Plans", "emoji": "🗺️"})
 
 
 @app.get("/equipment", response_class=HTMLResponse)
 async def equipment(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Equipment", "emoji": "📦"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Equipment", "emoji": "📦"})
 
 
 @app.get("/vendors", response_class=HTMLResponse)
 async def vendors(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Vendors", "emoji": "🤝"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Vendors", "emoji": "🤝"})
 
 
 @app.get("/photos", response_class=HTMLResponse)
 async def photos(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Photos", "emoji": "📸"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Photos", "emoji": "📸"})
 
 
 @app.get("/reports", response_class=HTMLResponse)
 async def reports(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Reports", "emoji": "📄"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Reports", "emoji": "📄"})
 
 
 @app.get("/ai-assistant", response_class=HTMLResponse)
 async def ai_assistant(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "AI Assistant", "emoji": "🤖"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "AI Assistant", "emoji": "🤖"})
 
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
-    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "title": "Settings", "emoji": "⚙️"})
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Settings", "emoji": "⚙️"})
 
 
 # === API HEALTH CHECK ===

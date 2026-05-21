@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - CadOwl</title>
+    <title>Dashboard - {{ brand.app_name }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ brand.icon_path }}">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -18,13 +19,13 @@
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
         <aside x-show="sidebarOpen" 
-               class="w-64 bg-gradient-to-b from-purple-600 to-purple-800 text-white flex-shrink-0">
+               class="w-64 bg-gradient-to-b from-[#0053e2] to-[#0039a6] text-white flex-shrink-0">
             <div class="p-6">
                 <div class="flex items-center gap-3 mb-8">
-                    <span class="text-4xl">🦉</span>
+                    <img src="{{ brand.icon_path }}" alt="{{ brand.app_name }} icon" class="w-10 h-10" />
                     <div>
-                        <h1 class="text-2xl font-bold">CadOwl</h1>
-                        <p class="text-purple-200 text-sm">v1.0.0</p>
+                        <h1 class="text-2xl font-bold">{{ brand.app_name }}</h1>
+                        <p class="text-blue-200 text-sm">v1.0.0</p>
                     </div>
                 </div>
                 
@@ -82,7 +83,7 @@
                         <!-- Search -->
                         <input type="search" 
                                placeholder="Search stores, surveys..." 
-                               class="px-4 py-2 border border-gray-300 rounded-lg w-64 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                               class="px-4 py-2 border border-gray-300 rounded-lg w-64 focus:ring-2 focus:ring-[#0053e2] focus:border-transparent">
                         
                         <!-- Notifications -->
                         <button class="relative p-2 hover:bg-gray-100 rounded-lg">
@@ -92,7 +93,7 @@
                         
                         <!-- User -->
                         <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            <div class="w-10 h-10 bg-[#0053e2] rounded-full flex items-center justify-center text-white font-bold">
                                 M
                             </div>
                             <span class="font-semibold">Maxim</span>
@@ -151,7 +152,7 @@
                 </div>
                 
                 <!-- Quick Actions -->
-                <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl shadow-lg p-8 mb-8 text-white">
+                <div class="bg-gradient-to-r from-[#0053e2] to-[#0039a6] rounded-xl shadow-lg p-8 mb-8 text-white">
                     <h3 class="text-2xl font-bold mb-4">Quick Actions</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <button class="bg-white/20 hover:bg-white/30 transition rounded-lg p-4 text-center">
@@ -213,13 +214,13 @@
                             </div>
                         </div>
                         
-                        <button class="w-full mt-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg font-semibold transition">
+                        <button class="w-full mt-4 py-2 text-[#0053e2] hover:bg-blue-50 rounded-lg font-semibold transition">
                             View All Surveys →
                         </button>
                     </div>
                     
                     <!-- AI Assistant Preview -->
-                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-sm p-6 border border-purple-200">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm p-6 border border-blue-200">
                         <div class="flex items-center gap-3 mb-4">
                             <div class="text-3xl">🤖</div>
                             <h3 class="text-xl font-bold">AI Assistant</h3>
@@ -238,8 +239,8 @@
                         <div class="flex gap-2">
                             <input type="text" 
                                    placeholder="Ask AI anything..." 
-                                   class="flex-1 px-4 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold">
+                                   class="flex-1 px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#0053e2] focus:border-transparent">
+                            <button class="bg-[#0053e2] text-white px-6 py-2 rounded-lg hover:bg-[#0039a6] transition font-semibold">
                                 Ask
                             </button>
                         </div>
@@ -255,7 +256,7 @@
                     
                     <div class="grid grid-cols-4 gap-4 text-center">
                         <div>
-                            <div class="text-3xl font-bold text-purple-600">750+</div>
+                            <div class="text-3xl font-bold text-[#0053e2]">750+</div>
                             <div class="text-sm text-gray-600 mt-1">Stores</div>
                         </div>
                         <div>

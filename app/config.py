@@ -5,11 +5,17 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     """Application settings."""
-    
+
     # App
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8080
     SECRET_KEY: str = "cadowl-secret-key-change-in-production"
+
+    # Branding
+    BRAND_APP_NAME: str = "CadOwl"
+    BRAND_TAGLINE: str = "Modern Survey Coordination Platform"
+    BRAND_ICON_PATH: str = "/static/branding/cadowl.ico"
+    BRAND_SHORTCUT_PATH: str = r"C:\Users\vn59j7j\OneDrive - Walmart Inc\Desktop\CadOwl.lnk"
     
     # Database
     DATABASE_URL: str = "sqlite:///cadowl.db"

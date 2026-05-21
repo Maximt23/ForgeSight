@@ -5,11 +5,12 @@
 set SCRIPT_DIR=%~dp0
 set SHORTCUT_NAME=CadOwl
 set TARGET=%SCRIPT_DIR%CadOwl.bat
-set DESKTOP=%USERPROFILE%\Desktop
+set DESKTOP=%USERPROFILE%\OneDrive - Walmart Inc\Desktop
+if not exist "%DESKTOP%" set DESKTOP=%USERPROFILE%\Desktop
 
 echo Creating desktop shortcut for CadOwl...
 
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%DESKTOP%\%SHORTCUT_NAME%.lnk'); $s.TargetPath = '%TARGET%'; $s.WorkingDirectory = '%SCRIPT_DIR%'; $s.Description = 'CadOwl - CAD to SiteOwl Converter'; $s.WindowStyle = 7; $s.Save()"
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%DESKTOP%\%SHORTCUT_NAME%.lnk'); $s.TargetPath = '%TARGET%'; $s.WorkingDirectory = '%SCRIPT_DIR%'; $s.IconLocation = '%SCRIPT_DIR%app\static\branding\cadowl.ico,0'; $s.Description = 'CadOwl - CAD to SiteOwl Converter'; $s.WindowStyle = 7; $s.Save()"
 
 if exist "%DESKTOP%\%SHORTCUT_NAME%.lnk" (
     echo.
