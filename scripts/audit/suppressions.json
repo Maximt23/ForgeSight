@@ -1,6 +1,20 @@
 {
   "_README": "Suppress known findings that are tracked elsewhere. Each suppression MUST include a reason and an expires date (YYYY-MM-DD). Expired suppressions are reported as warnings. Don't suppress to hide real bugs — only to keep CI clean while a real ticket is pending.",
+  "files": [
+    {
+      "file": "apps/api/store.py",
+      "reason": "In-memory + JSON file store, scheduled for removal in Phase 1.1.b/c/d when we swap to SQLAlchemy repositories. Splitting now would waste effort.",
+      "ticket": "FORGE-051 json-store-to-postgres",
+      "expires": "2026-08-01"
+    }
+  ],
   "endpoints": [
+    {
+      "endpoint": "/api/cameras/ws/health",
+      "reason": "PLANNED — WebSocket camera health push, listed in docs/INTEGRATIONS.md as the consumer contract. Server-side not implemented yet.",
+      "ticket": "FORGE-501 camera-health-ws",
+      "expires": "2026-09-01"
+    },
     {
       "endpoint": "/api/v1/designs",
       "reason": "Real route lives at /api/v1/lifecycle/designs. Docs need a sweep, but the lifecycle prefix is intentional (separates legacy /sites from extended site lifecycle).",

@@ -63,6 +63,7 @@ def load_suppressions() -> dict[str, dict[str, Suppression]]:
                 "imports": "module",
                 "deps": "package",
                 "schemas": "entity",
+                "files": "file",
             }.get(check_name, "key")
 
             key = entry.get(key_field)

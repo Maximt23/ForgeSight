@@ -19,6 +19,7 @@ except Exception:
 # a silent try/except here previously hid a broken import chain and the
 # routes never registered (caught by scripts/audit). Don't reintroduce.
 from .maxillm_routes import router as maxillm_router
+from .validation_routes import router as validation_router
 from .schemas import (
     AsdpxBatchStageRequest,
     AsdpxBatchStageResponse,
@@ -74,6 +75,7 @@ app.include_router(infrastructure_router)
 if lifecycle_router is not None:
     app.include_router(lifecycle_router)
 app.include_router(maxillm_router)
+app.include_router(validation_router)
 
 
 def _safe_write(operation):

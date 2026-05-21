@@ -14,6 +14,7 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
+from ..suppressions import load_suppressions
 from ..types import REPO_ROOT, CheckResult, Finding, Severity
 
 _MAX_LINES = 600
@@ -40,21 +41,37 @@ def run() -> CheckResult:
                 files.append(p)
 
     result.items_scanned = len(files)
+    suppressions = load_suppressions().get("files", {})
 
     for path in files:
+        rel = str(path.relative_to(REPO_ROOT)).replace("\\", "/")
         try:
             lines = path.read_text(encoding="utf-8").count("\n") + 1
         except (OSError, UnicodeDecodeError):
             continue
 
         if lines > _MAX_LINES:
+            suppression = suppressions.get(rel)
+            if suppression and not suppression.expired:
+                result.findings.append(
+                    Finding(
+                        check="files",
+                        severity=Severity.INFO,
+                        title=f"Large file (tracked): {path.name}",
+                        detail=f"{lines} lines. Suppressed: {suppression.reason}",
+                        file=rel,
+                        suggestion=f"Ticket: {suppression.ticket or 'n/a'} · expires {suppression.expires.isoformat()}",
+                        metadata={"lines": lines, "limit": _MAX_LINES, "suppressed": True},
+                    )
+                )
+                continue
             result.findings.append(
                 Finding(
                     check="files",
                     severity=Severity.WARNING,
                     title=f"File over {_MAX_LINES} lines: {path.name}",
                     detail=f"{lines} lines (limit: {_MAX_LINES})",
-                    file=str(path.relative_to(REPO_ROOT)),
+                    file=rel,
                     suggestion="Consider splitting into smaller modules. See CLAUDE.md for the 600-line guideline.",
                     metadata={"lines": lines, "limit": _MAX_LINES},
                 )
@@ -66,7 +83,7 @@ def run() -> CheckResult:
                     severity=Severity.INFO,
                     title=f"Large file approaching limit: {path.name}",
                     detail=f"{lines} lines (will warn at {_MAX_LINES})",
-                    file=str(path.relative_to(REPO_ROOT)),
+                    file=rel,
                     metadata={"lines": lines, "limit": _MAX_LINES},
                 )
             )

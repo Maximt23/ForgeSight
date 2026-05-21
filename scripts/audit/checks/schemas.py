@@ -62,20 +62,34 @@ def _json_schemas() -> set[str]:
 
 # Entity names that exist intentionally in only one place
 _PYDANTIC_ONLY = {
+    "BaseEntity",  # base class, not an entity itself
     "ProjectCreate", "SiteCreate", "FloorCreate", "MapCreate", "DeviceCreate",
     "ZoneCreate", "CableCreate", "ImportBatchCreate", "ImportBatchCommitRequest",
     "ImportBatchCommitResponse", "RollbackRequest", "RollbackResult",
     "AsdpxBatchStageRequest", "AsdpxBatchStageResponse", "AsdpxPreviewRequest",
-    "AsdpxPreviewResponse", "AsdpxDevicePreview", "MapModel",
+    "AsdpxPreviewResponse", "AsdpxDevicePreview",
+    # Lifecycle helpers / DTOs (not persisted entities)
+    "DesignCreate", "DesignFilter", "SiteFilter", "StatusChange",
+    "DashboardStats", "DesignsByStatus", "SitesByType",
+    # Import validation + re-upload + delete DTOs (request/response wrappers)
+    "ImportBatchValidateResponse", "ImportBatchValidationIssue",
+    "ImportDeleteCommitRequest", "ImportDeleteCommitResponse",
+    "ImportDeletePreviewRequest", "ImportDeletePreviewResponse",
+    "ImportReuploadCommitRequest", "ImportReuploadCommitResponse",
+    "ImportReuploadPreviewRequest", "ImportReuploadPreviewResponse",
 }
 
 _SQL_ONLY = {
     "Base", "IdempotencyKey",  # internal infrastructure
+    "Snapshot",  # state snapshot — internal, exposed via revision endpoints, not as a typed entity
 }
 
 # Entities that are intentionally in SQLAlchemy but use a different Pydantic name
 _NAME_ALIASES = {
     "MapModel": "Map",  # Pydantic uses MapModel to avoid clash with builtin
+    "SiteExtended": "SiteExtended",  # lifecycle Pydantic in apps/api/lifecycle.py
+    "Design": "Design",
+    "SandboxConfig": "SandboxConfig",
 }
 
 
@@ -85,7 +99,12 @@ def run() -> CheckResult:
 
     pydantic_classes = _class_names_in(
         REPO_ROOT / "apps" / "api" / "schemas.py",
-        base_filter=("BaseModel",),
+        base_filter=("BaseModel", "BaseEntity"),
+    )
+    # Lifecycle entities (SiteExtended, Design, SandboxConfig) live in lifecycle.py
+    pydantic_classes |= _class_names_in(
+        REPO_ROOT / "apps" / "api" / "lifecycle.py",
+        base_filter=("BaseModel", "BaseEntity"),
     )
     sql_classes = _class_names_in(
         REPO_ROOT / "packages" / "db" / "models.py",

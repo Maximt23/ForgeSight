@@ -22,8 +22,54 @@ from pathlib import Path
 from ..suppressions import load_suppressions
 from ..types import REPO_ROOT, CheckResult, Finding, Severity
 
-# Match `/api/v1/...` (optionally with `{param}` placeholders) in docs
-_ENDPOINT_PATTERN = re.compile(r"/api/v1/[a-zA-Z0-9/_\-{}]+")
+# Strategy: only extract endpoint paths from contexts where they're
+# clearly endpoints, not file paths or prose mentions. We look for:
+#   1. Markdown code spans:   `/api/v1/foo` or `GET /api/v1/foo`
+#   2. Markdown code fences:  ```...``` blocks
+#   3. HTTP method prefixes:  `GET /api/...`, `POST /api/...`
+_CODE_SPAN_PATTERN = re.compile(r"`([^`\n]+)`")
+_CODE_FENCE_PATTERN = re.compile(r"```[\s\S]*?```", re.MULTILINE)
+_PATH_IN_TEXT = re.compile(r"/api/[a-zA-Z0-9][a-zA-Z0-9/_\-{}.]+")
+_METHOD_PATH = re.compile(r"\b(GET|POST|PUT|PATCH|DELETE)\s+(/api/[a-zA-Z0-9/_\-{}.]+)")
+
+
+def _extract_endpoint_mentions(text: str) -> list[str]:
+    """Pull /api/... paths from contexts where they're clearly endpoints.
+
+    We use three signals (any one is enough):
+      1. The path is inside a markdown code span (backticks)
+      2. The path is inside a fenced code block
+      3. The path is preceded by an HTTP method (GET, POST, etc.)
+
+    Prose mentions like "see apps/api/main.py" do NOT produce false positives.
+    """
+    found: list[str] = []
+
+    # 1. METHOD path (always counts)
+    for match in _METHOD_PATH.finditer(text):
+        found.append(match.group(2))
+
+    # 2. Code spans — only count if the span IS the path (or method + path),
+    #    not where /api/... appears inside a longer file path like `apps/api/foo.py`.
+    for span_match in _CODE_SPAN_PATTERN.finditer(text):
+        content = span_match.group(1).strip()
+        # Strip leading method if present (`GET /api/v1/foo`)
+        method_match = _METHOD_PATH.match(content)
+        if method_match:
+            found.append(method_match.group(2))
+            continue
+        # Otherwise the span must start with `/` to count as an endpoint
+        if content.startswith("/"):
+            for inner in _PATH_IN_TEXT.findall(content):
+                if content == inner or content.startswith(inner):
+                    found.append(inner)
+
+    # 3. Fenced code blocks (think `curl http://localhost/api/...`)
+    for fence in _CODE_FENCE_PATTERN.findall(text):
+        for inner in _PATH_IN_TEXT.findall(fence):
+            found.append(inner)
+
+    return found
 
 
 def _normalize(path: str) -> str:
@@ -56,16 +102,32 @@ def _collect_real_routes() -> set[str]:
 
 
 def _collect_documented_routes(docs_root: Path) -> dict[str, list[tuple[Path, int]]]:
-    """Scan all .md files for endpoint references."""
+    """Scan all .md files for endpoint references in code contexts."""
     documented: dict[str, list[tuple[Path, int]]] = {}
+    # Paths to ignore: file/module references and bare namespace prefixes
+    skip_exact = {"/api/v1", "/api", "/api/exports", "/api/v1/exports"}
+    skip_prefixes = ("apps/", "packages/", "scripts/")
+
     for md in docs_root.rglob("*.md"):
         try:
-            for lineno, line in enumerate(md.read_text(encoding="utf-8").splitlines(), 1):
-                for match in _ENDPOINT_PATTERN.findall(line):
-                    key = _normalize(match)
-                    documented.setdefault(key, []).append((md, lineno))
+            content = md.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
+        for lineno, line in enumerate(content.splitlines(), 1):
+            for raw in _extract_endpoint_mentions(line):
+                # Filter file-path mentions like `apps/api/...`
+                if any(raw.startswith(p) or f" {p}" in raw for p in skip_prefixes):
+                    continue
+                key = _normalize(raw)
+                if key in skip_exact:
+                    continue
+                if key.endswith((".py", ".md", ".json", ".yaml")):
+                    continue
+                # An endpoint should have at least 2 segments after /api/
+                segments = [s for s in key.split("/") if s]
+                if len(segments) < 2:
+                    continue
+                documented.setdefault(key, []).append((md, lineno))
     return documented
 
 
