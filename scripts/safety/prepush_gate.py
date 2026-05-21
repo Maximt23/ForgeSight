@@ -70,9 +70,9 @@ def check_upstream_sync() -> None:
 def run_audit(mode: str) -> None:
     _print_step(f"running audit ({mode})")
     if mode == "smoke":
-        _run(["python", "-m", "scripts.audit", "--check", "files,endpoints,schemas", "--quiet"])
+        _run(["uv", "run", "python", "-m", "scripts.audit", "--check", "files,endpoints,schemas", "--quiet"])
     else:
-        _run(["python", "-m", "scripts.audit", "--quiet"])
+        _run(["uv", "run", "python", "-m", "scripts.audit", "--quiet"])
 
 
 def run_tests(mode: str) -> None:
@@ -80,6 +80,8 @@ def run_tests(mode: str) -> None:
     if mode == "smoke":
         _run(
             [
+                "uv",
+                "run",
                 "pytest",
                 "-q",
                 "tests/integration/test_validation_routes.py",
@@ -87,7 +89,7 @@ def run_tests(mode: str) -> None:
             ]
         )
     else:
-        _run(["pytest", "-q"])
+        _run(["uv", "run", "pytest", "-q"])
 
 
 def parse_args() -> argparse.Namespace:
