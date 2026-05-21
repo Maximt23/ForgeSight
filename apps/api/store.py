@@ -290,10 +290,12 @@ class JsonStore:
     @staticmethod
     def _parse_coordinates(coord_value: str) -> tuple[float, float]:
         text = (coord_value or "").strip().strip('"')
-        match = re.search(r"\(?\s*([0-9]+(?:\.[0-9]+)?)\s*,\s*([0-9]+(?:\.[0-9]+)?)\s*\)?", text)
+        match = re.search(r"\(?\s*(-?[0-9]+(?:\.[0-9]+)?)\s*,\s*(-?[0-9]+(?:\.[0-9]+)?)\s*\)?", text)
         if not match:
             return 0.0, 0.0
-        return float(match.group(1)), float(match.group(2))
+        x = max(0.0, float(match.group(1)))
+        y = max(0.0, float(match.group(2)))
+        return x, y
 
     def commit_import_batch(
         self,

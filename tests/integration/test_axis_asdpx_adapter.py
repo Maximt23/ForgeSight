@@ -1,5 +1,6 @@
 import importlib
 import os
+import re
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -86,3 +87,9 @@ def test_asdpx_stage_and_commit_flow(tmp_path):
     assert first['Project ID'] == '2996'
     assert first['Plan ID'] == '1'
     assert ',' in first['Barcode']
+
+    for row in rows:
+        match = re.search(r'\(?\s*([0-9]+(?:\.[0-9]+)?)\s*,\s*([0-9]+(?:\.[0-9]+)?)\s*\)?', row['Coordinates'])
+        assert match is not None
+        assert float(match.group(1)) >= 0
+        assert float(match.group(2)) >= 0

@@ -56,6 +56,26 @@ def test_schema_validation_blocks_empty_device_name(tmp_path):
     assert 'Schema validation failed' in r.json()['detail']
 
 
+def test_negative_coordinates_rejected(tmp_path):
+    client, _ = build_client(tmp_path)
+    project, _, floor, map_obj = seed_core(client)
+
+    r = client.post(
+        '/api/v1/devices',
+        json={
+            'project_id': project['id'],
+            'site_number': '0041',
+            'floor_id': floor['id'],
+            'map_id': map_obj['id'],
+            'device_type': 'camera',
+            'name': 'NEG-CAM',
+            'local_x': -1,
+            'local_y': 10,
+        },
+    )
+    assert r.status_code == 422
+
+
 def test_import_batch_idempotency_key_enforced(tmp_path):
     client, _ = build_client(tmp_path)
 

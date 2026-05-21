@@ -37,8 +37,8 @@ Use Axis SiteDesigner `.asdpx` exports as an import adapter for SiteOwl-compatib
 - map centered in artboard
 - GPS -> pixel -> feet -> SiteOwl display coordinates
 - coverage direction normalized to 0..359
+- no negative coordinates allowed: values are clamped to `>= 0.00`
 
 ## Known Gaps (intentional for phase)
 - no UI editor integration yet
-- no persistent import-commit pipeline yet
 - part-number mapping falls back to deterministic defaults when source is sparse

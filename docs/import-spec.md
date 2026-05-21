@@ -36,4 +36,5 @@ Every commit creates rollback checkpoint and event references.
 - Commit endpoint: `POST /api/v1/import/{batch_id}/commit`
 - Backend CLI: `scripts/import/convert_asdpx_to_siteowl_csv.py`
 - Coordinate pipeline: GPS -> pixel -> feet -> SiteOwl 100x100 with 80% width centering rule
+- Coordinate safety rule: no negative coordinates are allowed for stored devices
 - Staged row payloads are persisted in `data/jsondb/import_batch_payloads.json`

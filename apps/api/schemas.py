@@ -64,8 +64,8 @@ class DeviceCreate(BaseModel):
     map_id: Optional[UUID] = None
     device_type: str
     name: str
-    local_x: float
-    local_y: float
+    local_x: float = Field(ge=0)
+    local_y: float = Field(ge=0)
 
 
 class Device(BaseEntity):
@@ -75,8 +75,8 @@ class Device(BaseEntity):
     map_id: Optional[UUID] = None
     device_type: str
     name: str
-    local_x: float
-    local_y: float
+    local_x: float = Field(ge=0)
+    local_y: float = Field(ge=0)
 
 
 class ZoneCreate(BaseModel):
