@@ -7,10 +7,25 @@ Exports detected devices to SiteOwl-compatible CSV format.
 import csv
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from .detector import Device, SystemType, DeviceType
+
+
+class ExportFormat(str, Enum):
+    """Supported export formats for CadOwl device data.
+
+    Only CSV is fully implemented today — the enum exists so the public
+    `forgesight.cad` API and future writers (Excel, JSON, GeoJSON) can
+    consume a single type without breaking changes.
+    """
+
+    CSV = "csv"
+    JSON = "json"      # planned: roadmap item, not yet implemented
+    EXCEL = "xlsx"     # planned: roadmap item, not yet implemented
+    GEOJSON = "geojson"  # planned: roadmap item, not yet implemented
 
 
 # SiteOwl CSV column headers (56 columns)

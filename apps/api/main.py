@@ -15,10 +15,10 @@ try:
 except Exception:
     lifecycle_router = None
 
-try:
-    from .maxillm_routes import router as maxillm_router
-except Exception:
-    maxillm_router = None
+# MAXILLM continuous-learning routes. We import explicitly and fail loud:
+# a silent try/except here previously hid a broken import chain and the
+# routes never registered (caught by scripts/audit). Don't reintroduce.
+from .maxillm_routes import router as maxillm_router
 from .schemas import (
     AsdpxBatchStageRequest,
     AsdpxBatchStageResponse,
@@ -64,8 +64,7 @@ app.include_router(infrastructure_router)
 # Mount optional routers when available.
 if lifecycle_router is not None:
     app.include_router(lifecycle_router)
-if maxillm_router is not None:
-    app.include_router(maxillm_router)
+app.include_router(maxillm_router)
 
 
 def _safe_write(operation):

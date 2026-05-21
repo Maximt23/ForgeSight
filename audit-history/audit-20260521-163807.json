@@ -1,0 +1,1749 @@
+{
+  "timestamp": "2026-05-21T16:38:07.589764+00:00",
+  "results": [
+    {
+      "check": "imports",
+      "passed": true,
+      "items_scanned": 77,
+      "duration_ms": 5498.834400088526,
+      "error": null,
+      "findings": [],
+      "by_severity": {
+        "info": 0,
+        "warning": 0,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "endpoints",
+      "passed": false,
+      "items_scanned": 93,
+      "duration_ms": 546.4145999867469,
+      "error": null,
+      "findings": [
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/lifecycle",
+          "detail": "Documented in CHANGELOG.md:17 but no such route in the running app.",
+          "file": "CHANGELOG.md",
+          "line": 17,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/exports/pdf",
+          "detail": "Documented in CHANGELOG.md:163 but no such route in the running app.",
+          "file": "CHANGELOG.md",
+          "line": 163,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/exports/pdf"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/doris/validate",
+          "detail": "Documented in docs\\doris-intelligence-spec.md:19 but no such route in the running app.",
+          "file": "docs\\doris-intelligence-spec.md",
+          "line": 19,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/doris/validate"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/doris/recommend",
+          "detail": "Documented in docs\\doris-intelligence-spec.md:20 but no such route in the running app.",
+          "file": "docs\\doris-intelligence-spec.md",
+          "line": 20,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/doris/recommend"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/doris/catalog",
+          "detail": "Documented in docs\\doris-intelligence-spec.md:21 but no such route in the running app.",
+          "file": "docs\\doris-intelligence-spec.md",
+          "line": 21,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/doris/catalog"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sites/{}",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:98 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 98,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sites/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sites/{}/type",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:104 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 104,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sites/{}/type"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sites/by-type",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:117 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 117,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sites/by-type"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:138 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 138,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs/{}",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:170 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 170,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs/{}/status",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:176 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 176,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs/{}/status"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs/{}/allowed-transitions",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:189 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 189,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs/{}/allowed-transitions"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs/{}/assign",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:203 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 203,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs/{}/assign"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs/{}/vendor",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:214 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 214,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs/{}/vendor"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sandbox/clone/{}",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:230 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 230,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sandbox/clone/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sandbox/template",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:251 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 251,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sandbox/template"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sandbox/templates",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:263 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 263,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sandbox/templates"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/dashboard/stats",
+          "detail": "Documented in wiki\\Dev-API-Reference.md:273 but no such route in the running app.",
+          "file": "wiki\\Dev-API-Reference.md",
+          "line": 273,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/dashboard/stats"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/sandbox",
+          "detail": "Documented in wiki\\Dev-Architecture.md:25 but no such route in the running app.",
+          "file": "wiki\\Dev-Architecture.md",
+          "line": 25,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/sandbox"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/protected",
+          "detail": "Documented in wiki\\Dev-Authentication.md:171 but no such route in the running app.",
+          "file": "wiki\\Dev-Authentication.md",
+          "line": 171,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/protected"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/designs/{}/approve",
+          "detail": "Documented in wiki\\Dev-Authentication.md:181 but no such route in the running app.",
+          "file": "wiki\\Dev-Authentication.md",
+          "line": 181,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/designs/{}/approve"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/autodesign/recommend",
+          "detail": "Documented in wiki\\ForgeSight-AutoDesign.md:177 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-AutoDesign.md",
+          "line": 177,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/autodesign/recommend"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/autodesign/anomalies",
+          "detail": "Documented in wiki\\ForgeSight-AutoDesign.md:193 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-AutoDesign.md",
+          "line": 193,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/autodesign/anomalies"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/autodesign/query",
+          "detail": "Documented in wiki\\ForgeSight-AutoDesign.md:204 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-AutoDesign.md",
+          "line": 204,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/autodesign/query"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/field/surveys",
+          "detail": "Documented in wiki\\ForgeSight-Field.md:161 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Field.md",
+          "line": 161,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/field/surveys"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/field/surveys/{}",
+          "detail": "Documented in wiki\\ForgeSight-Field.md:182 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Field.md",
+          "line": 182,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/field/surveys/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/grid/transform",
+          "detail": "Documented in wiki\\ForgeSight-Grid.md:166 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Grid.md",
+          "line": 166,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/grid/transform"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/grid/match",
+          "detail": "Documented in wiki\\ForgeSight-Grid.md:186 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Grid.md",
+          "line": 186,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/grid/match"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/grid/zones/{}/at",
+          "detail": "Documented in wiki\\ForgeSight-Grid.md:199 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Grid.md",
+          "line": 199,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/grid/zones/{}/at"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/vision/analyze",
+          "detail": "Documented in wiki\\ForgeSight-Vision.md:146 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Vision.md",
+          "line": 146,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/vision/analyze"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "error",
+          "title": "Hallucinated endpoint: /api/v1/vision/recommend",
+          "detail": "Documented in wiki\\ForgeSight-Vision.md:165 but no such route in the running app.",
+          "file": "wiki\\ForgeSight-Vision.md",
+          "line": 165,
+          "suggestion": "Either implement the endpoint or remove/update the doc.",
+          "metadata": {
+            "endpoint": "/api/v1/vision/recommend"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/zones",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/zones"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sites",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sites"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sandbox/template",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sandbox/template"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/projects/{}/metadata",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/projects/{}/metadata"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/maxillm/predict",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/maxillm/predict"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/{}/metadata",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/{}/metadata"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sites/{}/type",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sites/{}/type"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/import/batches",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/import/batches"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/floors",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/floors"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/maxillm/stats",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/maxillm/stats"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/revisions/snapshots",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/revisions/snapshots"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/executive-report",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/executive-report"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sandbox/clone/{}",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sandbox/clone/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sandbox/templates",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sandbox/templates"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/cables",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/cables"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/devices/{}/metadata",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/devices/{}/metadata"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/revisions/rollback",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/revisions/rollback"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sites/{}",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sites/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/maxillm/train",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/maxillm/train"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/dashboard/stats",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/dashboard/stats"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/zones/{}/metadata",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/zones/{}/metadata"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/project-package",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/project-package"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs/{}/allowed-transitions",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs/{}/allowed-transitions"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/metadata/search",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/metadata/search"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/projects",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/projects"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/import/batch",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/import/batch"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/siteowl",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/siteowl"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/qa-package",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/qa-package"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/gis",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/gis"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/cables/{}/metadata",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/cables/{}/metadata"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs/by-status",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs/by-status"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/imports/{}/metadata",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/imports/{}/metadata"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs/{}",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs/{}"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs/{}/assign",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs/{}/assign"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs/{}/vendor",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs/{}/vendor"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/exports/cad",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/exports/cad"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/designs/{}/status",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/designs/{}/status"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/maps",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/maps"
+          }
+        },
+        {
+          "check": "endpoints",
+          "severity": "warning",
+          "title": "Undocumented endpoint: /api/v1/lifecycle/sites/by-type",
+          "detail": "Route exists in code but is not mentioned in any .md file under the repo.",
+          "file": null,
+          "line": null,
+          "suggestion": "Add the endpoint to docs/API.md or the relevant subsystem doc.",
+          "metadata": {
+            "endpoint": "/api/v1/lifecycle/sites/by-type"
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 0,
+        "warning": 40,
+        "error": 31,
+        "critical": 0
+      }
+    },
+    {
+      "check": "files",
+      "passed": true,
+      "items_scanned": 66,
+      "duration_ms": 46.85149993747473,
+      "error": null,
+      "findings": [
+        {
+          "check": "files",
+          "severity": "info",
+          "title": "Large file approaching limit: lifecycle_store.py",
+          "detail": "553 lines (will warn at 600)",
+          "file": "apps\\api\\lifecycle_store.py",
+          "line": null,
+          "suggestion": null,
+          "metadata": {
+            "lines": 553,
+            "limit": 600
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 1,
+        "warning": 0,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "tests",
+      "passed": true,
+      "items_scanned": 18,
+      "duration_ms": 27.76389999780804,
+      "error": null,
+      "findings": [
+        {
+          "check": "tests",
+          "severity": "warning",
+          "title": "No tests reference module: maxillm_routes",
+          "detail": "Source file apps\\api\\maxillm_routes.py is not mentioned in any test_*.py",
+          "file": "apps\\api\\maxillm_routes.py",
+          "line": null,
+          "suggestion": "Add tests/integration/test_maxillm_routes.py or unit tests as appropriate.",
+          "metadata": {
+            "module": "maxillm_routes",
+            "test_files_searched": 7
+          }
+        },
+        {
+          "check": "tests",
+          "severity": "warning",
+          "title": "No tests reference module: middleware",
+          "detail": "Source file apps\\api\\middleware.py is not mentioned in any test_*.py",
+          "file": "apps\\api\\middleware.py",
+          "line": null,
+          "suggestion": "Add tests/integration/test_middleware.py or unit tests as appropriate.",
+          "metadata": {
+            "module": "middleware",
+            "test_files_searched": 7
+          }
+        },
+        {
+          "check": "tests",
+          "severity": "warning",
+          "title": "No tests reference module: writers",
+          "detail": "Source file apps\\api\\export_center\\writers.py is not mentioned in any test_*.py",
+          "file": "apps\\api\\export_center\\writers.py",
+          "line": null,
+          "suggestion": "Add tests/integration/test_writers.py or unit tests as appropriate.",
+          "metadata": {
+            "module": "writers",
+            "test_files_searched": 7
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 0,
+        "warning": 3,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "todos",
+      "passed": true,
+      "items_scanned": 105,
+      "duration_ms": 119.12990000564605,
+      "error": null,
+      "findings": [
+        {
+          "check": "todos",
+          "severity": "info",
+          "title": "Marker inventory: 8 markers found",
+          "detail": "TODO=2, FIXME=2, XXX=3, BUG=1",
+          "file": null,
+          "line": null,
+          "suggestion": null,
+          "metadata": {
+            "TODO": 2,
+            "FIXME": 2,
+            "XXX": 3,
+            "HACK": 0,
+            "BUG": 1
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "info",
+          "title": "TODO: wire to packages.import.dxf parser when extracted",
+          "detail": "# TODO: wire to packages.import.dxf parser when extracted",
+          "file": "apps\\worker\\main.py",
+          "line": 28,
+          "suggestion": null,
+          "metadata": {
+            "marker": "TODO"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "warning",
+          "title": "BUG: / drift, fails CI",
+          "detail": "ERROR = \"error\"        # real bug / drift, fails CI",
+          "file": "scripts\\audit\\types.py",
+          "line": 27,
+          "suggestion": null,
+          "metadata": {
+            "marker": "BUG"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "warning",
+          "title": "FIXME: markers",
+          "detail": "- Stale TODO/FIXME markers",
+          "file": "scripts\\audit\\__init__.py",
+          "line": 13,
+          "suggestion": null,
+          "metadata": {
+            "marker": "FIXME"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "info",
+          "title": "TODO: / FIXME / XXX / HACK tracker.",
+          "detail": "TODO / FIXME / XXX / HACK tracker.",
+          "file": "scripts\\audit\\checks\\todos.py",
+          "line": 2,
+          "suggestion": null,
+          "metadata": {
+            "marker": "TODO"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "warning",
+          "title": "FIXME: / BUG / HACK = higher severity; TODO = info",
+          "detail": "# FIXME / BUG / HACK = higher severity; TODO = info",
+          "file": "scripts\\audit\\checks\\todos.py",
+          "line": 57,
+          "suggestion": null,
+          "metadata": {
+            "marker": "FIXME"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "info",
+          "title": "XXX: \\",
+          "detail": "#     --from-literal=DORIS_API_KEY=xxx \\",
+          "file": "infra\\k8s\\01-namespace-config.yaml",
+          "line": 27,
+          "suggestion": null,
+          "metadata": {
+            "marker": "XXX"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "info",
+          "title": "XXX: \\",
+          "detail": "#     --from-literal=SAONE_API_KEY=xxx \\",
+          "file": "infra\\k8s\\01-namespace-config.yaml",
+          "line": 28,
+          "suggestion": null,
+          "metadata": {
+            "marker": "XXX"
+          }
+        },
+        {
+          "check": "todos",
+          "severity": "info",
+          "title": "XXX: \\",
+          "detail": "#     --from-literal=GRAFANA_API_KEY=xxx \\",
+          "file": "infra\\k8s\\01-namespace-config.yaml",
+          "line": 29,
+          "suggestion": null,
+          "metadata": {
+            "marker": "XXX"
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 6,
+        "warning": 3,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "deps",
+      "passed": false,
+      "items_scanned": 80,
+      "duration_ms": 281.20619989931583,
+      "error": null,
+      "findings": [
+        {
+          "check": "deps",
+          "severity": "error",
+          "title": "Missing requirement: starlette",
+          "detail": "The package `starlette` is imported in source but not listed in requirements.txt",
+          "file": null,
+          "line": null,
+          "suggestion": "Add `starlette` to requirements.txt with a pinned version.",
+          "metadata": {
+            "package": "starlette"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: ezdxf",
+          "detail": "`ezdxf` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "ezdxf"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: numpy",
+          "detail": "`numpy` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "numpy"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: pandas",
+          "detail": "`pandas` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "pandas"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: pymupdf",
+          "detail": "`pymupdf` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "pymupdf"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: pypdf",
+          "detail": "`pypdf` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "pypdf"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: python-dotenv",
+          "detail": "`python-dotenv` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "python-dotenv"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: rapidfuzz",
+          "detail": "`rapidfuzz` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "rapidfuzz"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: scikit-learn",
+          "detail": "`scikit-learn` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "scikit-learn"
+          }
+        },
+        {
+          "check": "deps",
+          "severity": "info",
+          "title": "Possibly unused requirement: shapely",
+          "detail": "`shapely` is declared in requirements.txt but no source file imports it directly.",
+          "file": null,
+          "line": null,
+          "suggestion": "If truly unused, remove. If used indirectly (transitive runtime dep), add it to the known_indirect allowlist.",
+          "metadata": {
+            "package": "shapely"
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 9,
+        "warning": 0,
+        "error": 1,
+        "critical": 0
+      }
+    },
+    {
+      "check": "schemas",
+      "passed": true,
+      "items_scanned": 41,
+      "duration_ms": 6.094599957577884,
+      "error": null,
+      "findings": [
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in Pydantic but missing SQLAlchemy model: baseentity",
+          "detail": "Pydantic class exists in apps/api/schemas.py but no matching table in packages/db/models.py",
+          "file": "packages/db/models.py",
+          "line": null,
+          "suggestion": "Add a SQLAlchemy model for baseentity or document why it's API-only.",
+          "metadata": {
+            "entity": "baseentity"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: cable",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for cable or document why it's storage-only.",
+          "metadata": {
+            "entity": "cable"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: design",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for design or document why it's storage-only.",
+          "metadata": {
+            "entity": "design"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: device",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for device or document why it's storage-only.",
+          "metadata": {
+            "entity": "device"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: floor",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for floor or document why it's storage-only.",
+          "metadata": {
+            "entity": "floor"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: importbatch",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for importbatch or document why it's storage-only.",
+          "metadata": {
+            "entity": "importbatch"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: map",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for map or document why it's storage-only.",
+          "metadata": {
+            "entity": "map"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: project",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for project or document why it's storage-only.",
+          "metadata": {
+            "entity": "project"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: sandboxconfig",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for sandboxconfig or document why it's storage-only.",
+          "metadata": {
+            "entity": "sandboxconfig"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: site",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for site or document why it's storage-only.",
+          "metadata": {
+            "entity": "site"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: siteextended",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for siteextended or document why it's storage-only.",
+          "metadata": {
+            "entity": "siteextended"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: snapshot",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for snapshot or document why it's storage-only.",
+          "metadata": {
+            "entity": "snapshot"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "warning",
+          "title": "Entity in SQLAlchemy but missing Pydantic schema: zone",
+          "detail": "Database table exists but no matching Pydantic API schema in apps/api/schemas.py",
+          "file": "apps/api/schemas.py",
+          "line": null,
+          "suggestion": "Add a Pydantic schema for zone or document why it's storage-only.",
+          "metadata": {
+            "entity": "zone"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: cable",
+          "detail": "apps/api/schemas_json/cable.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "cable"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: device",
+          "detail": "apps/api/schemas_json/device.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "device"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: floor",
+          "detail": "apps/api/schemas_json/floor.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "floor"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: import_batch",
+          "detail": "apps/api/schemas_json/import_batch.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "import_batch"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: map",
+          "detail": "apps/api/schemas_json/map.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "map"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: project",
+          "detail": "apps/api/schemas_json/project.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "project"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: site",
+          "detail": "apps/api/schemas_json/site.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "site"
+          }
+        },
+        {
+          "check": "schemas",
+          "severity": "info",
+          "title": "JSON schema with no Pydantic equivalent: zone",
+          "detail": "apps/api/schemas_json/zone.api.schema.json exists but no Pydantic class",
+          "file": null,
+          "line": null,
+          "suggestion": "Either add a Pydantic schema or remove the JSON file.",
+          "metadata": {
+            "entity": "zone"
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 8,
+        "warning": 13,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "docs",
+      "passed": true,
+      "items_scanned": 35,
+      "duration_ms": 124.18980000074953,
+      "error": null,
+      "findings": [
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: relayops/state/conflicts.md",
+          "detail": "Docs mention `relayops/state/conflicts.md` but no such file in the repo.",
+          "file": "CONTRIBUTING.md",
+          "line": 146,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "relayops/state/conflicts.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: relayops/state/conflicts.md",
+          "detail": "Docs mention `relayops/state/conflicts.md` but no such file in the repo.",
+          "file": "GOVERNANCE.md",
+          "line": 111,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "relayops/state/conflicts.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: docs/contributors.md",
+          "detail": "Docs mention `docs/contributors.md` but no such file in the repo.",
+          "file": "GOVERNANCE.md",
+          "line": 137,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "docs/contributors.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: relayops/state/conflicts.md",
+          "detail": "Docs mention `relayops/state/conflicts.md` but no such file in the repo.",
+          "file": "SUPPORT.md",
+          "line": 86,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "relayops/state/conflicts.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: relayops/state/registry.md",
+          "detail": "Docs mention `relayops/state/registry.md` but no such file in the repo.",
+          "file": "docs\\ECOSYSTEM.md",
+          "line": 149,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "relayops/state/registry.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: relayops/state/conflicts.md",
+          "detail": "Docs mention `relayops/state/conflicts.md` but no such file in the repo.",
+          "file": "docs\\ECOSYSTEM.md",
+          "line": 150,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "relayops/state/conflicts.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/core/puppy_coordinator.py",
+          "detail": "Docs mention `src/core/puppy_coordinator.py` but no such file in the repo.",
+          "file": "docs\\ECOSYSTEM.md",
+          "line": 153,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/core/puppy_coordinator.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/core/auto_git.py",
+          "detail": "Docs mention `src/core/auto_git.py` but no such file in the repo.",
+          "file": "docs\\ECOSYSTEM.md",
+          "line": 155,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/core/auto_git.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/integrations/doris.py",
+          "detail": "Docs mention `src/integrations/doris.py` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 13,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/integrations/doris.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/integrations/saone.py",
+          "detail": "Docs mention `src/integrations/saone.py` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 45,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/integrations/saone.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/integrations/grafana.py",
+          "detail": "Docs mention `src/integrations/grafana.py` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 89,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/integrations/grafana.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/integrations/axis_designer.py",
+          "detail": "Docs mention `src/integrations/axis_designer.py` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 144,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/integrations/axis_designer.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/gis/integration.py",
+          "detail": "Docs mention `src/gis/integration.py` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 187,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/gis/integration.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: data/schemas/field-survey.schema.json",
+          "detail": "Docs mention `data/schemas/field-survey.schema.json` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 272,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "data/schemas/field-survey.schema.json"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: docs/vive-integration.md",
+          "detail": "Docs mention `docs/vive-integration.md` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 272,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "docs/vive-integration.md"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: src/integrations/master_bridge.py",
+          "detail": "Docs mention `src/integrations/master_bridge.py` but no such file in the repo.",
+          "file": "docs\\INTEGRATIONS.md",
+          "line": 278,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "src/integrations/master_bridge.py"
+          }
+        },
+        {
+          "check": "docs",
+          "severity": "info",
+          "title": "Referenced file not found: docs/migrations/phase-1.1-postgres.md",
+          "detail": "Docs mention `docs/migrations/phase-1.1-postgres.md` but no such file in the repo.",
+          "file": "packages\\db\\README.md",
+          "line": 162,
+          "suggestion": "Update the docs to reflect the actual file location.",
+          "metadata": {
+            "referenced_file": "docs/migrations/phase-1.1-postgres.md"
+          }
+        }
+      ],
+      "by_severity": {
+        "info": 17,
+        "warning": 0,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "orphans",
+      "passed": true,
+      "items_scanned": 20,
+      "duration_ms": 219.38549994956702,
+      "error": null,
+      "findings": [],
+      "by_severity": {
+        "info": 0,
+        "warning": 0,
+        "error": 0,
+        "critical": 0
+      }
+    },
+    {
+      "check": "migrations",
+      "passed": true,
+      "items_scanned": 2,
+      "duration_ms": 4908.602000097744,
+      "error": null,
+      "findings": [],
+      "by_severity": {
+        "info": 0,
+        "warning": 0,
+        "error": 0,
+        "critical": 0
+      }
+    }
+  ],
+  "summary": {
+    "total_checks": 10,
+    "total_findings": 132,
+    "all_passed": false
+  }
+}

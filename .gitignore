@@ -169,3 +169,9 @@ relayops/state/conflicts.md.lock
 *_health_report.json
 master_dashboard_*.json
 store_*_dashboard.json
+ 
+# Audit transient outputs (history dir IS tracked) 
+audit-report.html 
+audit-report.json 
+_alembic_tmp.db 
+_endpoints.txt

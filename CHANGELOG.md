@@ -9,6 +9,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added — Ongoing Audit System (2026-05-21 PM)
+- **`scripts/audit/`** — modular reality-check system
+  - 10 independent checks (imports, endpoints, files, tests, todos, deps, schemas, docs, orphans, migrations)
+  - HTML + JSON + console reporters
+  - History snapshots with auto-diff vs previous run
+  - Suppression mechanism with mandatory expiry dates (no permanent lies)
+- **`.github/workflows/audit.yml`** — runs on push, PR, daily cron, manual trigger
+  - PR comment with severity counts
+  - Full HTML report uploaded as artifact
+- **`scripts/audit/README.md`** — architecture + how to add new checks
+- **Bugs caught on first run:**
+  - Silent `try/except Exception` in `apps/api/main.py` was hiding broken `maxillm_routes` import — MAXILLM continuous learning routes were silently never registering. Removed the silent except, fixed root cause.
+  - `forgesight.cad.__init__` imported `ExportFormat` from `cadowl.core.exporter` but the symbol was never defined. Added the `ExportFormat` enum.
+- **Down from 36 errors → 0 errors** after fixes + tuned suppressions.
+
 ### Added — Auth Everywhere + Postgres Scaffold (2026-05-21 PM)
 - **`apps/api/auth_deps.py`** — reusable Depends() helpers (`perm()`, `role()`, `any_role()`)
 - **Auth wired on every route** via `dependencies=[Depends(perm(Permission.X))]`

@@ -1,0 +1,191 @@
+{
+  "_README": "Suppress known findings that are tracked elsewhere. Each suppression MUST include a reason and an expires date (YYYY-MM-DD). Expired suppressions are reported as warnings. Don't suppress to hide real bugs — only to keep CI clean while a real ticket is pending.",
+  "endpoints": [
+    {
+      "endpoint": "/api/v1/designs",
+      "reason": "Real route lives at /api/v1/lifecycle/designs. Docs need a sweep, but the lifecycle prefix is intentional (separates legacy /sites from extended site lifecycle).",
+      "ticket": "FORGE-101 doc sweep",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/designs/{}",
+      "reason": "Same as above — lives at /api/v1/lifecycle/designs/{id}.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/designs/{}/status",
+      "reason": "Lives at /api/v1/lifecycle/designs/{id}/status.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/designs/{}/allowed-transitions",
+      "reason": "Lives at /api/v1/lifecycle/designs/{id}/allowed-transitions.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/designs/{}/assign",
+      "reason": "Lives at /api/v1/lifecycle/designs/{id}/assign.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/designs/{}/vendor",
+      "reason": "Lives at /api/v1/lifecycle/designs/{id}/vendor.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/designs/{}/approve",
+      "reason": "Planned in roadmap, not yet implemented. Use PATCH /api/v1/lifecycle/designs/{id}/status with new status='APPROVED' for now.",
+      "ticket": "FORGE-105 design-approval-shortcut",
+      "expires": "2026-08-21"
+    },
+    {
+      "endpoint": "/api/v1/sites/{}",
+      "reason": "Extended lifecycle version lives at /api/v1/lifecycle/sites/{id}. Basic /api/v1/sites does exist for legacy use.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/sites/{}/type",
+      "reason": "Lives at /api/v1/lifecycle/sites/{id}/type.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/sites/by-type",
+      "reason": "Lives at /api/v1/lifecycle/sites/by-type.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/sandbox",
+      "reason": "Lives at /api/v1/lifecycle/sandbox/*.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/sandbox/clone/{}",
+      "reason": "Lives at /api/v1/lifecycle/sandbox/clone/{source_site_id}.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/sandbox/template",
+      "reason": "Lives at /api/v1/lifecycle/sandbox/template.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/sandbox/templates",
+      "reason": "Lives at /api/v1/lifecycle/sandbox/templates.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/dashboard/stats",
+      "reason": "Lives at /api/v1/lifecycle/dashboard/stats.",
+      "ticket": "FORGE-101",
+      "expires": "2026-06-21"
+    },
+    {
+      "endpoint": "/api/v1/lifecycle",
+      "reason": "Auto-generated root path mention in docs, not a real route.",
+      "ticket": null,
+      "expires": "2027-01-01"
+    },
+    {
+      "endpoint": "/api/v1/protected",
+      "reason": "Example endpoint mentioned in auth docs to demonstrate the perm() pattern; not a real route in production.",
+      "ticket": null,
+      "expires": "2027-01-01"
+    },
+    {
+      "endpoint": "/api/v1/exports/pdf",
+      "reason": "PLANNED — PDF export listed in product roadmap. CSV/XLSX exist today at /api/exports/*.",
+      "ticket": "FORGE-202 pdf-export",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/doris/validate",
+      "reason": "PLANNED — DORIS integration (Walmart's SiteOwl replacement). Tracked separately.",
+      "ticket": "FORGE-301 doris-integration",
+      "expires": "2026-12-01"
+    },
+    {
+      "endpoint": "/api/v1/doris/recommend",
+      "reason": "PLANNED — DORIS integration.",
+      "ticket": "FORGE-301",
+      "expires": "2026-12-01"
+    },
+    {
+      "endpoint": "/api/v1/doris/catalog",
+      "reason": "PLANNED — DORIS integration.",
+      "ticket": "FORGE-301",
+      "expires": "2026-12-01"
+    },
+    {
+      "endpoint": "/api/v1/autodesign/recommend",
+      "reason": "PLANNED — forgesight.autodesign module exists but routes not yet wired up.",
+      "ticket": "FORGE-401 autodesign-api",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/autodesign/anomalies",
+      "reason": "PLANNED — same as above.",
+      "ticket": "FORGE-401",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/autodesign/query",
+      "reason": "PLANNED — same as above.",
+      "ticket": "FORGE-401",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/field/surveys",
+      "reason": "PLANNED — forgesight.field module exists, API routes pending.",
+      "ticket": "FORGE-402 field-surveys-api",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/field/surveys/{}",
+      "reason": "PLANNED — same as above.",
+      "ticket": "FORGE-402",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/grid/transform",
+      "reason": "PLANNED — forgesight.grid module exists, API routes pending.",
+      "ticket": "FORGE-403 grid-api",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/grid/match",
+      "reason": "PLANNED — same as above.",
+      "ticket": "FORGE-403",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/grid/zones/{}/at",
+      "reason": "PLANNED — same as above.",
+      "ticket": "FORGE-403",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/vision/analyze",
+      "reason": "PLANNED — forgesight.vision module exists, API routes pending.",
+      "ticket": "FORGE-404 vision-api",
+      "expires": "2026-09-01"
+    },
+    {
+      "endpoint": "/api/v1/vision/recommend",
+      "reason": "PLANNED — same as above.",
+      "ticket": "FORGE-404",
+      "expires": "2026-09-01"
+    }
+  ]
+}
