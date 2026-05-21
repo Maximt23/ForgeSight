@@ -150,7 +150,7 @@ That's it. Run `python -m scripts.audit --check your_check` to verify.
 
 The audit specifically catches these patterns:
 
-1. **Documented but doesn't exist** — docs say `/api/v1/foo`, no route.
+1. **Documented but doesn't exist** — e.g. docs say `GET /api/v1/<thing>` for an unbuilt route.
 2. **Imports something missing** — `from cadowl.bar import Baz`, no Baz.
 3. **Silent try/except hiding failure** — found one of these on day 1!
 4. **Schema mismatch** — Pydantic has `User`, DB doesn't, OR they have

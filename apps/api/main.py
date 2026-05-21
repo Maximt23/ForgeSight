@@ -160,6 +160,8 @@ def create_device(payload: DeviceCreate):
         name=payload.name,
         local_x=payload.local_x,
         local_y=payload.local_y,
+        fov_degrees=payload.fov_degrees,
+        fov_range=payload.fov_range,
     )
     return _safe_write(lambda: STORE.add_device(model))
 
@@ -181,6 +183,7 @@ def create_zone(payload: ZoneCreate):
         floor_id=payload.floor_id,
         zone_name=payload.zone_name,
         zone_type=payload.zone_type,
+        points=payload.points,
     )
     return _safe_write(lambda: STORE.add_zone(model))
 
@@ -203,6 +206,8 @@ def create_cable(payload: CableCreate):
         source_device_id=payload.source_device_id,
         destination_device_id=payload.destination_device_id,
         cable_type=payload.cable_type,
+        path_points=payload.path_points,
+        estimated_length=payload.estimated_length,
     )
     return _safe_write(lambda: STORE.add_cable(model))
 

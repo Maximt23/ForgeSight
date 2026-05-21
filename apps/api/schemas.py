@@ -66,6 +66,8 @@ class DeviceCreate(BaseModel):
     name: str
     local_x: float = Field(ge=0)
     local_y: float = Field(ge=0)
+    fov_degrees: Optional[float] = Field(default=None, ge=1, le=360)
+    fov_range: Optional[float] = Field(default=None, ge=0)
 
 
 class Device(BaseEntity):
@@ -77,6 +79,8 @@ class Device(BaseEntity):
     name: str
     local_x: float = Field(ge=0)
     local_y: float = Field(ge=0)
+    fov_degrees: Optional[float] = Field(default=None, ge=1, le=360)
+    fov_range: Optional[float] = Field(default=None, ge=0)
 
 
 class ZoneCreate(BaseModel):
@@ -84,6 +88,7 @@ class ZoneCreate(BaseModel):
     floor_id: UUID
     zone_name: str
     zone_type: str
+    points: list[dict[str, float]] = Field(default_factory=list)
 
 
 class Zone(BaseEntity):
@@ -91,6 +96,7 @@ class Zone(BaseEntity):
     floor_id: UUID
     zone_name: str
     zone_type: str
+    points: list[dict[str, float]] = Field(default_factory=list)
 
 
 class CableCreate(BaseModel):
@@ -99,6 +105,8 @@ class CableCreate(BaseModel):
     source_device_id: UUID
     destination_device_id: UUID
     cable_type: str
+    path_points: list[dict[str, float]] = Field(default_factory=list)
+    estimated_length: Optional[float] = Field(default=None, ge=0)
 
 
 class Cable(BaseEntity):
@@ -107,6 +115,8 @@ class Cable(BaseEntity):
     source_device_id: UUID
     destination_device_id: UUID
     cable_type: str
+    path_points: list[dict[str, float]] = Field(default_factory=list)
+    estimated_length: Optional[float] = Field(default=None, ge=0)
 
 
 class ImportBatchCreate(BaseModel):
