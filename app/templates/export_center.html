@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" x-data="exportCenter()">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Export Center - {{ brand.app_name }}</title>
+  <link rel="icon" type="image/x-icon" href="{{ brand.icon_path }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="max-w-7xl mx-auto p-6 md:p-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold">Export Center</h1>
+        <p class="text-gray-600">Build enterprise-grade export packages with metadata controls.</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="/sectors" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100">Sectors</a>
+        <a href="/dashboard" class="px-4 py-2 rounded-lg bg-[#0053e2] text-white hover:bg-[#0039a6]">← Dashboard</a>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+      <section class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-xl font-bold mb-4">Export Builder</h2>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <label class="block">
+            <span class="text-sm font-semibold text-gray-700">Project ID</span>
+            <input x-model="projectId" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#0053e2]" placeholder="UUID" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-gray-700">Created By</span>
+            <input x-model="createdBy" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#0053e2]" placeholder="maxim" />
+          </label>
+        </div>
+
+        <div class="mb-4">
+          <span class="text-sm font-semibold text-gray-700">Export Type</span>
+          <div class="grid md:grid-cols-3 gap-2 mt-2">
+            <template x-for="type in exportTypes" :key="type">
+              <button @click="exportType=type" :class="exportType===type ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-3 py-2 rounded-lg text-sm" x-text="type"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <span class="text-sm font-semibold text-gray-700">Formats</span>
+          <div class="grid grid-cols-3 md:grid-cols-5 gap-2 mt-2 text-sm">
+            <template x-for="fmt in formats" :key="fmt">
+              <label class="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+                <input type="checkbox" :value="fmt" @change="toggleFormat(fmt)" :checked="selectedFormats.includes(fmt)">
+                <span x-text="fmt"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <span class="text-sm font-semibold text-gray-700">Include Metadata</span>
+          <div class="grid md:grid-cols-2 gap-2 mt-2 text-sm">
+            <label><input type="checkbox" x-model="includeValidation"> Validation history</label>
+            <label><input type="checkbox" x-model="includeAi"> AI suggestions</label>
+            <label><input type="checkbox" x-model="includeAudit"> Audit log</label>
+            <label><input type="checkbox" x-model="includeTransforms"> Coordinate transforms</label>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button @click="buildPayload()" class="bg-[#0053e2] text-white px-4 py-2 rounded-lg hover:bg-[#0039a6]">Preview Payload</button>
+          <button @click="buildCurl()" class="bg-[#ffc220] text-gray-900 px-4 py-2 rounded-lg hover:bg-[#e6ad00]">Generate cURL</button>
+        </div>
+      </section>
+
+      <aside class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-xl font-bold mb-3">Export Health Check</h2>
+        <ul class="space-y-2 text-sm text-gray-700">
+          <li>✅ Required fields included</li>
+          <li>✅ Coordinate policy: no negatives</li>
+          <li>✅ Manifest required</li>
+          <li>⚠️ Critical validation blocks unless override</li>
+        </ul>
+        <p class="text-xs text-gray-500 mt-4">Risk override must include reason for audit compliance.</p>
+      </aside>
+    </div>
+
+    <section class="mt-6 grid lg:grid-cols-2 gap-6">
+      <div class="bg-gray-900 text-gray-100 rounded-xl p-4">
+        <h3 class="font-semibold mb-2">Payload Preview</h3>
+        <pre class="text-xs overflow-auto" x-text="payloadPreview"></pre>
+      </div>
+      <div class="bg-gray-900 text-gray-100 rounded-xl p-4">
+        <h3 class="font-semibold mb-2">cURL Command</h3>
+        <pre class="text-xs overflow-auto" x-text="curlPreview"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function exportCenter() {
+      return {
+        projectId: '',
+        createdBy: 'maxim',
+        exportType: 'project-package',
+        exportTypes: ['project-package', 'siteowl', 'gis', 'cad', 'qa-package', 'executive-report'],
+        formats: ['zip', 'json', 'csv', 'xlsx', 'geojson', 'pdf', 'png', 'svg', 'dxf'],
+        selectedFormats: ['zip', 'json'],
+        includeValidation: true,
+        includeAi: true,
+        includeAudit: true,
+        includeTransforms: true,
+        payloadPreview: '{ }',
+        curlPreview: '# generate payload first',
+        toggleFormat(fmt) {
+          if (this.selectedFormats.includes(fmt)) {
+            this.selectedFormats = this.selectedFormats.filter(x => x !== fmt)
+          } else {
+            this.selectedFormats.push(fmt)
+          }
+        },
+        payload() {
+          return {
+            project_id: this.projectId,
+            created_by: this.createdBy,
+            export_mode: 'full_project_intelligence_package',
+            formats: this.selectedFormats,
+            include_validation_history: this.includeValidation,
+            include_ai_suggestions: this.includeAi,
+            include_audit_log: this.includeAudit,
+            include_coordinate_transforms: this.includeTransforms
+          }
+        },
+        buildPayload() {
+          this.payloadPreview = JSON.stringify(this.payload(), null, 2)
+        },
+        buildCurl() {
+          this.buildPayload()
+          this.curlPreview = `curl -X POST http://localhost:9010/api/exports/${this.exportType} \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(this.payload())}'`
+        }
+      }
+    }
+  </script>
+</body>
+</html>

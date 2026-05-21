@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" x-data="{ tab: 'design' }">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Sectors - {{ brand.app_name }}</title>
+  <link rel="icon" type="image/x-icon" href="{{ brand.icon_path }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <main class="max-w-7xl mx-auto p-6 md:p-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold">Business Sectors</h1>
+        <p class="text-gray-600">Dedicated operating lanes for design, survey, install, QA, and leadership.</p>
+      </div>
+      <a href="/dashboard" class="bg-[#0053e2] text-white px-4 py-2 rounded-lg hover:bg-[#0039a6]">← Dashboard</a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-2 mb-6 flex flex-wrap gap-2">
+      <button @click="tab='design'" :class="tab==='design' ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-4 py-2 rounded-lg">Design</button>
+      <button @click="tab='survey'" :class="tab==='survey' ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-4 py-2 rounded-lg">Survey</button>
+      <button @click="tab='install'" :class="tab==='install' ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-4 py-2 rounded-lg">Installation</button>
+      <button @click="tab='qa'" :class="tab==='qa' ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-4 py-2 rounded-lg">QA</button>
+      <button @click="tab='executive'" :class="tab==='executive' ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-4 py-2 rounded-lg">Executive</button>
+      <button @click="tab='operations'" :class="tab==='operations' ? 'bg-[#0053e2] text-white' : 'bg-gray-100 text-gray-800'" class="px-4 py-2 rounded-lg">Operations</button>
+    </div>
+
+    <section x-show="tab==='design'" class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Design Studio</h2><p class="text-gray-600">Floorplans, devices, cable routes, zoning and AI-assisted layouts.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Design Inputs</h2><p class="text-gray-600">DXF/PDF imports, layer detection, device inference, coordinate transforms.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Design Outputs</h2><p class="text-gray-600">SiteOwl CSV, CAD packs, GIS overlays, project manifests.</p></div>
+    </section>
+
+    <section x-show="tab==='survey'" class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Survey Intake</h2><p class="text-gray-600">Field captures, photos, install notes, vendor submissions.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Survey Validation</h2><p class="text-gray-600">Missing fields, duplicate assets, geolocation confidence checks.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Survey Handoff</h2><p class="text-gray-600">Review queues into design and QA sectors.</p></div>
+    </section>
+
+    <section x-show="tab==='install'" class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Field Install Package</h2><p class="text-gray-600">Device list, coordinates, cable schedule, validation warnings.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Installer Tracking</h2><p class="text-gray-600">Install status, blockers, completion by floor/zone.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">As-Built Loop</h2><p class="text-gray-600">Post-install adjustments feed back into metadata history.</p></div>
+    </section>
+
+    <section x-show="tab==='qa'" class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">QA Package</h2><p class="text-gray-600">Validation runs, unresolved errors, AI findings, audit timeline.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Defect Trends</h2><p class="text-gray-600">Repeated naming/coordinate/cable issues by vendor/designer.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Approval Gate</h2><p class="text-gray-600">Risk override requires reason and metadata traceability.</p></div>
+    </section>
+
+    <section x-show="tab==='executive'" class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Executive Report</h2><p class="text-gray-600">Project progress, validation score, and risk by region/site.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Budget/BOM</h2><p class="text-gray-600">Cost rollups and replacement-value snapshots.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Decision Log</h2><p class="text-gray-600">Who changed what, when, and why.</p></div>
+    </section>
+
+    <section x-show="tab==='operations'" class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Ops Integrations</h2><p class="text-gray-600">Doris/Saone/Grafana correlation for live estate health.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Metadata Search</h2><p class="text-gray-600">Find low-confidence devices, blind spots, and overlength cables.</p></div>
+      <div class="bg-white rounded-xl border p-5"><h2 class="font-bold text-xl mb-2">Automation</h2><p class="text-gray-600">Scheduled exports, policy checks, reproducible project packages.</p></div>
+    </section>
+  </main>
+</body>
+</html>

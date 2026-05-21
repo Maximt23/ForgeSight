@@ -113,6 +113,50 @@ async def settings_page(request: Request):
     return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "Settings", "emoji": "⚙️"})
 
 
+# === FORGESIGHT PRODUCT TABS ===
+
+@app.get("/cad", response_class=HTMLResponse)
+async def cad_product(request: Request):
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "ForgeSight CAD", "emoji": "📐"})
+
+
+@app.get("/field", response_class=HTMLResponse)
+async def field_product(request: Request):
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "ForgeSight Field", "emoji": "📱"})
+
+
+@app.get("/vision", response_class=HTMLResponse)
+async def vision_product(request: Request):
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "ForgeSight Vision", "emoji": "👁️"})
+
+
+@app.get("/grid", response_class=HTMLResponse)
+async def grid_product(request: Request):
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "ForgeSight Grid", "emoji": "🗺️"})
+
+
+@app.get("/autodesign", response_class=HTMLResponse)
+async def autodesign_product(request: Request):
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "ForgeSight AutoDesign", "emoji": "🧠"})
+
+
+@app.get("/maxillm", response_class=HTMLResponse)
+async def maxillm_product(request: Request):
+    return templates.TemplateResponse(request=request, name="module_placeholder.html", context={"request": request, "brand": BRAND, "title": "MAXILLM Training", "emoji": "🎓"})
+
+
+# === NEW UI SURFACES ===
+
+@app.get("/sectors", response_class=HTMLResponse)
+async def sectors(request: Request):
+    return templates.TemplateResponse(request=request, name="sectors.html", context={"request": request, "brand": BRAND})
+
+
+@app.get("/export-center", response_class=HTMLResponse)
+async def export_center(request: Request):
+    return templates.TemplateResponse(request=request, name="export_center.html", context={"request": request, "brand": BRAND})
+
+
 # === API HEALTH CHECK ===
 
 @app.get("/api/health")
