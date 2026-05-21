@@ -1,0 +1,60 @@
+========================================
+     SITEOwl WORKFLOW - QUICK REF
+========================================
+
+OPEN: Double-click "SiteOwl_Workflow.html"
+
+3-STEP PROCESS:
+┌─────────────────────────────────────────┐
+│  STEP 1: IMPORT                         │
+│  • Drop .asdpx file                     │
+│  • Auto-converts to CSV                 │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│  STEP 2: PREVIEW                        │
+│  • Check 56 columns                      │
+│  • Verify GPS in Field Notes           │
+│  • Scroll ↔ for all fields              │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│  STEP 3: EDIT FLOORPLAN                │
+│  • Drag devices to move                │
+│  • Toggle coverage/floorplan           │
+│  • Export final CSV                    │
+└─────────────────────────────────────────┘
+
+COLUMN HIGHLIGHTS:
+==================
+Col 4:  Device ID (New0001)
+Col 5:  Camera Model Name
+Col 8:  System Type (Video Surveillance)
+Col 9:  Device Type (Dome, Bullet, PTZ, etc.)
+Col 10: Part Number (02658-001)
+Col 31: Coverage Direction (°)
+Col 32: Coverage Angle (°)
+Col 33: Coverage Range (ft)
+Col 34: Height (ft)
+Col 44: Field Notes (GPS: lat, lng)
+Col 47: Replacement Cost ($)
+Col 53: Coordinates (XX.XX, YY.YY)
+
+DEVICE TYPE MAPPING:
+====================
+Dome Camera     = M3088-V, P3288-LV, Q9307-LV
+Bullet Camera   = P1488-LE, P1518-LE  
+Panoramic Camera= P3738-PLE, P4708-PLVE, Q3839-PVE, Q4809-PVE
+PTZ Camera      = P5655-E
+Fisheye Camera  = M3077-PLVE
+Network Switch  = D8248, D8308
+
+TIPS:
+=====
+✓ No installation needed
+✓ Works offline
+✓ 80% Width Rule for scaling
+✓ All data stays local (private)
+✓ Chrome/Edge recommended
+
+========================================

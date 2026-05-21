@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gecgithub01.walmart.com/vn59j7j/CadOwl/shared/schema/lifecycle.schema.json",
+  "title": "Site & Design Lifecycle Schema",
+  "description": "JSON Schema for site types, design types, and workflow statuses",
+  
+  "definitions": {
+    "SiteType": {
+      "type": "string",
+      "enum": ["sandbox", "design", "installation", "live", "archived"],
+      "description": "Lifecycle phase of a site"
+    },
+    
+    "DesignType": {
+      "type": "string",
+      "enum": [
+        "cctv",
+        "fire_alarm", 
+        "intrusion",
+        "access_control",
+        "integrated",
+        "network",
+        "audio_visual"
+      ],
+      "description": "Type of security system design"
+    },
+    
+    "DesignStatus": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "in_review",
+        "revision_required",
+        "rejected",
+        "approved",
+        "in_progress",
+        "on_hold",
+        "complete",
+        "commissioned",
+        "live",
+        "archived"
+      ],
+      "description": "Current status in the design workflow"
+    },
+    
+    "Priority": {
+      "type": "string",
+      "enum": ["critical", "high", "normal", "low", "backlog"],
+      "description": "Priority level for designs/tasks"
+    },
+    
+    "VendorStatus": {
+      "type": "string",
+      "enum": ["unassigned", "assigned", "scheduled", "in_progress", "complete", "cancelled"],
+      "description": "Status of vendor assignment"
+    },
+    
+    "StatusChange": {
+      "type": "object",
+      "required": ["from_status", "to_status", "changed_by", "changed_at"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "from_status": { "type": "string" },
+        "to_status": { "type": "string" },
+        "changed_by": { "type": "string" },
+        "changed_at": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    
+    "Design": {
+      "type": "object",
+      "required": ["id", "project_id", "site_id", "name", "design_type", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "project_id": { "type": "string", "format": "uuid" },
+        "site_id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "design_type": { "$ref": "#/definitions/DesignType" },
+        "status": { "$ref": "#/definitions/DesignStatus" },
+        "priority": { "$ref": "#/definitions/Priority" },
+        "description": { "type": "string" },
+        "created_by": { "type": "string" },
+        "assigned_to": { "type": "string" },
+        "reviewer": { "type": "string" },
+        "vendor_id": { "type": "string", "format": "uuid" },
+        "vendor_status": { "$ref": "#/definitions/VendorStatus" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "submitted_at": { "type": "string", "format": "date-time" },
+        "approved_at": { "type": "string", "format": "date-time" },
+        "due_date": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "version": { "type": "integer", "minimum": 1 },
+        "parent_design_id": { "type": "string", "format": "uuid" },
+        "status_history": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/StatusChange" }
+        }
+      }
+    },
+    
+    "SiteExtended": {
+      "type": "object",
+      "required": ["id", "project_id", "site_number", "name", "site_type"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "project_id": { "type": "string", "format": "uuid" },
+        "site_number": { "type": "string" },
+        "name": { "type": "string" },
+        "site_type": { "$ref": "#/definitions/SiteType" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "zip_code": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "store_format": { "type": "string" },
+        "square_footage": { "type": "integer" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "go_live_date": { "type": "string", "format": "date-time" },
+        "type_history": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/StatusChange" }
+        },
+        "active_design_ids": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    
+    "SandboxConfig": {
+      "type": "object",
+      "required": ["id", "site_id"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "site_id": { "type": "string", "format": "uuid" },
+        "is_template": { "type": "boolean", "default": false },
+        "template_name": { "type": "string" },
+        "cloned_from": { "type": "string", "format": "uuid" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "auto_archive": { "type": "boolean", "default": true },
+        "shared_with": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "is_public": { "type": "boolean", "default": false },
+        "purpose": { "type": "string" }
+      }
+    }
+  },
+  
+  "type": "object",
+  "properties": {
+    "sites": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/SiteExtended" }
+    },
+    "designs": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/Design" }
+    },
+    "sandboxes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/SandboxConfig" }
+    }
+  }
+}

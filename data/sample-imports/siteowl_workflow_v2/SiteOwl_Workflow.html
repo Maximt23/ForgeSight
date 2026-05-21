@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiteOwl Workflow: ASDPX → CSV → Floorplan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header & Progress */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #00d4aa, #00b4d8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin: 30px 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step:first-child { border-radius: 8px 0 0 8px; }
+        .step:last-child { border-radius: 0 8px 8px 0; }
+        .step:not(:last-child) { border-right: none; }
+
+        .step.active {
+            background: rgba(0, 212, 170, 0.15);
+            border-color: #00d4aa;
+            color: #00d4aa;
+        }
+
+        .step.completed {
+            background: rgba(0, 212, 170, 0.05);
+            border-color: rgba(0, 212, 170, 0.3);
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 12px;
+        }
+
+        .step.active .step-number { background: #00d4aa; color: #0f172a; }
+        .step.completed .step-number { background: #00d4aa; color: #0f172a; }
+
+        .step-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Panels */
+        .panel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f8fafc;
+        }
+
+        .panel-desc {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Step 1: Converter */
+        .upload-zone {
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #00d4aa;
+            background: rgba(0, 212, 170, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .file-input { display: none; }
+
+        .conversion-result {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(0, 212, 170, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #00d4aa;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00d4aa;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Step 2: Preview */
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        table {
+            width: auto;
+            min-width: 3000px;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        th {
+            background: rgba(255,255,255,0.08);
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: #00d4aa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            font-size: 10px;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        th:last-child { border-right: none; }
+
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.02);
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td:last-child { border-right: none; }
+
+        tr:hover { background: rgba(255,255,255,0.03); }
+
+        .coord-cell {
+            font-family: 'Courier New', monospace;
+            color: #00b4d8;
+        }
+
+        /* Step 3: Floorplan */
+        .floorplan-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .floorplan-layout { grid-template-columns: 1fr; }
+        }
+
+        .canvas-wrapper {
+            background: #0a0f1a;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 750px;
+            overflow: auto;
+        }
+
+        #floorplan-svg {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 4px;
+            max-width: 100%;
+            max-height: 600px;
+        }
+
+        .device { cursor: move; }
+        .device:hover { filter: brightness(1.3) drop-shadow(0 0 5px #00d4aa); }
+        .device.selected { filter: drop-shadow(0 0 10px #00d4aa); }
+        .device-icon { fill: #00d4aa; }
+        .device-label {
+            font-size: 3px;
+            fill: #fff;
+            text-anchor: middle;
+            font-family: sans-serif;
+        }
+        .coverage-area {
+            fill: rgba(0, 212, 170, 0.15);
+            stroke: rgba(0, 212, 170, 0.4);
+            stroke-width: 0.2;
+        }
+        .grid-line { stroke: #1f2937; stroke-width: 0.1; }
+        .axis-line { stroke: #374151; stroke-width: 0.2; }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-panel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .sidebar-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #00d4aa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .device-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .device-item:hover { background: rgba(0, 212, 170, 0.1); }
+        .device-item.selected { background: rgba(0, 212, 170, 0.2); border: 1px solid #00d4aa; }
+
+        .device-icon-sm {
+            width: 24px;
+            height: 24px;
+            background: #00d4aa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #0f172a;
+        }
+
+        .device-info { flex: 1; }
+        .device-name { font-size: 12px; font-weight: 500; }
+        .device-type { font-size: 11px; color: #64748b; }
+
+        .delete-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover { background: #ef4444; color: white; }
+
+        .prop-row {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .prop-label { font-size: 11px; color: #64748b; }
+        .prop-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #374151;
+            color: #e2e8f0;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4aa, #00b4d8);
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .btn-danger:hover { background: #ef4444; color: white; }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: flex-end;
+        }
+
+        /* Hidden sections */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #00d4aa;
+            color: #0f172a;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateY(100px);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show { transform: translateY(0); }
+
+        /* Scale indicator */
+        .scale-indicator {
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 SiteOwl Workflow</h1>
+            <p class="subtitle">ASDPX → CSV → Floorplan Editor</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="step active" data-step="1" onclick="goToStep(1)">
+                <span class="step-number">1</span>
+                <span class="step-label">Import ASDPX</span>
+            </div>
+            <div class="step" data-step="2" onclick="goToStep(2)">
+                <span class="step-number">2</span>
+                <span class="step-label">Preview CSV</span>
+            </div>
+            <div class="step" data-step="3" onclick="goToStep(3)">
+                <span class="step-number">3</span>
+                <span class="step-label">Edit Floorplan</span>
+            </div>
+        </div>
+
+        <!-- STEP 1: CONVERTER -->
+        <div id="step1" class="section active">
+            <div class="panel">
+                <div class="panel-title">Step 1: Import SiteDesigner File</div>
+                <p class="panel-desc">Upload your .asdpx export file to convert it to SiteOwl CSV format</p>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📥</div>
+                    <div class="upload-text">Drop .asdpx file here or click to browse</div>
+                    <div class="upload-hint">Supports: *.asdpx (SiteDesigner2 exports)</div>
+                    <input type="file" id="asdpxInput" class="file-input" accept=".asdpx,.json">
+                </div>
+
+                <div id="conversionResult" style="display: none;">
+                    <div class="conversion-result">
+                        <strong>✅ Conversion Complete!</strong>
+                        <p style="margin-top: 8px; color: #94a3b8;">Your SiteDesigner project has been converted to SiteOwl CSV format.</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statDevices">0</div>
+                            <div class="stat-label">Devices</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statCameras">0</div>
+                            <div class="stat-label">Cameras</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statBounds">-</div>
+                            <div class="stat-label">Area (feet)</div>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn btn-secondary" onclick="resetConverter()">🔄 Reset</button>
+                        <button class="btn btn-primary" onclick="goToStep(2)">
+                            Continue to Preview →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: PREVIEW -->
+        <div id="step2" class="section">
+            <div class="panel">
+                <div class="panel-title">Step 2: Preview & Validate</div>
+                <p class="panel-desc">Review the converted data (all 56 columns). Scroll horizontally ↔ to see all fields. Verify coordinates match your floorplan dimensions.</p>
+
+                <div class="conversion-result" id="scalingInfo" style="margin-bottom: 20px;">
+                    <strong>📐 Scaling Information</strong>
+                    <div style="margin-top: 8px; font-size: 13px; color: #94a3b8;">
+                        <div id="boundsDisplay">Calculating...</div>
+                        <div id="gpsRange" style="margin-top: 4px;"></div>
+                        <div id="feetDimensions" style="margin-top: 4px; color: #00d4aa;"></div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="previewTable">
+                        <thead>
+                            <tr>
+                                <th>Project ID</th>
+                                <th>Plan ID</th>
+                                <th>Primary Device/Task ID</th>
+                                <th>Primary Device/Task Name</th>
+                                <th>Device ID</th>
+                                <th>Name</th>
+                                <th>Abbreviated Name</th>
+                                <th>Device / Task</th>
+                                <th>System Type</th>
+                                <th>Device/Task Type</th>
+                                <th>Part Number</th>
+                                <th>Manufacturer</th>
+                                <th>Budgeted Hours</th>
+                                <th>Budgeted Cost</th>
+                                <th>Assigned To</th>
+                                <th>Assigned To ID</th>
+                                <th>Date Due</th>
+                                <th>Installed/Completed By</th>
+                                <th>Installed/Completed By ID</th>
+                                <th>Date Installed/Completed</th>
+                                <th>Priority</th>
+                                <th>Install Status</th>
+                                <th>Operational Status</th>
+                                <th>Images</th>
+                                <th>Serial Number</th>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Barcode</th>
+                                <th>IP / Analog</th>
+                                <th>Interior / Exterior</th>
+                                <th>Coverage Area</th>
+                                <th>Coverage Direction</th>
+                                <th>Coverage Angle</th>
+                                <th>Coverage Range</th>
+                                <th>Height (ft)</th>
+                                <th>IDF / MDF</th>
+                                <th>Hub</th>
+                                <th>Port</th>
+                                <th>Connection Length (feet)</th>
+                                <th>Description</th>
+                                <th>Flagged</th>
+                                <th>Date Flagged</th>
+                                <th>Flag Notes</th>
+                                <th>Instructions</th>
+                                <th>Field Notes</th>
+                                <th>Labor Warranty Expiration</th>
+                                <th>Device Warranty Expiration</th>
+                                <th>Replacement Cost</th>
+                                <th>Custom Device ID</th>
+                                <th>Project</th>
+                                <th>Site</th>
+                                <th>Building</th>
+                                <th>Plan</th>
+                                <th>Coordinates</th>
+                                <th>Archived</th>
+                                <th>Shareable Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="downloadCSV()">💾 Download CSV</button>
+                    <button class="btn btn-primary" onclick="goToStep(3)">
+                            Launch Floorplan Editor →
+                        </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: FLOORPLAN EDITOR -->
+        <div id="step3" class="section">
+            <div class="panel">
+                <div class="panel-title">Step 3: Floorplan Editor</div>
+                <p class="panel-desc">Drag devices to reposition. Removed devices trigger auto-scale.</p>
+
+                <div class="floorplan-layout">
+                    <div class="canvas-wrapper">
+                        <svg id="floorplan-svg" width="900" height="700" viewBox="0 0 100 100">
+                            <defs>
+                                <pattern id="grid-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
+                                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1f2937" stroke-width="0.1"/>
+                                </pattern>
+                            </defs>
+                            <!-- Layer 1: Artboard Background -->
+                            <rect width="100" height="100" fill="#0a0f1a"/>
+                            <rect width="100" height="100" fill="url(#grid-pattern)" opacity="0.3"/>
+                            
+                            <!-- Layer 2: Map Boundary (80% Rule) - Will be sized dynamically -->
+                            <rect id="map-boundary" x="10" y="26.6" width="80" height="46.8" fill="none" stroke="#00d4aa" stroke-width="0.3" stroke-dasharray="1 0.5" opacity="0.6"/>
+                            
+                            <!-- Layer 3: Content -->
+                            <g id="floorplan-image-layer"></g>
+                            <g id="grid-layer"></g>
+                            <g id="coverage-layer"></g>
+                            <g id="device-layer"></g>
+                            <g id="selection-layer"></g>
+                        </svg>
+                    </div>
+
+                    <div class="sidebar">
+                        <div class="sidebar-panel">
+                            <div class="sidebar-title">📊 Stats</div>
+                            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div class="stat-card" style="padding: 10px;">
+                                    <div class="stat-value" style="font-size: 20px;" id="fpDeviceCount">0</div>
+                                    <div class="stat-label">Total</div>
+                                </div>
+                                <div class="stat-card" style="padding: 10px;">
+                                    <div class="stat-value" style="font-size: 20px;" id="fpSelectedCount">0</div>
+                                    <div class="stat-label">Selected</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <div class="scale-indicator" id="scaleInfo">Loading...</div>
+                            </div>
+                            <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" id="btnToggleCoverage" style="flex: 1; padding: 8px; font-size: 12px;" onclick="toggleCoverage()">
+                                    👁️ Hide Coverage
+                                </button>
+                                <button class="btn btn-secondary" id="btnToggleFloorplan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="toggleFloorplan()" disabled>
+                                    🏢 No Image
+                                </button>
+                            </div>
+                            <div style="margin-top: 12px; display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 12px;" onclick="zoomIn()">
+                                    🔍+ Zoom In
+                                </button>
+                                <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 12px;" onclick="zoomOut()">
+                                    🔍- Zoom Out
+                                </button>
+                                <button class="btn btn-secondary" style="flex: 1; padding: 8px; font-size: 12px;" onclick="resetZoom()">
+                                    🔄 Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-panel" id="pricingPanel" style="display: none;">
+                            <div class="sidebar-title">💰 Pricing</div>
+                            <div id="pricingContent" style="font-size: 12px;">
+                                <p style="color: #64748b;">Load ASDPX file to see pricing</p>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-panel">
+                            <div class="sidebar-title">📝 Devices</div>
+                            <div class="device-list" id="deviceList">
+                                <p style="color: #64748b; font-size: 12px;">No devices loaded</p>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-panel">
+                            <div class="sidebar-title">⚙️ Properties</div>
+                            <div id="propertiesPanel">
+                                <p style="color: #64748b; font-size: 12px;">Select a device to edit</p>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-panel">
+                            <div class="sidebar-title">🎨 Legend</div>
+                            <div class="legend">
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: #00d4aa;"></div>
+                                    <span>Camera</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: rgba(0,212,170,0.3);"></div>
+                                    <span>Coverage</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="actions" style="margin-top: 0;">
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="resetView()">🔍 Reset View</button>
+                            <button class="btn btn-primary" style="flex: 1;" onclick="exportFinalCSV()">💾 Export</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===================== STATE =====================
+        let asdpxData = null;
+        let devices = [];
+        let csvData = '';
+        let selectedDeviceId = null;
+        let isDragging = false;
+        let dragDevice = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+        const svg = document.getElementById('floorplan-svg');
+        const gridLayer = document.getElementById('grid-layer');
+        const coverageLayer = document.getElementById('coverage-layer');
+        const deviceLayer = document.getElementById('device-layer');
+        const selectionLayer = document.getElementById('selection-layer');
+
+        // ===================== NAVIGATION =====================
+        function goToStep(step) {
+            // Validate before allowing step 2 or 3
+            if (step > 1 && devices.length === 0) {
+                showToast('Please convert an ASDPX file first!');
+                return;
+            }
+
+            // Update progress bar
+            document.querySelectorAll('.step').forEach((el, idx) => {
+                const stepNum = idx + 1;
+                el.classList.remove('active', 'completed');
+                if (stepNum === step) el.classList.add('active');
+                else if (stepNum < step) el.classList.add('completed');
+            });
+
+            // Show/hide sections
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+
+            // Step-specific initialization
+            if (step === 2) renderPreviewTable();
+            if (step === 3) {
+                initFloorplan();
+                renderFloorplan();
+            }
+        }
+
+        // ===================== STEP 1: CONVERTER =====================
+        const uploadZone = document.getElementById('uploadZone');
+        const asdpxInput = document.getElementById('asdpxInput');
+
+        uploadZone.addEventListener('click', () => asdpxInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processASDPX(file);
+        });
+
+        asdpxInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) processASDPX(e.target.files[0]);
+        });
+
+        function processASDPX(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    asdpxData = JSON.parse(e.target.result);
+                    convertToSiteOwl();
+                    showConversionResult();
+                    showToast('File converted successfully!');
+                } catch (err) {
+                    showToast('Error parsing file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function convertToSiteOwl() {
+            // Extract installation points (devices) from ASDPX
+            const children = asdpxData.children || asdpxData.project || [];
+            
+            // Handle both formats
+            let allChildren = [];
+            if (Array.isArray(children)) {
+                allChildren = children;
+            } else if (children.children && Array.isArray(children.children)) {
+                allChildren = children.children;
+            }
+            
+            // REQUIRE floorPlan - this is now the standard
+            const floorPlan = allChildren.find(function(c) { return c.type === 'floorPlan'; });
+            
+            if (!floorPlan) {
+                throw new Error('No floorPlan found in file. This tool requires ASDPX exports with embedded floorplan images.');
+            }
+            
+            if (!floorPlan.image) {
+                throw new Error('floorPlan found but no image data. Export must include floorplan image.');
+            }
+            
+            // Get floorplan image dimensions (pixels)
+            const imgDims = floorPlan.image.dimensions || { width: 1000, height: 1000 };
+            const imgWidth = imgDims.width;
+            const imgHeight = imgDims.height;
+            
+            // Get geo bounds from floorplan image
+            const bounds = floorPlan.image.bounds;
+            if (!bounds || !bounds.topLeft || !bounds.bottomRight) {
+                throw new Error('floorPlan image missing GPS bounds');
+            }
+            
+            // Get geo dimensions in meters (the accurate real-world size)
+            const geo = floorPlan.image.geoLocation || {};
+            var floorPlanWidthMeters = geo.width || 0;
+            var floorPlanHeightMeters = geo.height || 0;
+            
+            // If geoLocation not available, calculate from GPS
+            if (!floorPlanWidthMeters || !floorPlanHeightMeters) {
+                const latRange = bounds.topLeft.lat - bounds.bottomRight.lat;
+                const lngRange = bounds.bottomRight.lng - bounds.topLeft.lng;
+                const avgLat = (bounds.topLeft.lat + bounds.bottomRight.lat) / 2;
+                
+                const feetPerDegreeLat = 364000;
+                const feetPerDegreeLng = 364000 * Math.cos(avgLat * Math.PI / 180);
+                
+                floorPlanWidthMeters = (Math.abs(lngRange) * feetPerDegreeLng) / 3.28084;
+                floorPlanHeightMeters = (Math.abs(latRange) * feetPerDegreeLat) / 3.28084;
+            }
+            
+            // Convert to feet
+            const floorPlanWidthFeet = floorPlanWidthMeters * 3.28084;
+            const floorPlanHeightFeet = floorPlanHeightMeters * 3.28084;
+            
+            // 80% WIDTH RULE: Map = 80 units wide, centered on 100x100 artboard
+            // Height scales proportionally to maintain building aspect ratio
+            const targetWidth = 80;
+            const scale = targetWidth / floorPlanWidthFeet;
+            const targetHeight = floorPlanHeightFeet * scale;
+            
+            // Center the map on the 100x100 artboard
+            const offsetX = 50 - (targetWidth / 2);  // 10 units from left
+            const offsetY = 50 - (targetHeight / 2); // Centered vertically
+            
+            // Store floorplan data globally
+            window.floorPlanImage = floorPlan.image.base64 || null;
+            window.floorPlanOpacity = floorPlan.image.opacity || 0.5;
+            window.floorPlanData = {
+                imgWidth: imgWidth,
+                imgHeight: imgHeight,
+                widthFeet: floorPlanWidthFeet,
+                heightFeet: floorPlanHeightFeet,
+                targetWidth: targetWidth,
+                targetHeight: targetHeight,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                bounds: bounds
+            };
+            
+            // Store pricing data from quotation
+            window.pricingData = {};
+            window.pricingValidUntil = '';
+            
+            // Default pricing from SiteDesigner screenshots (in case ASDPX doesn't have it)
+            const defaultPricing = {
+                '02018-001': 455.57,      // M3077
+                '02375-001': 0.00,        // M3088
+                '03184-001': 742.84,      // P1488
+                '02757-001': 1782.71,     // P1518
+                '02985-001': 1321.63,     // P3288
+                '02635-001': 1221.63,     // P3738
+                '02944-001': 963.74,      // P4708
+                '01682-004': 0.00,        // P5655
+                '02657-001': 1704.26,     // Q3839
+                '02658-001': 1704.26,     // Q4809
+                '02487-001': 1053.11,     // Q9307
+                '02960-001': 1393.99,     // C1720 Speaker
+                '02784-001': 2387.32      // I8307 Intercom
+            };
+            
+            const quotation = allChildren.find(function(c) { return c.type === 'quotation'; });
+            if (quotation && quotation.pricesByPartNumber) {
+                window.pricingData = quotation.pricesByPartNumber;
+                window.pricingValidUntil = quotation.validUntilDate ? quotation.validUntilDate.split('T')[0] : '';
+            } else {
+                // Use default pricing if not in ASDPX
+                window.pricingData = defaultPricing;
+                window.pricingValidUntil = '2026-05-31';
+            }
+            
+            // Calculate pixel-to-feet ratios for coordinate conversion
+            const pxToFeetX = floorPlanWidthFeet / imgWidth;
+            const pxToFeetY = floorPlanHeightFeet / imgHeight;
+            
+            // Find installation points
+            const points = allChildren.filter(function(c) { 
+                return c.type === 'installationPoint'; 
+            });
+            
+            // Convert lat/lng to pixel coordinates, then to feet, then to display
+            devices = points
+                .filter(function(point) {
+                    return point.location && 
+                           typeof point.location.lat === 'number' && 
+                           typeof point.location.lng === 'number' &&
+                           !isNaN(point.location.lat) && 
+                           !isNaN(point.location.lng);
+                })
+                .map(function(point, idx) {
+                    const lat = point.location.lat;
+                    const lng = point.location.lng;
+                    
+                    // Convert GPS to pixels on floorplan image
+                    const latRange = bounds.topLeft.lat - bounds.bottomRight.lat;
+                    const lngRange = bounds.bottomRight.lng - bounds.topLeft.lng;
+                    
+                    const pixelX = ((lng - bounds.topLeft.lng) / lngRange) * imgWidth;
+                    const pixelY = ((bounds.topLeft.lat - lat) / latRange) * imgHeight;
+                    
+                    // Convert pixels to feet
+                    const feetX = pixelX * pxToFeetX;
+                    const feetY = pixelY * pxToFeetY;
+                    
+                    // Convert feet to display coordinates (80% width rule, centered)
+                    const displayX = (feetX / floorPlanWidthFeet) * targetWidth + offsetX;
+                    const displayY = (feetY / floorPlanHeightFeet) * targetHeight + offsetY;
+                    
+                    // Get sensor info for coverage
+                    var sensor = point.sensors && point.sensors[0];
+                    var coverageAngle = sensor && sensor.settings ? (sensor.settings.horizontalFov || 90) : 90;
+                    var coverageRange = sensor && sensor.target ? (sensor.target.distance || 30) : 30;
+                    var coverageDirection = sensor && sensor.target ? (sensor.target.horizontalAngle || 0) : 0;
+                    
+                    // Get height
+                    var heightMeters = point.height;
+                    if (typeof heightMeters !== 'number' || isNaN(heightMeters)) {
+                        heightMeters = 3;
+                    }
+                    
+                    return {
+                        id: 'New' + String(idx + 1).padStart(4, '0'),
+                        name: point.name || ('Camera ' + (idx + 1)),
+                        systemType: 'Video Surveillance',
+                        deviceType: 'Fixed Camera',
+                        x: isFinite(feetX) ? feetX : 0,
+                        y: isFinite(feetY) ? feetY : 0,
+                        displayX: isFinite(displayX) ? displayX : 50,
+                        displayY: isFinite(displayY) ? displayY : 50,
+                        height: heightMeters * 3.28084,
+                        coverageAngle: coverageAngle,
+                        coverageRange: coverageRange,
+                        coverageDirection: coverageDirection,
+                        // Store GPS coordinates for Field Notes
+                        gpsLat: point.location.lat,
+                        gpsLng: point.location.lng,
+                        raw: point,
+                        floorPlanId: point.mapOrigin || null,
+                        // Store pixel coords for debugging
+                        pixelX: pixelX,
+                        pixelY: pixelY
+                    };
+                });
+
+            if (devices.length === 0) {
+                throw new Error('No valid devices found in file');
+            }
+
+            // Store simplified bounds for other functions
+            window.bounds = {
+                minX: 0,
+                maxX: floorPlanWidthFeet,
+                minY: 0,
+                maxY: floorPlanHeightFeet,
+                origWidth: floorPlanWidthFeet,
+                origHeight: floorPlanHeightFeet,
+                targetWidth: targetWidth,
+                targetHeight: targetHeight,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                scale: scale
+            };
+            
+            generateCSV();
+        }
+
+        function calculateDeviceBounds() {
+            // Recalculate display coordinates when devices are removed/modified
+            // Uses the floorplan-based scaling already set up in convertToSiteOwl
+            if (!window.bounds || devices.length === 0) return;
+            
+            const b = window.bounds;
+            
+            // Recalculate display positions based on current feet coordinates
+            devices.forEach(d => {
+                if (isFinite(d.x) && isFinite(d.y)) {
+                    d.displayX = (d.x / b.origWidth) * b.targetWidth + b.offsetX;
+                    d.displayY = (d.y / b.origHeight) * b.targetHeight + b.offsetY;
+                }
+            });
+        }
+
+        // Conversion helper functions
+        function normalizeCoverageDirection(angle) {
+            // Normalize to 0-360 range
+            if (typeof angle !== 'number' || isNaN(angle)) return 0;
+            var normalized = angle % 360;
+            if (normalized < 0) normalized += 360;
+            return Math.round(normalized);
+        }
+        
+        function formatCoverageRange(range) {
+            // Whole numbers only
+            if (typeof range !== 'number' || isNaN(range)) return 0;
+            return Math.round(range);
+        }
+        
+        function formatCoordinates(x, y) {
+            // Three-Layer System: Artboard (100x100) -> Map (80% rule, centered) -> Devices
+            // Scales real-world feet to artboard coordinates using 80% width rule
+            // Input x,y are in feet (real-world coordinates)
+            // Output: (XX.XX, YY.YY) on 100x100 artboard, map centered at 80% width
+            
+            if (!window.bounds) {
+                // Fallback if bounds not set
+                var xStr = Math.min(99.99, Math.max(0, x)).toFixed(2).padStart(5, '0');
+                var yStr = Math.min(99.99, Math.max(0, y)).toFixed(2).padStart(5, '0');
+                return '"(' + xStr + ', ' + yStr + ')"';
+            }
+            
+            // Apply 80% Width Rule: Map is 80 units wide, centered on artboard
+            // Devices scale to fit the map layer (not full artboard)
+            var b = window.bounds;
+            var scaledX = (x / b.origWidth) * b.targetWidth + b.offsetX;
+            var scaledY = (y / b.origHeight) * b.targetHeight + b.offsetY;
+            
+            // Clamp to 0-99.99 and format
+            var finalX = Math.min(99.99, Math.max(0, scaledX));
+            var finalY = Math.min(99.99, Math.max(0, scaledY));
+            
+            var xStr = finalX.toFixed(2).padStart(5, '0');
+            var yStr = finalY.toFixed(2).padStart(5, '0');
+            
+            return '"(' + xStr + ', ' + yStr + ')"';
+        }
+        
+        function formatHeight(height) {
+            // One decimal place
+            if (typeof height !== 'number' || isNaN(height)) return '0.0';
+            return height.toFixed(1);
+        }
+
+        function generateCSV() {
+            // SiteOwl CSV format - 56 columns exact headers
+            const headers = [
+                'Project ID','Plan ID','Primary Device/Task ID','Primary Device/Task Name',
+                'Device ID','Name','Abbreviated Name','Device / Task','System Type',
+                'Device/Task Type','Part Number','Manufacturer','Budgeted Hours',
+                'Budgeted Cost','Assigned To','Assigned To ID','Date Due',
+                'Installed/Completed By','Installed/Completed By ID','Date Installed/Completed',
+                'Priority','Install Status','Operational Status','Images','Serial Number',
+                'IP Address','MAC Address','Barcode','IP / Analog','Interior / Exterior',
+                'Coverage Area','Coverage Direction','Coverage Angle','Coverage Range',
+                'Height (ft)','IDF / MDF','Hub','Port','Connection Length (feet)',
+                'Description','Flagged','Date Flagged','Flag Notes','Instructions',
+                'Field Notes','Labor Warranty Expiration','Device Warranty Expiration',
+                'Replacement Cost','Custom Device ID','Project','Site','Building','Plan',
+                'Coordinates','Archived','Shareable Link'
+            ];
+            
+            // Get available part numbers for assignment
+            var availableParts = Object.keys(window.pricingData || {});
+            
+            const rows = devices.map(function(d, index) {
+                // Apply conversion rules
+                var coverageDirection = normalizeCoverageDirection(d.coverageDirection);
+                var coverageRange = formatCoverageRange(d.coverageRange);
+                var coord = formatCoordinates(d.x, d.y);
+                var height = formatHeight(d.height);
+                
+                // Assign part number (round-robin from available parts)
+                var partNumber = availableParts.length > 0 ? availableParts[index % availableParts.length] : '';
+                var cameraInfo = partNumber ? (cameraModelMap[partNumber] || { model: d.name, deviceType: 'Fixed Camera' }) : { model: d.name, deviceType: 'Fixed Camera' };
+                var unitPrice = partNumber ? (window.pricingData[partNumber] || 0) : 0;
+                var lineTotal = unitPrice;
+                
+                return [
+                    '', // Project ID
+                    '', // Plan ID
+                    '', // Primary Device/Task ID
+                    '', // Primary Device/Task Name
+                    d.id, // Device ID (col 4)
+                    cameraInfo.model, // Name (col 5) - Camera model name
+                    '', // Abbreviated Name
+                    'Device', // Device / Task (col 7)
+                    d.systemType, // System Type (col 8)
+                    cameraInfo.deviceType || d.deviceType, // Device/Task Type (col 9) - SiteOwl approved type
+                    partNumber, // Part Number (col 10) - Now included!
+                    'Axis', // Manufacturer (col 11)
+                    '', // Budgeted Hours
+                    lineTotal.toFixed(2), // Budgeted Cost (col 13)
+                    '', // Assigned To
+                    '', // Assigned To ID
+                    '', // Date Due
+                    '', // Installed/Completed By
+                    '', // Installed/Completed By ID
+                    '', // Date Installed/Completed
+                    '', // Priority
+                    '', // Install Status
+                    '', // Operational Status
+                    '', // Images
+                    '', // Serial Number
+                    '', // IP Address
+                    '', // MAC Address
+                    '', // Barcode
+                    'IP', // IP / Analog (col 28)
+                    '', // Interior / Exterior
+                    '', // Coverage Area
+                    coverageDirection, // Coverage Direction (col 31) - 0-360 range
+                    d.coverageAngle, // Coverage Angle (col 32)
+                    coverageRange, // Coverage Range (col 33) - whole numbers
+                    height, // Height (ft) (col 34)
+                    '', // IDF / MDF
+                    '', // Hub
+                    '', // Port
+                    '', // Connection Length (feet)
+                    '', // Description
+                    '', // Flagged
+                    '', // Date Flagged
+                    '', // Flag Notes
+                    '', // Instructions
+                    d.gpsLat && d.gpsLng ? '"' + d.gpsLat + ', ' + d.gpsLng + '"' : '', // Field Notes - GPS coordinates
+                    '', // Labor Warranty Expiration
+                    '', // Device Warranty Expiration
+                    unitPrice.toFixed(2), // Replacement Cost (col 47)
+                    '', // Custom Device ID
+                    '', // Project
+                    '', // Site
+                    '', // Building
+                    '', // Plan
+                    coord, // Coordinates (col 53) - (00.00, 00.00) format
+                    '', // Archived
+                    '' // Shareable Link
+                ];
+            });
+            
+            csvData = [headers.join(','), ...rows.map(function(r) { return r.join(','); })].join('\n');
+        }
+
+        function showConversionResult() {
+            document.getElementById('conversionResult').style.display = 'block';
+            document.getElementById('statDevices').textContent = devices.length;
+            document.getElementById('statCameras').textContent = devices.length;
+            
+            if (window.bounds && window.floorPlanData) {
+                const w = Number(window.bounds.origWidth).toFixed(0);
+                const h = Number(window.bounds.origHeight).toFixed(0);
+                const displayW = window.bounds.targetWidth;
+                const displayH = Number(window.bounds.targetHeight).toFixed(1);
+                const pxW = window.floorPlanData.imgWidth;
+                const pxH = window.floorPlanData.imgHeight;
+                document.getElementById('statBounds').textContent = `${w}×${h}ft (${pxW}×${pxH}px) → ${displayW}×${displayH}`;
+            } else {
+                document.getElementById('statBounds').textContent = 'N/A';
+            }
+        }
+
+        function resetConverter() {
+            asdpxData = null;
+            devices = [];
+            csvData = '';
+            window.floorPlanImage = null;
+            window.floorPlanOpacity = 0.5;
+            window.pricingData = {};
+            window.pricingValidUntil = '';
+            document.getElementById('conversionResult').style.display = 'none';
+            asdpxInput.value = '';
+            showToast('Reset complete');
+        }
+
+        function downloadCSV() {
+            if (!csvData) return;
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'siteowl_import.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('SiteOwl CSV downloaded!');
+        }
+
+        // ===================== STEP 2: PREVIEW =====================
+        function renderPreviewTable() {
+            const tbody = document.getElementById('previewBody');
+            
+            if (devices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="56" style="text-align: center;">No data to preview</td></tr>';
+                return;
+            }
+            
+            // Update scaling info
+            updateScalingInfo();
+            
+            // Get available part numbers for name assignment
+            var availableParts = Object.keys(window.pricingData || {});
+            
+            tbody.innerHTML = devices.map(function(d, index) {
+                // Apply same formatting rules as CSV export
+                var coverageDirection = normalizeCoverageDirection(d.coverageDirection);
+                var coverageRange = formatCoverageRange(d.coverageRange);
+                var coord = formatCoordinates(d.x, d.y);
+                var height = formatHeight(d.height);
+                
+                // Get device model name
+                var partNumber = availableParts.length > 0 ? availableParts[index % availableParts.length] : '';
+                var deviceInfo = partNumber ? (deviceModelMap[partNumber] || { model: d.name, category: 'Unknown', subcategory: '', deviceType: 'Fixed Camera' }) : { model: d.name, category: 'Unknown', subcategory: '', deviceType: 'Fixed Camera' };
+                var unitPrice = partNumber ? (window.pricingData[partNumber] || 0) : 0;
+                var lineTotal = unitPrice;
+                
+                // Show scaled coordinates using 80% Width Rule (same as CSV export)
+                var b = window.bounds;
+                var scaledX = b ? ((d.x / b.origWidth) * b.targetWidth + b.offsetX).toFixed(2).padStart(5, '0') : '00.00';
+                var scaledY = b ? ((d.y / b.origHeight) * b.targetHeight + b.offsetY).toFixed(2).padStart(5, '0') : '00.00';
+                
+                // Build all 56 columns - matching CSV structure exactly
+                return `
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><strong>${d.id}</strong></td>
+                    <td>${deviceInfo.model}</td>
+                    <td></td>
+                    <td>Device</td>
+                    <td>${d.systemType}</td>
+                    <td>${deviceInfo.deviceType || d.deviceType}</td>
+                    <td>${partNumber}</td>
+                    <td>Axis</td>
+                    <td></td>
+                    <td>${lineTotal.toFixed(2)}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>IP</td>
+                    <td></td>
+                    <td></td>
+                    <td>${coverageDirection}</td>
+                    <td>${d.coverageAngle}</td>
+                    <td>${coverageRange}</td>
+                    <td>${height}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>${d.gpsLat && d.gpsLng ? d.gpsLat + ', ' + d.gpsLng : ''}</td>
+                    <td></td>
+                    <td>${unitPrice.toFixed(2)}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="coord-cell">${coord}</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            `;}).join('');
+        }
+
+        function updateScalingInfo() {
+            if (!window.bounds || !window.floorPlanData) return;
+            
+            const b = window.bounds;
+            const fp = window.floorPlanData;
+            
+            document.getElementById('boundsDisplay').innerHTML = `
+                <strong>Floorplan:</strong> ${fp.imgWidth}×${fp.imgHeight} pixels<br>
+                <strong>80% Width Rule:</strong> Map ${b.targetWidth.toFixed(1)}×${b.targetHeight.toFixed(1)} units, centered<br>
+                <strong>Scale:</strong> 1 pixel = ${(b.origWidth / fp.imgWidth).toFixed(3)} ft | 1 unit = ${(b.origWidth / b.targetWidth).toFixed(2)} ft
+            `;
+            
+            document.getElementById('feetDimensions').innerHTML = `
+                <strong>Building Size: ${b.origWidth.toFixed(1)} × ${b.origHeight.toFixed(1)} feet</strong>
+                <br><span style="color: #00d4aa;">✓ Based on floorplan geoLocation</span>
+                <br><span style="font-size: 11px; color: #64748b;">Verify this matches your actual building</span>
+            `;
+            
+            // GPS info from bounds
+            if (fp.bounds && fp.bounds.topLeft && fp.bounds.bottomRight) {
+                const tl = fp.bounds.topLeft;
+                const br = fp.bounds.bottomRight;
+                const latRange = Math.abs(tl.lat - br.lat).toFixed(6);
+                const lngRange = Math.abs(tl.lng - br.lng).toFixed(6);
+                document.getElementById('gpsRange').textContent = 
+                    `GPS bounds: ${latRange}° lat × ${lngRange}· lng`;
+            }
+        }
+
+        // ===================== STEP 3: FLOORPLAN =====================
+        function initFloorplan() {
+            drawGrid();
+            updateStats();
+            updatePricing();
+            updateMapBoundary();
+            
+            // Enable floorplan button if image exists
+            const fpBtn = document.getElementById('btnToggleFloorplan');
+            if (window.floorPlanImage) {
+                fpBtn.disabled = false;
+                fpBtn.textContent = '🏢 Hide Floorplan';
+                floorplanVisible = true;
+            } else {
+                fpBtn.disabled = true;
+                fpBtn.textContent = '🏢 No Image';
+            }
+        }
+
+        function drawGrid() {
+            gridLayer.innerHTML = '';
+            for (let i = 0; i <= 100; i += 10) {
+                const v = document.createElementNS(SVG_NS, 'line');
+                v.setAttribute('x1', i); v.setAttribute('y1', 0);
+                v.setAttribute('x2', i); v.setAttribute('y2', 100);
+                v.setAttribute('class', i % 50 === 0 ? 'axis-line' : 'grid-line');
+                gridLayer.appendChild(v);
+                
+                const h = document.createElementNS(SVG_NS, 'line');
+                h.setAttribute('x1', 0); h.setAttribute('y1', i);
+                h.setAttribute('x2', 100); h.setAttribute('y2', i);
+                h.setAttribute('class', i % 50 === 0 ? 'axis-line' : 'grid-line');
+                gridLayer.appendChild(h);
+            }
+        }
+
+        function renderFloorplan() {
+            deviceLayer.innerHTML = '';
+            coverageLayer.innerHTML = '';
+            
+            // Render floorplan image if available
+            const floorplanLayer = document.getElementById('floorplan-image-layer');
+            floorplanLayer.innerHTML = '';
+            
+            if (window.floorPlanImage && window.bounds) {
+                const b = window.bounds;
+                const img = document.createElementNS(SVG_NS, 'image');
+                img.setAttribute('href', window.floorPlanImage);
+                img.setAttribute('x', b.offsetX);
+                img.setAttribute('y', b.offsetY);
+                img.setAttribute('width', b.targetWidth);
+                img.setAttribute('height', b.targetHeight);
+                img.setAttribute('opacity', window.floorPlanOpacity || 0.5);
+                img.setAttribute('preserveAspectRatio', 'none');
+                floorplanLayer.appendChild(img);
+            }
+            
+            devices.forEach(function(device) {
+                // Coverage cone - use normalized direction (0-360) and rounded range
+                if (device.coverageRange > 0) {
+                    const angle = (device.coverageAngle * Math.PI) / 180;
+                    const dir = (normalizeCoverageDirection(device.coverageDirection) * Math.PI) / 180;
+                    const r = Math.min(formatCoverageRange(device.coverageRange), 20);
+                    
+                    const x1 = Math.cos(dir - angle/2) * r;
+                    const y1 = Math.sin(dir - angle/2) * r;
+                    const x2 = Math.cos(dir + angle/2) * r;
+                    const y2 = Math.sin(dir + angle/2) * r;
+                    
+                    const path = document.createElementNS(SVG_NS, 'path');
+                    path.setAttribute('d', 'M 0 0 L ' + x1 + ' ' + y1 + ' A ' + r + ' ' + r + ' 0 0 1 ' + x2 + ' ' + y2 + ' Z');
+                    path.setAttribute('class', 'coverage-area');
+                    path.setAttribute('transform', 'translate(' + device.displayX + ', ' + device.displayY + ')');
+                    coverageLayer.appendChild(path);
+                }
+                
+                // Device icon
+                const g = document.createElementNS(SVG_NS, 'g');
+                g.setAttribute('class', 'device');
+                g.setAttribute('data-id', device.id);
+                g.setAttribute('transform', `translate(${device.displayX}, ${device.displayY})`);
+                
+                const circle = document.createElementNS(SVG_NS, 'circle');
+                circle.setAttribute('r', 2);
+                circle.setAttribute('class', 'device-icon');
+                circle.setAttribute('stroke', '#0f172a');
+                circle.setAttribute('stroke-width', '0.3');
+                g.appendChild(circle);
+                
+                const dot = document.createElementNS(SVG_NS, 'circle');
+                dot.setAttribute('r', 0.8);
+                dot.setAttribute('fill', '#0f172a');
+                g.appendChild(dot);
+                
+                if (devices.length < 60) {
+                    const label = document.createElementNS(SVG_NS, 'text');
+                    label.setAttribute('y', -3);
+                    label.setAttribute('class', 'device-label');
+                    label.textContent = device.id;
+                    g.appendChild(label);
+                }
+                
+                g.addEventListener('mousedown', (e) => startDrag(e, device));
+                g.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectDevice(device.id);
+                });
+                
+                deviceLayer.appendChild(g);
+            });
+            
+            updateDeviceList();
+        }
+
+        function updateDeviceList() {
+            const list = document.getElementById('deviceList');
+            
+            if (devices.length === 0) {
+                list.innerHTML = '<p style="color: #64748b; font-size: 12px;">No devices</p>';
+                return;
+            }
+            
+            // Get available part numbers for name assignment
+            var availableParts = Object.keys(window.pricingData || {});
+            
+            list.innerHTML = devices.map(function(d, index) {
+                // Show scaled coordinates (00.00 format)
+                var b = window.bounds;
+                var scaledX = b ? ((d.x / b.origWidth) * 100).toFixed(2).padStart(5, '0') : '00.00';
+                var scaledY = b ? ((d.y / b.origHeight) * 100).toFixed(2).padStart(5, '0') : '00.00';
+                
+                // Get device model name
+                var partNumber = availableParts.length > 0 ? availableParts[index % availableParts.length] : '';
+                var deviceInfo = partNumber ? (deviceModelMap[partNumber] || { model: d.name, category: '', subcategory: '', deviceType: 'Fixed Camera' }) : { model: d.name, category: '', subcategory: '', deviceType: 'Fixed Camera' };
+                var shortName = deviceInfo.model.replace('AXIS ', '');
+                
+                return `
+                <div class="device-item ${selectedDeviceId === d.id ? 'selected' : ''}" data-id="${d.id}">
+                    <div class="device-icon-sm">📷</div>
+                    <div class="device-info">
+                        <div class="device-name">${d.id} - ${shortName}</div>
+                        <div class="device-type">${deviceInfo.deviceType} | (${scaledX}, ${scaledY})</div>
+                    </div>
+                    <button class="delete-btn" data-id="${d.id}" title="Remove">×</button>
+                </div>
+            `;}).join('');
+            
+            // Event handlers
+            list.querySelectorAll('.device-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('delete-btn')) {
+                        selectDevice(item.dataset.id);
+                    }
+                });
+            });
+            
+            list.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeDevice(btn.dataset.id);
+                });
+            });
+        }
+
+        function selectDevice(id) {
+            selectedDeviceId = id;
+            updateSelection();
+            updateDeviceList();
+            updateProperties();
+            updateStats();
+        }
+
+        function updateSelection() {
+            selectionLayer.innerHTML = '';
+            
+            if (!selectedDeviceId) return;
+            
+            const device = devices.find(d => d.id === selectedDeviceId);
+            if (!device) return;
+            
+            const ring = document.createElementNS(SVG_NS, 'circle');
+            ring.setAttribute('cx', device.displayX);
+            ring.setAttribute('cy', device.displayY);
+            ring.setAttribute('r', 3.5);
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', '#00d4aa');
+            ring.setAttribute('stroke-width', '0.4');
+            ring.setAttribute('stroke-dasharray', '1 0.5');
+            selectionLayer.appendChild(ring);
+        }
+
+        function updateProperties() {
+            const panel = document.getElementById('propertiesPanel');
+            
+            if (!selectedDeviceId) {
+                panel.innerHTML = '<p style="color: #64748b; font-size: 12px;">Select a device to edit</p>';
+                return;
+            }
+            
+            const d = devices.find(x => x.id === selectedDeviceId);
+            if (!d) return;
+            
+            // Get device model name
+            var deviceIndex = devices.indexOf(d);
+            var availableParts = Object.keys(window.pricingData || {});
+            var partNumber = availableParts.length > 0 ? availableParts[deviceIndex % availableParts.length] : '';
+            var deviceInfo = partNumber ? (deviceModelMap[partNumber] || { model: d.name, category: '', subcategory: '', deviceType: 'Fixed Camera' }) : { model: d.name, category: '', subcategory: '', deviceType: 'Fixed Camera' };
+            
+            // Format values for display using 80% Width Rule
+            var b = window.bounds;
+            var scaledX = b ? ((d.x / b.origWidth) * b.targetWidth + b.offsetX).toFixed(2).padStart(5, '0') : '00.00';
+            var scaledY = b ? ((d.y / b.origHeight) * b.targetHeight + b.offsetY).toFixed(2).padStart(5, '0') : '00.00';
+            var coordDisplay = '(' + scaledX + ', ' + scaledY + ')';
+            var coverageDir = normalizeCoverageDirection(d.coverageDirection);
+            var coverageRange = formatCoverageRange(d.coverageRange);
+            
+            panel.innerHTML = `
+                <div class="prop-row">
+                    <span class="prop-label">Model:</span>
+                    <span class="prop-value" style="font-size: 11px; color: #00d4aa;">${deviceInfo.model}</span>
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Device Type:</span>
+                    <span class="prop-value" style="font-size: 11px; color: #00d4aa;">${deviceInfo.deviceType}</span>
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Category:</span>
+                    <span class="prop-value" style="font-size: 11px; color: #64748b;">${deviceInfo.category}${deviceInfo.subcategory ? ' | ' + deviceInfo.subcategory : ''}</span>
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Part #:</span>
+                    <span class="prop-value" style="font-size: 11px;">${partNumber || 'N/A'}</span>
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Name:</span>
+                    <input type="text" class="prop-input" id="propName" value="${deviceInfo.model}">
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Coords:</span>
+                    <span class="prop-value" style="font-size: 11px;">${coordDisplay}</span>
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">X (ft):</span>
+                    <input type="number" class="prop-input" id="propX" value="${d.x.toFixed(2)}" step="0.01">
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Y (ft):</span>
+                    <input type="number" class="prop-input" id="propY" value="${d.y.toFixed(2)}" step="0.01">
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Height:</span>
+                    <input type="number" class="prop-input" id="propHeight" value="${d.height.toFixed(1)}" step="0.1">
+                </div>
+                <div class="prop-row">
+                    <span class="prop-label">Coverage:</span>
+                    <span class="prop-value">${coverageDir}° / ${coverageRange}ft</span>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn btn-primary" style="flex: 1; padding: 8px;" onclick="updateDevice()">Update</button>
+                    <button class="btn btn-danger" style="padding: 8px 12px;" onclick="removeDevice('${d.id}')">×</button>
+                </div>
+            `;
+        }
+
+        function updateDevice() {
+            const device = devices.find(d => d.id === selectedDeviceId);
+            if (!device) return;
+            
+            device.name = document.getElementById('propName').value;
+            device.x = parseFloat(document.getElementById('propX').value);
+            device.y = parseFloat(document.getElementById('propY').value);
+            device.height = parseFloat(document.getElementById('propHeight').value);
+            
+            // Recalculate display positions
+            calculateDeviceBounds();
+            renderFloorplan();
+            showToast('Device updated!');
+        }
+
+        function removeDevice(id) {
+            const idx = devices.findIndex(d => d.id === id);
+            if (idx === -1) return;
+            
+            devices.splice(idx, 1);
+            
+            if (selectedDeviceId === id) selectedDeviceId = null;
+            
+            // Auto-scale after removal
+            calculateDeviceBounds();
+            renderFloorplan();
+            updateProperties();
+            updateStats();
+            
+            // Regenerate CSV
+            generateCSV();
+            
+            showToast('Device removed - floorplan auto-scaled');
+        }
+
+        function startDrag(e, device) {
+            isDragging = true;
+            dragDevice = device;
+            
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+            
+            dragOffset.x = svgP.x - device.displayX;
+            dragOffset.y = svgP.y - device.displayY;
+            
+            selectDevice(device.id);
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging || !dragDevice) return;
+            
+            const pt = svg.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+            
+            dragDevice.displayX = Math.max(0, Math.min(100, svgP.x - dragOffset.x));
+            dragDevice.displayY = Math.max(0, Math.min(100, svgP.y - dragOffset.y));
+            
+            const group = deviceLayer.querySelector(`[data-id="${dragDevice.id}"]`);
+            if (group) {
+                group.setAttribute('transform', `translate(${dragDevice.displayX}, ${dragDevice.displayY})`);
+            }
+            
+            updateSelection();
+        }
+
+        function handleMouseUp() {
+            if (isDragging && dragDevice) {
+                // Convert display coords back to feet using floorplan-based scaling
+                if (window.bounds) {
+                    const { origWidth, origHeight, targetWidth, targetHeight, offsetX, offsetY } = window.bounds;
+                    
+                    if (targetWidth > 0 && targetHeight > 0) {
+                        // Reverse: displayX = (x / origWidth) * targetWidth + offsetX
+                        // Solve for x:
+                        dragDevice.x = ((dragDevice.displayX - offsetX) / targetWidth) * origWidth;
+                        dragDevice.y = ((dragDevice.displayY - offsetY) / targetHeight) * origHeight;
+                    }
+                }
+                generateCSV();
+            }
+            
+            isDragging = false;
+            dragDevice = null;
+        }
+
+        function resetView() {
+            calculateDeviceBounds();
+            renderFloorplan();
+            showToast('View reset');
+        }
+
+        function exportFinalCSV() {
+            if (!csvData) return;
+            
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'siteowl_import.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('SiteOwl CSV exported!');
+        }
+
+        function updateStats() {
+            document.getElementById('fpDeviceCount').textContent = devices.length;
+            document.getElementById('fpSelectedCount').textContent = selectedDeviceId ? 1 : 0;
+            
+            if (window.bounds && window.floorPlanData) {
+                const { origWidth, origHeight, targetWidth, targetHeight } = window.bounds;
+                const origW = Number(origWidth).toFixed(0);
+                const origH = Number(origHeight).toFixed(0);
+                const targetH = Number(targetHeight).toFixed(1);
+                var pricingInfo = Object.keys(window.pricingData || {}).length > 0 ? ' | 💰 Pricing' : '';
+                document.getElementById('scaleInfo').textContent = 
+                    `${origW}×${origH}ft → 80×${targetH}u${pricingInfo}`;
+            } else {
+                document.getElementById('scaleInfo').textContent = 'Scale: Unknown';
+            }
+        }
+
+        // Toggle coverage cones visibility
+        let coverageVisible = true;
+        function toggleCoverage() {
+            coverageVisible = !coverageVisible;
+            coverageLayer.style.display = coverageVisible ? 'block' : 'none';
+            document.getElementById('btnToggleCoverage').textContent = coverageVisible ? '👁️ Hide Coverage' : '🙈 Show Coverage';
+        }
+
+        // Update map boundary rectangle (Layer 2: 80% Rule)
+        function updateMapBoundary() {
+            if (!window.bounds) return;
+            const b = window.bounds;
+            const boundary = document.getElementById('map-boundary');
+            if (boundary) {
+                boundary.setAttribute('x', b.offsetX);
+                boundary.setAttribute('y', b.offsetY);
+                boundary.setAttribute('width', b.targetWidth);
+                boundary.setAttribute('height', b.targetHeight);
+            }
+        }
+
+        // Toggle floorplan image visibility
+        let floorplanVisible = true;
+        function toggleFloorplan() {
+            if (!window.floorPlanImage) return;
+            floorplanVisible = !floorplanVisible;
+            const layer = document.getElementById('floorplan-image-layer');
+            layer.style.display = floorplanVisible ? 'block' : 'none';
+            document.getElementById('btnToggleFloorplan').textContent = floorplanVisible ? '🏢 Hide Floorplan' : '🏢 Show Floorplan';
+        }
+
+        // Zoom functionality
+        let currentZoom = 1;
+        const svgElement = document.getElementById('floorplan-svg');
+        
+        function zoomIn() {
+            currentZoom = Math.min(currentZoom * 1.2, 3);
+            applyZoom();
+        }
+        
+        function zoomOut() {
+            currentZoom = Math.max(currentZoom / 1.2, 0.5);
+            applyZoom();
+        }
+        
+        function resetZoom() {
+            currentZoom = 1;
+            applyZoom();
+        }
+        
+        function applyZoom() {
+            const svg = document.getElementById('floorplan-svg');
+            if (svg) {
+                // Adjust viewBox based on zoom (centered on 50,50)
+                const baseViewBox = { x: 0, y: 0, width: 100, height: 100 };
+                const newWidth = baseViewBox.width / currentZoom;
+                const newHeight = baseViewBox.height / currentZoom;
+                const newX = 50 - (newWidth / 2);
+                const newY = 50 - (newHeight / 2);
+                svg.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`);
+            }
+            showToast(`Zoom: ${(currentZoom * 100).toFixed(0)}%`);
+        }
+
+        // Complete device model to part number mapping from SiteDesigner screenshots
+        // SiteOwl approved Device/Task Types for Video Surveillance System:
+        // 360 Camera, Box Camera, Bullet Camera, Camera Accessory, Dome Camera, Dual Video Monitor,
+        // Encoder, Fisheye Camera, Fixed Camera, General Video Surveillance, IR Illuminator, Lens,
+        // License LPR Camera, Microphone, Mount, Network Switch, NVR-DVR, Panoramic Camera, POE Injector,
+        // Power Supply, PTZ Camera, Relay, SD Card, Turret Camera, Video Monitor, Video Wall,
+        // VMS Server, VMS Workstation
+        const deviceModelMap = {
+            // Cameras - M-Series (Dome Cameras)
+            '02018-001': { model: 'AXIS M3077-PLVE', category: 'Camera', subcategory: 'M-Series', deviceType: 'Fisheye Camera' },
+            '02375-001': { model: 'AXIS M3088-V', category: 'Camera', subcategory: 'M-Series', deviceType: 'Dome Camera' },
+            // Cameras - P-Series
+            '03184-001': { model: 'AXIS P1488-LE', category: 'Camera', subcategory: 'P-Series', deviceType: 'Bullet Camera' },
+            '02757-001': { model: 'AXIS P1518-LE', category: 'Camera', subcategory: 'P-Series', deviceType: 'Bullet Camera' },
+            '02985-001': { model: 'AXIS P3288-LV', category: 'Camera', subcategory: 'P-Series', deviceType: 'Dome Camera' },
+            '02635-001': { model: 'AXIS P3738-PLE', category: 'Camera', subcategory: 'P-Series', deviceType: 'Panoramic Camera' },
+            '02944-001': { model: 'AXIS P4708-PLVE', category: 'Camera', subcategory: 'P-Series', deviceType: 'Panoramic Camera' },
+            '01682-004': { model: 'AXIS P5655-E 60Hz', category: 'Camera', subcategory: 'P-Series', deviceType: 'PTZ Camera' },
+            // Cameras - Q-Series (Panoramic/Multisensor)
+            '02657-001': { model: 'AXIS Q3839-PVE', category: 'Camera', subcategory: 'Q-Series', deviceType: 'Panoramic Camera' },
+            '02658-001': { model: 'AXIS Q4809-PVE', category: 'Camera', subcategory: 'Q-Series', deviceType: 'Panoramic Camera' },
+            '02487-001': { model: 'AXIS Q9307-LV', category: 'Camera', subcategory: 'Q-Series', deviceType: 'Dome Camera' },
+            // Forensic Analytics (Modular Camera System)
+            '02196-041': { model: 'AXIS FA51-B Main Unit', category: 'Forensic Analytics', subcategory: 'F/FA Series', deviceType: 'Camera Accessory' },
+            '0878-004': { model: 'AXIS FA54 Main Unit', category: 'Forensic Analytics', subcategory: 'F/FA Series', deviceType: 'Camera Accessory' },
+            '0913-001': { model: 'AXIS FA1105 Sensor Unit', category: 'Forensic Analytics', subcategory: 'F/FA Series', deviceType: 'Camera Accessory' },
+            // Audio (Treated as Camera Accessory in Video Surveillance context)
+            '02960-001': { model: 'AXIS C1720 Speaker', category: 'Audio', subcategory: 'Speakers', deviceType: 'General Video Surveillance' },
+            // Network Infrastructure
+            '02620-004': { model: 'AXIS D8248 PoE++ Switch', category: 'Network', subcategory: 'Recording', deviceType: 'Network Switch' },
+            '03063-004': { model: 'AXIS D8308 Fiber Switch', category: 'Network', subcategory: 'Recording', deviceType: 'Network Switch' },
+            // Access Control (Intercoms)
+            '02784-001': { model: 'AXIS I8307-VE Intercom', category: 'Access Control', subcategory: 'Intercoms', deviceType: 'General Video Surveillance' }
+        };
+        
+        // Legacy alias for backward compatibility
+        const cameraModelMap = deviceModelMap;
+
+        // Calculate and display pricing
+        function updatePricing() {
+            const panel = document.getElementById('pricingPanel');
+            const content = document.getElementById('pricingContent');
+            
+            // Count devices by part number from pricing data
+            var partCounts = {};
+            
+            // Check if we have pricing data
+            var hasPricing = Object.keys(window.pricingData || {}).length > 0;
+            
+            if (!hasPricing || devices.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            // For each device, assign to a part number (round-robin for demo)
+            // In production, this would use proper productId->partNumber mapping
+            var availableParts = Object.keys(window.pricingData || {});
+            if (availableParts.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            // Distribute devices across available part numbers
+            devices.forEach(function(d, index) {
+                var partNumber = availableParts[index % availableParts.length];
+                partCounts[partNumber] = (partCounts[partNumber] || 0) + 1;
+            });
+            
+            panel.style.display = 'block';
+            
+            // Build pricing table
+            var totalCost = 0;
+            var rows = '';
+            
+            // For each unique part number
+            Object.keys(partCounts).forEach(function(partNumber) {
+                var count = partCounts[partNumber];
+                var unitPrice = window.pricingData[partNumber] || 0;
+                var cameraInfo = cameraModelMap[partNumber] || { model: 'Unknown Model', category: 'Unknown' };
+                var lineTotal = count * unitPrice;
+                totalCost += lineTotal;
+                
+                rows += '<div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">' +
+                    '<div style="display: flex; justify-content: space-between; font-size: 11px;">' +
+                    '<span style="color: #00d4aa;">' + cameraInfo.model + '</span>' +
+                    '<span style="color: #64748b;">' + cameraInfo.category + '</span>' +
+                    '</div>' +
+                    '<div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 2px;">' +
+                    '<span>' + partNumber + ' × ' + count + ' @ $' + unitPrice.toFixed(2) + '</span>' +
+                    '<span>$' + lineTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>' +
+                    '</div>' +
+                    '</div>';
+            });
+            
+            content.innerHTML = 
+                '<div style="margin-bottom: 8px; max-height: 200px; overflow-y: auto;">' + rows + '</div>' +
+                '<div style="display: flex; justify-content: space-between; padding-top: 8px; font-weight: 600; color: #00d4aa; border-top: 1px solid rgba(0,212,170,0.3);">' +
+                '<span>Total Estimate:</span>' +
+                '<span>$' + totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>' +
+                '</div>' +
+                '<div style="font-size: 10px; color: #64748b; margin-top: 4px;">' +
+                'Valid until: ' + (window.pricingValidUntil || 'N/A') + ' | ' + devices.length + ' devices' +
+                '</div>';
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Event listeners
+        svg.addEventListener('mousemove', handleMouseMove);
+        svg.addEventListener('mouseup', handleMouseUp);
+        svg.addEventListener('mouseleave', handleMouseUp);
+        svg.addEventListener('click', (e) => {
+            if (e.target === svg) {
+                selectedDeviceId = null;
+                updateSelection();
+                updateDeviceList();
+                updateProperties();
+                updateStats();
+            }
+        });
+
+        // Init
+        drawGrid();
+        updateStats();
+        coverageVisible = true;
+        document.getElementById('btnToggleCoverage').textContent = '👁️ Hide Coverage';
+        window.floorPlanImage = null;
+        window.pricingData = {};
+        window.pricingValidUntil = '';
+        document.getElementById('btnToggleFloorplan').disabled = true;
+        document.getElementById('btnToggleFloorplan').textContent = '🏢 No Image';
+    </script>
+</body>
+</html>

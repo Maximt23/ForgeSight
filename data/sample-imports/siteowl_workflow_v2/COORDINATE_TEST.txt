@@ -1,0 +1,36 @@
+SITEOwl COORDINATE SYSTEM TEST
+===============================
+
+CURRENT IMPLEMENTATION (80% Width Rule):
+- Width scaled to 80 units (10-90 range)
+- Height scaled proportionally
+- Centered on 100x100 artboard
+- Example: Building center = (50.00, 50.00)
+
+ALTERNATIVE (Full 0-100 Range):
+- Width fills 0-100 range
+- Height fills 0-100 range  
+- Not centered (starts at 0,0)
+- Example: Building center = (50.00, 50.00)
+
+FOR A WIDE BUILDING (width > height):
+80% Rule gives:
+  X: 10 to 90 (80 units)
+  Y: 26.6 to 73.4 (46.8 units) - proportional to aspect ratio
+
+Full Range gives:
+  X: 0 to 100
+  Y: 0 to 100 (stretched/distorted?)
+
+QUESTION:
+Does SiteOwl expect:
+A) Proportional scaling (80% rule) - maintains building shape
+B) Full range scaling - fills entire artboard
+
+TEST:
+Import this CSV into SiteOwl and check:
+1. Do devices align with your floorplan image?
+2. Is the aspect ratio correct (not stretched)?
+3. Are devices centered or offset?
+
+Report back which coordinate system works!

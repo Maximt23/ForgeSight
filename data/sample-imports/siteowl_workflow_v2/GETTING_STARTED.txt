@@ -1,0 +1,57 @@
+========================================
+      GETTING STARTED IN 3 STEPS
+========================================
+
+STEP 1: Open the Tool
+---------------------
+Double-click on:  SiteOwl_Workflow.html
+
+The tool opens in your web browser.
+
+
+STEP 2: Load Your ASDPX File
+----------------------------
+1. In Step 1 (Import), drag your .asdpx file onto the drop zone
+   OR click "Browse Files" and select your file
+
+2. The tool will automatically:
+   ✓ Parse the ASDPX (JSON format)
+   ✓ Extract all devices with GPS coordinates
+   ✓ Convert GPS → pixel coordinates → feet → display units
+   ✓ Map part numbers to camera models
+   ✓ Assign SiteOwl-approved Device Types
+   ✓ Calculate coverage cones
+   ✓ Generate 56-column CSV
+
+3. Click "Continue to Preview"
+
+
+STEP 3: Review and Export
+-------------------------
+In Step 2 (Preview):
+- Verify building dimensions are correct
+- Check that Field Notes column shows GPS coordinates
+- Scroll right → to see all 56 columns
+- Click "Launch Floorplan Editor" (optional)
+
+In Step 3 (Floorplan Editor) [Optional]:
+- Drag devices to adjust positions
+- Toggle coverage cones (eye button)
+- Toggle floorplan image (building button)
+- View pricing in right sidebar
+- Delete devices with × button
+- Click "Export CSV" when done
+
+Or in Step 2:
+- Click "Download CSV" to save immediately
+
+
+YOUR OUTPUT FILE
+----------------
+The exported CSV is ready to import into SiteOwl!
+
+File format: siteowl_import.csv
+56 columns matching SiteOwl standard
+
+
+========================================
