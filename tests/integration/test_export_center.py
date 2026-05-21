@@ -11,8 +11,8 @@ def build_client(tmp_path):
     os.environ["CADOWL_DEV_MODE"] = "true"
 
     import apps.api.store as store_module
-    import apps.api.exports.service as export_service_module
-    import apps.api.exports.router as export_router_module
+    import apps.api.export_center.service as export_service_module
+    import apps.api.export_center.router as export_router_module
     import apps.api.main as main_module
 
     importlib.reload(store_module)

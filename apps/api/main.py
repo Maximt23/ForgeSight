@@ -47,7 +47,7 @@ from .schemas import (
     ZoneCreate,
 )
 from .store import STORE
-from .exports.router import router as export_router
+from .export_center.router import router as export_router
 
 app = FastAPI(title="CadOwl Phase 2 API", version="0.3.0")
 
