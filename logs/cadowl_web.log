@@ -1,0 +1,12 @@
+Starting CadOwl on 0.0.0.0:8090...
+Open: http://localhost:8090
+AI Model: MAXILLM
+
+INFO:     Started server process [22488]
+INFO:     Waiting for application startup.
+INFO:app.main:\U0001f989 CadOwl starting up...
+INFO:app.main:\U0001f4cd Host: 0.0.0.0:8080
+INFO:app.main:\U0001f916 AI Model: maxillm
+INFO:app.main:\u2705 Ready to fly!
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8090 (Press CTRL+C to quit)

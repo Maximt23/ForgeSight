@@ -1,0 +1,132 @@
+Blocks with attributes:
+  Block: CPT_BAR36
+    A: 13,395
+    B: 9,689
+    C: 0
+    D: 0
+    E: 0
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_Dairy Cooler Doors1 - D
+    WDSNumber: MG012
+    Manufacturer: ANTHONY
+    Model: 101
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$DOOR - WalkIn Door Traffic
+    WDSNumber: R0640.002
+    Manufacturer: VARIES
+    Model: ------
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_MD_SINGLE_DOOR_REFR - M
+    DEPARTMENT: 091
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_MD_SINGLE_DOOR_REFR - M
+    DEPARTMENT: 091
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_Dairy Cooler Doors1 - D
+    WDSNumber: MG012
+    Manufacturer: ANTHONY
+    Model: 101
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_Dairy Cooler Doors1 - D
+    WDSNumber: MG012
+    Manufacturer: ANTHONY
+    Model: 101
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_Dairy Cooler Doors1 - D
+    WDSNumber: MG012
+    Manufacturer: ANTHONY
+    Model: 101
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$05_Bollard_Grocery_36H pai
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_FoodService_Equip_Refri
+    DEPARTMENT: 091
+
+  Block: WMRT_SHELL-V01--RM-1-$0$RACKING - Multiple Storage
+    WDSNumber: RA2000
+    Manufacturer: ------
+    Model: ------
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$GROCERY - Scale_Labeler_QU
+    WDSNumber: MG025
+    Manufacturer: HOBART CORPORATION
+    Model: QUANTUM
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$REFR - RD3004 - RD3004_142
+    WDSNumber: RD3004.142.083043062
+    Manufacturer: HUSSMANN CORPORATION
+    Model: RL
+    LeftPanel: Yes
+    RightPanel: Yes
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_MD_SINGLE_DOOR_REFR - M
+    DEPARTMENT: 098
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_MD_SINGLE_DOOR_REFR - M
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$GHS_DOLLY2
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$GHS_DOLLY2
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$GHS_DOLLY2
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$DOOR - WalkIn Door Sliding
+    WDSNumber: R0610.004
+    Manufacturer: ------
+    Model: ------
+    LeftPanel: ------
+    RightPanel: ------
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_FoodService_Equip_Refri
+    DEPARTMENT: 091
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_FoodService_Equip_Refri
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_FoodService_Equip_Refri
+    DEPARTMENT: 
+
+  Block: WMRT_SHELL-V01--RM-1-$0$11_FoodService_Equip_Refri
+    DEPARTMENT: 091
+
+Total blocks with attributes: 30

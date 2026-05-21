@@ -75,11 +75,12 @@ class DevicePattern:
 
 # Layer patterns - what layers typically contain devices
 LAYER_PATTERNS: List[DevicePattern] = [
-    # Video Surveillance
+    # Video Surveillance layers
     DevicePattern(r"(?i).*cctv.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9),
     DevicePattern(r"(?i).*camera.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9),
     DevicePattern(r"(?i).*video.*surv.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9),
     DevicePattern(r"(?i).*surveillance.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.8),
+    DevicePattern(r"(?i)^CCTV-CONNECTOR$", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.8, "CCTV connector layer"),
     
     # Fire Alarm
     DevicePattern(r"(?i).*notification.*", SystemType.FIRE_ALARM, DeviceType.HORN_STROBE, 0.9),
@@ -141,6 +142,38 @@ BLOCK_PATTERNS: List[DevicePattern] = [
     DevicePattern(r"(?i).*camera.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.8),
     DevicePattern(r"(?i).*cctv.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.85),
     
+    # Bosch Cameras (Walmart standard)
+    DevicePattern(r"(?i)^Bosch_Indoor_PTZ$", SystemType.VIDEO_SURVEILLANCE, DeviceType.PTZ_CAMERA, 1.0, "Bosch Indoor PTZ"),
+    DevicePattern(r"(?i)^Bosch_12MP_Panaramic$", SystemType.VIDEO_SURVEILLANCE, DeviceType.PANORAMIC_CAMERA, 1.0, "Bosch 12MP 360"),
+    DevicePattern(r"(?i)^Bosch_5MP_Micro_Dome.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.DOME_CAMERA, 1.0, "Bosch Micro Dome"),
+    DevicePattern(r"(?i)^Bosch.*OUTDOOR.*5MP.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 1.0, "Bosch Outdoor 5MP"),
+    DevicePattern(r"(?i)^Bosch.*Video.*Decoder.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9, "Bosch Video Decoder"),
+    DevicePattern(r"(?i)^Bosch.*KBD.*PTZ.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.PTZ_CAMERA, 0.9, "Bosch PTZ Controller"),
+    DevicePattern(r"(?i)^Bosch.*flexidome.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.DOME_CAMERA, 1.0, "Bosch Flexidome"),
+    DevicePattern(r"(?i)^Bosch.*autodome.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.PTZ_CAMERA, 1.0, "Bosch Autodome PTZ"),
+    DevicePattern(r"(?i)^Bosch.*dinion.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 1.0, "Bosch Dinion"),
+    
+    # Axis Cameras
+    DevicePattern(r"(?i)^Axis.*Camera.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 1.0, "Axis Camera"),
+    DevicePattern(r"(?i)^FA54.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 1.0, "Axis FA54 PVM Camera"),
+    DevicePattern(r"(?i)^FA4115.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 1.0, "Axis FA4115 Camera Head"),
+    
+    # PVM Monitors (Public View Monitors)
+    DevicePattern(r"(?i)^\d+_Inch_LED_Monitor.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9, "PVM LED Monitor"),
+    DevicePattern(r"(?i)^\d+in.*Ceiling.*Monitor.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9, "PVM Ceiling Monitor"),
+    DevicePattern(r"(?i).*LED_Monitor.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.85, "LED Monitor/PVM"),
+    
+    # Camera Mounting
+    DevicePattern(r"(?i)^Camera.*Pendant.*Pole.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9, "Camera Pendant Pole Mount"),
+    DevicePattern(r"(?i).*Camera.*FOV.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.PANORAMIC_CAMERA, 0.8, "Camera Field of View"),
+    
+    # Walmart specific blocks
+    DevicePattern(r"(?i)^WMRT_DOME.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.DOME_CAMERA, 1.0, "Walmart Dome Camera"),
+    DevicePattern(r"(?i)^WMRT_PTZ.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.PTZ_CAMERA, 1.0, "Walmart PTZ Camera"),
+    DevicePattern(r"(?i)^10_Inch_EPVM.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9, "EPVM 10 inch"),
+    DevicePattern(r"(?i)^EPVM_Pendant.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.9, "EPVM Pendant"),
+    DevicePattern(r"(?i)^Surface_Back_Box.*", SystemType.VIDEO_SURVEILLANCE, DeviceType.FIXED_CAMERA, 0.8, "Camera Back Box"),
+    
     # Intrusion
     DevicePattern(r"(?i).*motion.*", SystemType.INTRUSION, DeviceType.MOTION_SENSOR, 0.9),
     DevicePattern(r"(?i).*pir.*", SystemType.INTRUSION, DeviceType.MOTION_SENSOR, 0.9),
@@ -178,6 +211,86 @@ EXCLUDE_PATTERNS: List[str] = [
     r"(?i)^xfloor.*",
     r"(?i)^shttitle.*",
     r"(?i)^stamp.*",
+    # Walmart architectural blocks (not security devices)
+    r"(?i)^WMRT_SHELL.*",        # Shell/building elements
+    r"(?i)^WMRT_AUTO--RM.*MERCH.*",  # Merchandise fixtures
+    r"(?i)^WMRT_SPTG--RM.*MERCH.*",  # Sporting goods fixtures
+    r"(?i)^WMRT_PAINT--RM.*MERCH.*", # Paint dept fixtures
+    r"(?i)^WMRT_COSM--RM.*LED.*",    # Cosmetics lighting
+    r"(?i)^WMRT_AISLE.*",            # Aisle fixtures
+    r"(?i)^WMRT_.*SHOWCASE.*",       # Display cases
+    r"(?i)^WMRT_COUT.*lipton.*",     # Product displays
+    r"(?i)^WMRT_MONEYCENTER.*CARDS.*", # Gift cards display
+    r"(?i)^WMRT_PHARM.*GLASS.*",     # Pharmacy glass
+    r"(?i).*BKRM_Rack.*",            # Backroom racks
+    r"(?i).*section_cnt.*",          # Section counters
+    r"(?i).*_fix$",                  # Fixture layers
+    r"(?i).*_cat$",                  # Category layers
+    r"(?i).*Bollard.*",              # Bollards (security barrier, not electronic)
+    r"(?i).*Door_Panel.*",           # Door panels
+    r"(?i).*Toilet.*",               # Restroom fixtures
+    r"(?i).*BREAKROOM.*",            # Breakroom furniture
+    # Walmart department markers (NOT security devices)
+    r"(?i)^WMRT_ALCOHOL--RM.*",
+    r"(?i)^WMRT_CANDY--RM.*",
+    r"(?i)^WMRT_DAIRY--RM.*",
+    r"(?i)^WMRT_FR-BAKE--RM.*",
+    r"(?i)^WMRT_FRZNFD--RM.*",
+    r"(?i)^WMRT_MT-DELI--RM.*",
+    r"(?i)^WMRT_MTFRFZ--RM.*",
+    r"(?i)^WMRT_SEAFOOD--RM.*",
+    r"(?i)^WMRT_PAPER--RM.*",
+    r"(?i)^WMRT_PETS--RM.*",
+    r"(?i)^WMRT_CHEM--RM.*",
+    r"(?i)^WMRT_INFTHRD--RM.*",
+    r"(?i)^WMRT_MENS--RM.*",
+    r"(?i)^WMRT_JEWL--RM.*",
+    r"(?i)^WMRT_ACCE--RM.*",
+    r"(?i)^WMRT_BOYS--RM.*",
+    r"(?i)^WMRT_FNDTION--RM.*",
+    r"(?i)^WMRT_GIRLS--RM.*",
+    r"(?i)^WMRT_HOSIERY--RM.*",
+    r"(?i)^WMRT_INTM--RM.*",
+    r"(?i)^WMRT_DRYGRO--RM.*",
+    r"(?i)^WMRT_DSD--RM.*",
+    r"(?i)^WMRT_ELEC--RM.*",
+    r"(?i)^WMRT_HBA--RM.*",
+    r"(?i)^WMRT_PROBAKE--RM.*",
+    r"(?i)^WMRT_BREAD--RM.*",
+    r"(?i)^WMRT_INFT--RM.*",
+    r"(?i)^WMRT_SRVDELI--RM.*",
+    r"(?i)^WMRT_PHOTO--RM.*",
+    r"(?i)^WMRT_COUT--RM.*",
+    r"(?i)^WMRT_MONEYCENTER--RM.*(?!.*Monitor).*",  # Exclude unless it's a monitor
+    # More Walmart departments
+    r"(?i)^WMRT_LADIES--RM.*",
+    r"(?i)^WMRT_SHOES--RM.*",
+    r"(?i)^WMRT_SOXHOSI--RM.*",
+    r"(?i)^WMRT_STA--RM.*",
+    r"(?i)^WMRT_GCTR--RM.*",
+    r"(?i)^WMRT_SEAS--RM.*",
+    r"(?i)^WMRT_LIVGD--RM.*",
+    r"(?i)^WMRT_CELB--RM.*",
+    r"(?i)^WMRT_CARPBLK--RM.*",
+    r"(?i)^WMRT_BEDDING--RM.*",
+    r"(?i)^WMRT_TOYS--RM.*",
+    r"(?i)^WMRT_HOME--RM.*",
+    r"(?i)^WMRT_FURN--RM.*",
+    r"(?i)^WMRT_CRAFT--RM.*",
+    r"(?i)^WMRT_FABRICS--RM.*",
+    r"(?i)^WMRT_STATIONERY--RM.*",
+    r"(?i)^WMRT_HARDWARE--RM.*",
+    # Infrastructure (not cameras, but related equipment)
+    r"(?i)^Data Rack.*",
+    r"(?i)^IDF Cabinet.*",
+    r"(?i)^MDF Cabinet.*",
+    r"(?i)^VSRV Server.*",
+    r"(?i)^Cisco.*Switch.*",
+    r"(?i)^.*Patch Panel.*",
+    r"(?i)^Netway.*Fiber.*",
+    r"(?i)^Fiber.*Tray.*",
+    r"(?i)^UPS.*",
+    r"(?i)^Battery.*Backup.*",
 ]
 
 # Attribute tags that typically contain device names
