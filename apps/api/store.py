@@ -370,6 +370,182 @@ class JsonStore:
 
             return {"batch_id": batch_id, "committed_devices": committed, "status": "committed"}
 
+    def validate_import_batch(self, batch_id: UUID) -> dict[str, Any]:
+        with self._lock:
+            batch = self.import_batches.get(batch_id)
+            if not batch:
+                raise ValueError(f"Import batch '{batch_id}' not found")
+
+            staged = self.get_batch_payload(batch_id)
+            rows = staged.get("rows", [])
+            if not rows:
+                raise ValueError("Cannot validate empty batch")
+
+            issues: list[dict[str, Any]] = []
+            required_fields = ["Name", "Device/Task Type"]
+            valid_rows = 0
+
+            for idx, row in enumerate(rows, start=1):
+                row_ok = True
+                for field in required_fields:
+                    value = str(row.get(field, "")).strip()
+                    if not value:
+                        row_ok = False
+                        issues.append({"row_index": idx, "field": field, "message": "missing required value"})
+                if row_ok:
+                    valid_rows += 1
+
+            quarantined_rows = len(rows) - valid_rows
+            health_score = round((valid_rows / len(rows)) * 100.0, 2)
+            new_status = "validated" if quarantined_rows == 0 else "quarantined"
+            batch.status = new_status
+            batch.updated_at = datetime.utcnow()
+            self.import_batches[batch_id] = batch
+            self._persist_entities("import_batches", self.import_batches)
+
+            staged_meta = staged.get("metadata", {})
+            staged_meta["validation_issues"] = issues
+            staged_meta["validation"] = {
+                "total_rows": len(rows),
+                "valid_rows": valid_rows,
+                "quarantined_rows": quarantined_rows,
+                "health_score": health_score,
+            }
+            staged["metadata"] = staged_meta
+            self.import_batch_payloads[str(batch_id)] = staged
+            self._write_json(self.import_batch_payloads_path, self.import_batch_payloads)
+
+            self._event(
+                "import_batch_validated",
+                "import_batch",
+                batch_id,
+                metadata={
+                    "status": new_status,
+                    "total_rows": len(rows),
+                    "valid_rows": valid_rows,
+                    "quarantined_rows": quarantined_rows,
+                    "health_score": health_score,
+                },
+            )
+
+            return {
+                "batch_id": batch_id,
+                "total_rows": len(rows),
+                "valid_rows": valid_rows,
+                "quarantined_rows": quarantined_rows,
+                "health_score": health_score,
+                "status": new_status,
+                "issues": issues[:100],
+            }
+
+    def preview_delete_by_batch(self, batch_id: UUID) -> dict[str, Any]:
+        staged = self.get_batch_payload(batch_id)
+        committed_ids = staged.get("metadata", {}).get("committed_device_ids", [])
+        deletable: list[UUID] = []
+        for raw_id in committed_ids:
+            try:
+                parsed = UUID(str(raw_id))
+            except ValueError:
+                continue
+            if parsed in self.devices:
+                deletable.append(parsed)
+        return {
+            "batch_id": batch_id,
+            "deletable_device_ids": deletable,
+            "deletable_count": len(deletable),
+        }
+
+    def delete_devices_by_batch(self, batch_id: UUID, actor: str = "system") -> dict[str, Any]:
+        with self._lock:
+            batch = self.import_batches.get(batch_id)
+            if not batch:
+                raise ValueError(f"Import batch '{batch_id}' not found")
+
+            preview = self.preview_delete_by_batch(batch_id)
+            deletable_ids: list[UUID] = preview["deletable_device_ids"]
+            snapshot = self._snapshot(f"pre-batch-delete:{batch_id}")
+
+            for device_id in deletable_ids:
+                self.devices.pop(device_id, None)
+
+            batch.status = "reverted"
+            batch.updated_at = datetime.utcnow()
+            self.import_batches[batch_id] = batch
+
+            self._persist_entities("devices", self.devices)
+            self._persist_entities("import_batches", self.import_batches)
+
+            self._event(
+                "import_batch_devices_deleted",
+                "import_batch",
+                batch_id,
+                actor=actor,
+                metadata={"deleted_devices": len(deletable_ids), "rollback_snapshot_id": snapshot["snapshot_id"]},
+            )
+
+            return {
+                "batch_id": batch_id,
+                "deleted_devices": len(deletable_ids),
+                "rollback_snapshot_id": snapshot["snapshot_id"],
+                "status": "deleted",
+            }
+
+    def preview_reupload_diff(self, batch_id: UUID, new_rows: list[dict[str, Any]]) -> dict[str, Any]:
+        old_rows = self.get_batch_payload(batch_id).get("rows", [])
+
+        def fingerprint(row: dict[str, Any]) -> str:
+            return "|".join(
+                [
+                    str(row.get("Name", "")).strip().lower(),
+                    str(row.get("Device/Task Type", "")).strip().lower(),
+                    str(row.get("Coordinates", "")).strip().lower(),
+                ]
+            )
+
+        old_set = {fingerprint(r) for r in old_rows}
+        new_set = {fingerprint(r) for r in new_rows}
+        return {
+            "batch_id": batch_id,
+            "old_count": len(old_rows),
+            "new_count": len(new_rows),
+            "added_count": len(new_set - old_set),
+            "removed_count": len(old_set - new_set),
+        }
+
+    def reupload_batch(self, batch_id: UUID, source_file_hash: str, new_rows: list[dict[str, Any]]) -> dict[str, Any]:
+        with self._lock:
+            batch = self.import_batches.get(batch_id)
+            if not batch:
+                raise ValueError(f"Import batch '{batch_id}' not found")
+
+            staged = self.get_batch_payload(batch_id)
+            staged["rows"] = new_rows
+            staged_meta = staged.get("metadata", {})
+            staged_meta["reuploaded_at"] = datetime.utcnow().isoformat()
+            staged["metadata"] = staged_meta
+            self.import_batch_payloads[str(batch_id)] = staged
+            self._write_json(self.import_batch_payloads_path, self.import_batch_payloads)
+
+            batch.source_file_hash = source_file_hash
+            batch.record_count = len(new_rows)
+            batch.status = "reuploaded"
+            batch.updated_at = datetime.utcnow()
+            self.import_batches[batch_id] = batch
+            self._persist_entities("import_batches", self.import_batches)
+
+            self._event(
+                "import_batch_reuploaded",
+                "import_batch",
+                batch_id,
+                metadata={"record_count": len(new_rows)},
+            )
+
+            return {
+                "batch_id": batch_id,
+                "record_count": len(new_rows),
+                "status": "reuploaded",
+            }
+
     def idempotent_execute(self, key: str, operation: str, request_payload: dict[str, Any], result_factory) -> dict[str, Any]:
         payload_hash = hashlib.sha256(json.dumps(request_payload, sort_keys=True).encode("utf-8")).hexdigest()
         composite_key = f"{operation}:{key}"

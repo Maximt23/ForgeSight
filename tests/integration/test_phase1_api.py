@@ -161,3 +161,78 @@ def test_event_ledger_file_exists_and_has_lines(tmp_path):
     assert ledger.exists()
     lines = [x for x in ledger.read_text(encoding='utf-8').splitlines() if x.strip()]
     assert len(lines) >= 4
+
+
+def test_batch_validate_reupload_and_delete_flow(tmp_path):
+    client, _ = build_client(tmp_path)
+    project, site, floor, map_obj = seed_core(client)
+
+    # Stage one invalid + one valid row to force quarantine.
+    payload = {
+        'source_file_name': 'import_devices.csv',
+        'source_file_hash': 'hash-v1',
+        'mode': 'merge',
+        'records': [
+            {'Name': 'CAM-OK', 'Device/Task Type': 'camera', 'Coordinates': '(10,20)'},
+            {'Name': '', 'Device/Task Type': 'camera', 'Coordinates': '(11,21)'},
+        ],
+    }
+    staged = client.post('/api/v1/import/batch', json=payload, headers={'Idempotency-Key': 'batch-flow-1'})
+    assert staged.status_code == 200
+    batch_id = staged.json()['id']
+
+    validate = client.post(f'/api/v1/import/{batch_id}/validate')
+    assert validate.status_code == 200
+    vbody = validate.json()
+    assert vbody['status'] == 'quarantined'
+    assert vbody['quarantined_rows'] == 1
+
+    # Reupload corrected records and preview diff.
+    reupload_preview = client.post(
+        f'/api/v1/import/{batch_id}/reupload/preview',
+        json={'records': [
+            {'Name': 'CAM-OK', 'Device/Task Type': 'camera', 'Coordinates': '(10,20)'},
+            {'Name': 'CAM-NEW', 'Device/Task Type': 'camera', 'Coordinates': '(22,33)'},
+        ]},
+    )
+    assert reupload_preview.status_code == 200
+    assert reupload_preview.json()['new_count'] == 2
+
+    reupload = client.post(
+        f'/api/v1/import/{batch_id}/reupload',
+        json={
+            'source_file_hash': 'hash-v2',
+            'records': [
+                {'Name': 'CAM-OK', 'Device/Task Type': 'camera', 'Coordinates': '(10,20)'},
+                {'Name': 'CAM-NEW', 'Device/Task Type': 'camera', 'Coordinates': '(22,33)'},
+            ],
+        },
+    )
+    assert reupload.status_code == 200
+    assert reupload.json()['status'] == 'reuploaded'
+
+    validate2 = client.post(f'/api/v1/import/{batch_id}/validate')
+    assert validate2.status_code == 200
+    assert validate2.json()['status'] == 'validated'
+
+    commit = client.post(
+        f'/api/v1/import/{batch_id}/commit',
+        json={
+            'project_id': project['id'],
+            'site_number': site['site_number'],
+            'floor_id': floor['id'],
+            'map_id': map_obj['id'],
+            'actor': 'qa@walmart.com',
+        },
+    )
+    assert commit.status_code == 200
+    assert commit.json()['committed_devices'] == 2
+
+    delete_preview = client.post('/api/v1/import/delete/preview', json={'batch_id': batch_id})
+    assert delete_preview.status_code == 200
+    assert delete_preview.json()['deletable_count'] == 2
+
+    delete_commit = client.post(f'/api/v1/import/{batch_id}/delete', json={'actor': 'qa@walmart.com'})
+    assert delete_commit.status_code == 200
+    assert delete_commit.json()['deleted_devices'] == 2
+    assert delete_commit.json()['rollback_snapshot_id']

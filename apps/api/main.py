@@ -35,6 +35,15 @@ from .schemas import (
     ImportBatchCommitRequest,
     ImportBatchCommitResponse,
     ImportBatchCreate,
+    ImportBatchValidateResponse,
+    ImportDeletePreviewRequest,
+    ImportDeletePreviewResponse,
+    ImportDeleteCommitRequest,
+    ImportDeleteCommitResponse,
+    ImportReuploadPreviewRequest,
+    ImportReuploadPreviewResponse,
+    ImportReuploadCommitRequest,
+    ImportReuploadCommitResponse,
     MapCreate,
     MapModel,
     Project,
@@ -251,6 +260,42 @@ def create_import_batch(payload: ImportBatchCreate, idempotency_key: Optional[st
 @app.get("/api/v1/import/batches", response_model=list[ImportBatch], dependencies=[Depends(perm(Permission.SITE_VIEW))])
 def list_import_batches():
     return list(STORE.import_batches.values())
+
+
+@app.post("/api/v1/import/{batch_id}/validate", response_model=ImportBatchValidateResponse, dependencies=[Depends(perm(Permission.SITE_CREATE))])
+def validate_batch(batch_id: UUID):
+    result = _safe_write(lambda: STORE.validate_import_batch(batch_id))
+    return ImportBatchValidateResponse.model_validate(result)
+
+
+@app.post("/api/v1/import/delete/preview", response_model=ImportDeletePreviewResponse, dependencies=[Depends(perm(Permission.SITE_EDIT))])
+def preview_batch_delete(payload: ImportDeletePreviewRequest):
+    result = _safe_write(lambda: STORE.preview_delete_by_batch(payload.batch_id))
+    return ImportDeletePreviewResponse.model_validate(result)
+
+
+@app.post("/api/v1/import/{batch_id}/delete", response_model=ImportDeleteCommitResponse, dependencies=[Depends(perm(Permission.SITE_DELETE))])
+def delete_batch_devices(batch_id: UUID, payload: ImportDeleteCommitRequest):
+    result = _safe_write(lambda: STORE.delete_devices_by_batch(batch_id=batch_id, actor=payload.actor))
+    return ImportDeleteCommitResponse.model_validate(result)
+
+
+@app.post("/api/v1/import/{batch_id}/reupload/preview", response_model=ImportReuploadPreviewResponse, dependencies=[Depends(perm(Permission.SITE_EDIT))])
+def preview_batch_reupload(batch_id: UUID, payload: ImportReuploadPreviewRequest):
+    result = _safe_write(lambda: STORE.preview_reupload_diff(batch_id=batch_id, new_rows=payload.records))
+    return ImportReuploadPreviewResponse.model_validate(result)
+
+
+@app.post("/api/v1/import/{batch_id}/reupload", response_model=ImportReuploadCommitResponse, dependencies=[Depends(perm(Permission.SITE_EDIT))])
+def reupload_batch(batch_id: UUID, payload: ImportReuploadCommitRequest):
+    result = _safe_write(
+        lambda: STORE.reupload_batch(
+            batch_id=batch_id,
+            source_file_hash=payload.source_file_hash,
+            new_rows=payload.records,
+        )
+    )
+    return ImportReuploadCommitResponse.model_validate(result)
 
 
 @app.post("/api/v1/import/asdpx/preview", response_model=AsdpxPreviewResponse, dependencies=[Depends(perm(Permission.SITE_VIEW))])

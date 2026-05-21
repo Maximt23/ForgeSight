@@ -34,6 +34,11 @@ Every commit creates rollback checkpoint and event references.
 - Preview endpoint: `POST /api/v1/import/asdpx/preview`
 - Stage endpoint: `POST /api/v1/import/asdpx/batch` (requires `Idempotency-Key`)
 - Commit endpoint: `POST /api/v1/import/{batch_id}/commit`
+- Validate endpoint: `POST /api/v1/import/{batch_id}/validate`
+- Re-upload preview: `POST /api/v1/import/{batch_id}/reupload/preview`
+- Re-upload commit: `POST /api/v1/import/{batch_id}/reupload`
+- Delete preview: `POST /api/v1/import/delete/preview`
+- Delete committed rows by batch: `POST /api/v1/import/{batch_id}/delete`
 - Backend CLI: `scripts/import/convert_asdpx_to_siteowl_csv.py`
 - Coordinate pipeline: GPS -> pixel -> feet -> SiteOwl 100x100 with 80% width centering rule
 - Coordinate safety rule: no negative coordinates are allowed for stored devices
