@@ -124,26 +124,6 @@ class ImportBatch(BaseEntity):
     record_count: int = 0
 
 
-class RollbackRequest(BaseModel):
-    snapshot_id: Optional[str] = None
-
-
-class RollbackResult(BaseModel):
-    restored_snapshot_id: str
-    restored_event_id: Optional[str] = None
-    restored_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-class Event(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    event_type: str
-    entity_type: str
-    entity_id: UUID
-    actor: str = "system"
-    metadata: dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-
 class AsdpxPreviewRequest(BaseModel):
     source_path: str
 
@@ -162,3 +142,47 @@ class AsdpxPreviewResponse(BaseModel):
     source_path: str
     row_count: int
     sample_rows: list[AsdpxDevicePreview]
+
+
+class AsdpxBatchStageRequest(BaseModel):
+    source_path: str
+    mode: Literal["merge", "overwrite", "append", "replace_batch"] = "merge"
+
+
+class AsdpxBatchStageResponse(BaseModel):
+    batch: ImportBatch
+    staged_row_count: int
+
+
+class ImportBatchCommitRequest(BaseModel):
+    project_id: UUID
+    site_number: str
+    floor_id: Optional[UUID] = None
+    map_id: Optional[UUID] = None
+    actor: str = "system"
+
+
+class ImportBatchCommitResponse(BaseModel):
+    batch_id: UUID
+    committed_devices: int
+    status: str
+
+
+class RollbackRequest(BaseModel):
+    snapshot_id: Optional[str] = None
+
+
+class RollbackResult(BaseModel):
+    restored_snapshot_id: str
+    restored_event_id: Optional[str] = None
+    restored_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Event(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    event_type: str
+    entity_type: str
+    entity_id: UUID
+    actor: str = "system"
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=datetime.utcnow)

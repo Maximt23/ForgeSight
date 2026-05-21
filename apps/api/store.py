@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from threading import RLock
@@ -9,21 +10,11 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 
-from .schemas import (
-    Cable,
-    Device,
-    Event,
-    Floor,
-    ImportBatch,
-    MapModel,
-    Project,
-    Site,
-    Zone,
-)
+from .schemas import Cable, Device, Event, Floor, ImportBatch, MapModel, Project, Site, Zone
 
 
 class JsonStore:
-    """JSON-backed repository with schema checks, event ledger, snapshots, and rollback."""
+    """JSON-backed repository with schema checks, event ledger, snapshots, rollback."""
 
     SNAPSHOT_EVERY_EVENTS = 10
 
@@ -55,6 +46,7 @@ class JsonStore:
         self.events: list[Event] = []
 
         self.idempotency_index: Dict[str, dict[str, Any]] = {}
+        self.import_batch_payloads: Dict[str, dict[str, Any]] = {}
 
         self._ensure_storage()
         self._load_all()
@@ -71,6 +63,10 @@ class JsonStore:
     def idempotency_path(self) -> Path:
         return self.base_dir / "idempotency_keys.json"
 
+    @property
+    def import_batch_payloads_path(self) -> Path:
+        return self.base_dir / "import_batch_payloads.json"
+
     def _ensure_storage(self) -> None:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         for file_name, _ in self.FILE_MAP.values():
@@ -84,6 +80,8 @@ class JsonStore:
             self.snapshots_path.write_text("[]", encoding="utf-8")
         if not self.idempotency_path.exists():
             self.idempotency_path.write_text("{}", encoding="utf-8")
+        if not self.import_batch_payloads_path.exists():
+            self.import_batch_payloads_path.write_text("{}", encoding="utf-8")
 
     def _read_json(self, file_path: Path, default: Any):
         try:
@@ -97,8 +95,7 @@ class JsonStore:
 
     def _read_json_array(self, key: str) -> list:
         file_name, _ = self.FILE_MAP[key]
-        file_path = self.base_dir / file_name
-        payload = self._read_json(file_path, [])
+        payload = self._read_json(self.base_dir / file_name, [])
         return payload if isinstance(payload, list) else []
 
     def _write_json_array(self, key: str, records: list) -> None:
@@ -125,6 +122,7 @@ class JsonStore:
             self.import_batches = self._deserialize_map("import_batches", ImportBatch)
             self.events = [Event.model_validate(x) for x in self._read_json_array("events")]
             self.idempotency_index = self._read_json(self.idempotency_path, {})
+            self.import_batch_payloads = self._read_json(self.import_batch_payloads_path, {})
 
     def _validate_json_schema(self, entity_type: str, payload: dict[str, Any]) -> None:
         schema_path = self.schema_dir / f"{entity_type}.api.schema.json"
@@ -154,7 +152,6 @@ class JsonStore:
                 raise ValueError(f"Schema validation failed: field '{field}' must be object")
             if rule_type == "array" and not isinstance(value, list):
                 raise ValueError(f"Schema validation failed: field '{field}' must be array")
-
             min_len = rules.get("minLength")
             if min_len is not None and isinstance(value, str) and len(value.strip()) < min_len:
                 raise ValueError(f"Schema validation failed: field '{field}' length must be >= {min_len}")
@@ -165,8 +162,7 @@ class JsonStore:
         return model
 
     def _persist_entities(self, key: str, entities: Dict[UUID, BaseModel]) -> None:
-        rows = [x.model_dump(mode="json") for x in entities.values()]
-        self._write_json_array(key, rows)
+        self._write_json_array(key, [x.model_dump(mode="json") for x in entities.values()])
 
     def _persist_events(self) -> None:
         self._write_json_array("events", [x.model_dump(mode="json") for x in self.events])
@@ -185,6 +181,7 @@ class JsonStore:
             "zones": [x.model_dump(mode="json") for x in self.zones.values()],
             "cables": [x.model_dump(mode="json") for x in self.cables.values()],
             "import_batches": [x.model_dump(mode="json") for x in self.import_batches.values()],
+            "import_batch_payloads": self.import_batch_payloads,
         }
         text = json.dumps(combined, sort_keys=True)
         return hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -207,6 +204,7 @@ class JsonStore:
                 "zones": [x.model_dump(mode="json") for x in self.zones.values()],
                 "cables": [x.model_dump(mode="json") for x in self.cables.values()],
                 "import_batches": [x.model_dump(mode="json") for x in self.import_batches.values()],
+                "import_batch_payloads": self.import_batch_payloads,
             },
         }
         snapshots.append(snapshot)
@@ -231,10 +229,8 @@ class JsonStore:
         self.events.append(event)
         self._persist_events()
         self._append_ledger(event)
-
         if len(self.events) % self.SNAPSHOT_EVERY_EVENTS == 0:
             self._snapshot("auto-compaction")
-
         return event
 
     def _save(self, key: str, entity_map: Dict[UUID, BaseModel], model: BaseModel, entity_type: str):
@@ -270,13 +266,96 @@ class JsonStore:
     def add_import_batch(self, batch: ImportBatch):
         return self._save("import_batches", self.import_batches, batch, "import_batch")
 
-    def idempotent_execute(
+    def stage_batch_payload(self, batch_id: UUID, rows: list[dict[str, Any]], metadata: dict[str, Any]) -> None:
+        with self._lock:
+            self.import_batch_payloads[str(batch_id)] = {
+                "rows": rows,
+                "metadata": metadata,
+                "staged_at": datetime.utcnow().isoformat(),
+            }
+            self._write_json(self.import_batch_payloads_path, self.import_batch_payloads)
+            self._event(
+                "import_batch_staged",
+                "import_batch",
+                batch_id,
+                metadata={"staged_row_count": len(rows), **metadata},
+            )
+
+    def get_batch_payload(self, batch_id: UUID) -> dict[str, Any]:
+        payload = self.import_batch_payloads.get(str(batch_id))
+        if not payload:
+            raise ValueError(f"No staged payload found for batch '{batch_id}'")
+       return payload
+
+    @staticmethod
+    def _parse_coordinates(coord_value: str) -> tuple[float, float]:
+        text = (coord_value or "").strip().strip('"')
+        match = re.search(r"\(?\s*([0-9]+(?:\.[0-9]+)?)\s*,\s*([0-9]+(?:\.[0-9]+)?)\s*\)?", text)
+        if not match:
+            return 0.0, 0.0
+        return float(match.group(1)), float(match.group(2))
+
+    def commit_import_batch(
         self,
-        key: str,
-        operation: str,
-        request_payload: dict[str, Any],
-        result_factory,
+        batch_id: UUID,
+        project_id: UUID,
+        site_number: str,
+        floor_id: Optional[UUID] = None,
+        map_id: Optional[UUID] = None,
+        actor: str = "system",
     ) -> dict[str, Any]:
+        with self._lock:
+            batch = self.import_batches.get(batch_id)
+            if not batch:
+                raise ValueError(f"Import batch '{batch_id}' not found")
+
+            if batch.status == "committed":
+                return {"batch_id": batch_id, "committed_devices": 0, "status": "already_committed"}
+
+            staged = self.get_batch_payload(batch_id)
+            rows = staged.get("rows", [])
+            if not rows:
+                raise ValueError("Cannot commit: staged batch has no rows")
+
+            committed = 0
+            for idx, row in enumerate(rows, start=1):
+                local_x, local_y = self._parse_coordinates(str(row.get("Coordinates", "")))
+                name = str(row.get("Name", "")).strip() or f"Imported Device {idx}"
+                dtype = str(row.get("Device/Task Type", "")).strip() or "Imported Device"
+
+                device = Device(
+                    project_id=project_id,
+                    site_number=site_number,
+                    floor_id=floor_id,
+                    map_id=map_id,
+                    device_type=dtype,
+                    name=name,
+                    local_x=local_x,
+                    local_y=local_y,
+                )
+                validated = device.model_dump(mode="json")
+                self._validate_json_schema("device", validated)
+                self.devices[device.id] = self._stamp(device)
+                committed += 1
+
+            batch.status = "committed"
+            batch.updated_at = datetime.utcnow()
+            self.import_batches[batch.id] = batch
+
+            self._persist_entities("devices", self.devices)
+            self._persist_entities("import_batches", self.import_batches)
+
+            self._event(
+                "import_batch_committed",
+                "import_batch",
+                batch_id,
+                actor=actor,
+                metadata={"committed_devices": committed, "site_number": site_number},
+            )
+
+            return {"batch_id": batch_id, "committed_devices": committed, "status": "committed"}
+
+    def idempotent_execute(self, key: str, operation: str, request_payload: dict[str, Any], result_factory) -> dict[str, Any]:
         payload_hash = hashlib.sha256(json.dumps(request_payload, sort_keys=True).encode("utf-8")).hexdigest()
         composite_key = f"{operation}:{key}"
 
@@ -312,6 +391,7 @@ class JsonStore:
         self.import_batches = {
             ImportBatch.model_validate(x).id: ImportBatch.model_validate(x) for x in state["import_batches"]
         }
+        self.import_batch_payloads = state.get("import_batch_payloads", {})
 
         self._persist_entities("projects", self.projects)
         self._persist_entities("sites", self.sites)
@@ -321,6 +401,7 @@ class JsonStore:
         self._persist_entities("zones", self.zones)
         self._persist_entities("cables", self.cables)
         self._persist_entities("import_batches", self.import_batches)
+        self._write_json(self.import_batch_payloads_path, self.import_batch_payloads)
 
         rollback_id = uuid4()
         self._event(
