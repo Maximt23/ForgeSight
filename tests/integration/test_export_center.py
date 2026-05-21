@@ -10,9 +10,13 @@ def build_client(tmp_path):
     os.environ["CADOWL_SCHEMA_DIR"] = str(Path("C:/MAXILLM/cadowl/apps/api/schemas_json"))
 
     import apps.api.store as store_module
+    import apps.api.exports.service as export_service_module
+    import apps.api.exports.router as export_router_module
     import apps.api.main as main_module
 
     importlib.reload(store_module)
+    importlib.reload(export_service_module)
+    importlib.reload(export_router_module)
     importlib.reload(main_module)
 
     return TestClient(main_module.app)
