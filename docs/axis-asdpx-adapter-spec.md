@@ -25,6 +25,8 @@ Use Axis SiteDesigner `.asdpx` exports as an import adapter for SiteOwl-compatib
 ## Implemented Components
 - `apps/api/adapters/axis_siteowl_adapter.py`
 - `POST /api/v1/import/asdpx/preview`
+- `POST /api/v1/import/asdpx/batch` (staged import batch)
+- `POST /api/v1/import/{batch_id}/commit` (device materialization)
 - `scripts/import/convert_asdpx_to_siteowl_csv.py`
 
 ## Conversion Rules

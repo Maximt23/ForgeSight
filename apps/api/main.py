@@ -1,9 +1,14 @@
+import hashlib
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
 from fastapi import FastAPI, Header, HTTPException
 
+from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
 from .schemas import (
+    AsdpxBatchStageRequest,
+    AsdpxBatchStageResponse,
     AsdpxDevicePreview,
     AsdpxPreviewRequest,
     AsdpxPreviewResponse,
@@ -14,6 +19,8 @@ from .schemas import (
     Floor,
     FloorCreate,
     ImportBatch,
+    ImportBatchCommitRequest,
+    ImportBatchCommitResponse,
     ImportBatchCreate,
     MapCreate,
     MapModel,
@@ -27,8 +34,8 @@ from .schemas import (
     ZoneCreate,
 )
 from .store import STORE
-from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
-app = FastAPI(title="CadOwl Phase 2 API", version="0.2.0")
+
+app = FastAPI(title="CadOwl Phase 2 API", version="0.2.1")
 
 
 def _safe_write(operation):
@@ -87,7 +94,8 @@ def list_sites(project_id: Optional[UUID] = None):
 
 @app.post("/api/v1/floors", response_model=Floor)
 def create_floor(payload: FloorCreate):
-    return _safe_write(lambda: STORE.add_floor(Floor(site_id=payload.site_id, name=payload.name, level=payload.level)))
+    model = Floor(site_id=payload.site_id, name=payload.name, level=payload.level)
+    return _safe_write(lambda: STORE.add_floor(model))
 
 
 @app.get("/api/v1/floors", response_model=list[Floor])
@@ -195,6 +203,8 @@ def create_import_batch(payload: ImportBatchCreate, idempotency_key: Optional[st
 
     def op() -> dict:
         created = STORE.add_import_batch(model)
+        if payload.records:
+            STORE.stage_batch_payload(created.id, payload.records, {"source": "manual_batch"})
         return created.model_dump(mode="json")
 
     return _safe_write(
@@ -214,8 +224,6 @@ def preview_asdpx(payload: AsdpxPreviewRequest):
     src = payload.source_path.strip()
     if not src.lower().endswith(".asdpx"):
         raise HTTPException(status_code=400, detail="source_path must point to an .asdpx file")
-
-    from pathlib import Path
 
     path = Path(src)
     if not path.exists():
@@ -239,6 +247,59 @@ def preview_asdpx(payload: AsdpxPreviewRequest):
             for x in sample
         ],
     )
+
+
+@app.post("/api/v1/import/asdpx/batch", response_model=AsdpxBatchStageResponse)
+def stage_asdpx_batch(
+    payload: AsdpxBatchStageRequest,
+    idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+):
+    if not idempotency_key:
+        raise HTTPException(status_code=400, detail="Idempotency-Key header is required for import batch writes")
+
+    path = Path(payload.source_path.strip())
+    if not path.exists() or path.suffix.lower() != ".asdpx":
+        raise HTTPException(status_code=400, detail="source_path must be an existing .asdpx file")
+
+    def op() -> dict:
+        rows, meta = convert_asdpx_to_siteowl_rows(path)
+        hash_value = hashlib.sha256(path.read_bytes()).hexdigest()
+        batch = STORE.add_import_batch(
+            ImportBatch(
+                source_file_name=path.name,
+                source_file_hash=hash_value,
+                mode=payload.mode,
+                status="validated",
+                record_count=len(rows),
+            )
+        )
+        STORE.stage_batch_payload(batch.id, rows, {"source": "axis_asdpx", **meta})
+        return {"batch": batch.model_dump(mode="json"), "staged_row_count": len(rows)}
+
+    result = _safe_write(
+        lambda: STORE.idempotent_execute(
+            idempotency_key,
+            "import_asdpx_batch",
+            payload.model_dump(mode="json"),
+            op,
+        )
+    )
+    return AsdpxBatchStageResponse(batch=ImportBatch.model_validate(result["batch"]), staged_row_count=result["staged_row_count"])
+
+
+@app.post("/api/v1/import/{batch_id}/commit", response_model=ImportBatchCommitResponse)
+def commit_batch(batch_id: UUID, payload: ImportBatchCommitRequest):
+    result = _safe_write(
+        lambda: STORE.commit_import_batch(
+            batch_id=batch_id,
+            project_id=payload.project_id,
+            site_number=payload.site_number,
+            floor_id=payload.floor_id,
+            map_id=payload.map_id,
+            actor=payload.actor,
+        )
+    )
+    return ImportBatchCommitResponse.model_validate(result)
 
 
 @app.get("/api/v1/events")

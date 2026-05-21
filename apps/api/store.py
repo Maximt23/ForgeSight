@@ -285,7 +285,7 @@ class JsonStore:
         payload = self.import_batch_payloads.get(str(batch_id))
         if not payload:
             raise ValueError(f"No staged payload found for batch '{batch_id}'")
-       return payload
+        return payload
 
     @staticmethod
     def _parse_coordinates(coord_value: str) -> tuple[float, float]:

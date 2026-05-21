@@ -32,5 +32,8 @@ Every commit creates rollback checkpoint and event references.
 ## Axis ASDPX Adapter (Phase 2)
 - Source: Axis SiteDesigner `.asdpx`
 - Preview endpoint: `POST /api/v1/import/asdpx/preview`
+- Stage endpoint: `POST /api/v1/import/asdpx/batch` (requires `Idempotency-Key`)
+- Commit endpoint: `POST /api/v1/import/{batch_id}/commit`
 - Backend CLI: `scripts/import/convert_asdpx_to_siteowl_csv.py`
 - Coordinate pipeline: GPS -> pixel -> feet -> SiteOwl 100x100 with 80% width centering rule
+- Staged row payloads are persisted in `data/jsondb/import_batch_payloads.json`
