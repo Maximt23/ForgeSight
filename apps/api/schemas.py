@@ -142,3 +142,23 @@ class Event(BaseModel):
     actor: str = "system"
     metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AsdpxPreviewRequest(BaseModel):
+    source_path: str
+
+
+class AsdpxDevicePreview(BaseModel):
+    device_id: str
+    name: str
+    system_type: str
+    device_task_type: str
+    part_number: str
+    coordinates: str
+    field_notes: str
+
+
+class AsdpxPreviewResponse(BaseModel):
+    source_path: str
+    row_count: int
+    sample_rows: list[AsdpxDevicePreview]

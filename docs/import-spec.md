@@ -28,3 +28,9 @@ Only valid rows are committed. Warnings require explicit user approval mode. Fai
 
 ## Rollback Rule
 Every commit creates rollback checkpoint and event references.
+
+## Axis ASDPX Adapter (Phase 2)
+- Source: Axis SiteDesigner `.asdpx`
+- Preview endpoint: `POST /api/v1/import/asdpx/preview`
+- Backend CLI: `scripts/import/convert_asdpx_to_siteowl_csv.py`
+- Coordinate pipeline: GPS -> pixel -> feet -> SiteOwl 100x100 with 80% width centering rule

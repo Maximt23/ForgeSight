@@ -4,6 +4,9 @@ from uuid import UUID
 from fastapi import FastAPI, Header, HTTPException
 
 from .schemas import (
+    AsdpxDevicePreview,
+    AsdpxPreviewRequest,
+    AsdpxPreviewResponse,
     Cable,
     CableCreate,
     Device,
@@ -24,7 +27,7 @@ from .schemas import (
     ZoneCreate,
 )
 from .store import STORE
-
+from .adapters.axis_siteowl_adapter import convert_asdpx_to_siteowl_rows
 app = FastAPI(title="CadOwl Phase 2 API", version="0.2.0")
 
 
@@ -204,6 +207,38 @@ def create_import_batch(payload: ImportBatchCreate, idempotency_key: Optional[st
 @app.get("/api/v1/import/batches", response_model=list[ImportBatch])
 def list_import_batches():
     return list(STORE.import_batches.values())
+
+
+@app.post("/api/v1/import/asdpx/preview", response_model=AsdpxPreviewResponse)
+def preview_asdpx(payload: AsdpxPreviewRequest):
+    src = payload.source_path.strip()
+    if not src.lower().endswith(".asdpx"):
+        raise HTTPException(status_code=400, detail="source_path must point to an .asdpx file")
+
+    from pathlib import Path
+
+    path = Path(src)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"ASDPX file not found: {src}")
+
+    rows, meta = _safe_write(lambda: convert_asdpx_to_siteowl_rows(path))
+    sample = rows[:10]
+    return AsdpxPreviewResponse(
+        source_path=str(path),
+        row_count=meta["row_count"],
+        sample_rows=[
+            AsdpxDevicePreview(
+                device_id=x.get("Device ID", ""),
+                name=x.get("Name", ""),
+                system_type=x.get("System Type", ""),
+                device_task_type=x.get("Device/Task Type", ""),
+                part_number=x.get("Part Number", ""),
+                coordinates=x.get("Coordinates", ""),
+                field_notes=x.get("Field Notes", ""),
+            )
+            for x in sample
+        ],
+    )
 
 
 @app.get("/api/v1/events")
